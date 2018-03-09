@@ -1,0 +1,18 @@
+
+// define our variables
+var a : int
+var b : int
+var c : int
+
+// initialize values
+a = 3
+b = 10
+
+// calculate
+c = a + b
+
+print(c)
+
+add(a, b, c)
+
+
