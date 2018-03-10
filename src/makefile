@@ -31,7 +31,7 @@ $(EXECUTABLE): $(OBJECTS)
 
 
 
-clear:
-	rm -f *.o  */*.o parser/Parser.cpp parser/Lexer.cpp
+clean:
+	rm -f $(EXECUTABLE) *.o parser.cpp parser.hpp lexer.cpp
 
 
