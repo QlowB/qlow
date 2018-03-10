@@ -19,6 +19,9 @@
 //
 // =============================================================================
 
+#ifndef QLOW_AST_H
+#define QLOW_AST_H
+
 #include <string>
 #include <vector>
 #include <memory>
@@ -249,5 +252,6 @@ struct qlow::ast::BinaryOperation : public Operation
 };
 
 
+#endif // QLOW_AST_H
 
 
