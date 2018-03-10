@@ -27,7 +27,8 @@
 #include <iostream>
 #include <cstdio>
 #include "Ast.h"
-using namespace qlow::parser;
+
+using namespace qlow::ast;
 
 extern int qlow_parser_lex();
 
@@ -41,7 +42,7 @@ std::unique_ptr<ClassList> parsedClasses;
 
 %}
 
-%define api.prefix {uetli_parser_}
+%define api.prefix {qlow_parser_}
 
 /*
 %skeleton "lalr1.cc" // generate C++ parser
@@ -52,12 +53,30 @@ std::unique_ptr<ClassList> parsedClasses;
 //%name-prefix "uetli_parser_"
 */
 %union {
-    std::vector<std::unique_ptr<uetli::parser::Class>>* classes;
-    ClassDefinition* classDefinition;
-    FeatureDeclaration* featureDeclaration;
-    std::vector<std::unique_ptr<uetli::parser::FeatureDeclaration>>* featureList;
+    std::vector<std::unique_ptr<qlow::ast::Class>>* classes;
+    qlow::ast::Class* classDefinition;
+    qlow::ast::FeatureDeclaration* featureDeclaration;
+    std::vector<std::unique_ptr<qlow::ast::FeatureDeclaration>>* featureList;
+    std::vector<std::unique_ptr<qlow::ast::ArgumentDeclaration>>* argumentList;
+    std::vector<std::unique_ptr<qlow::ast::Statement>>* statements;
+    std::vector<std::unique_ptr<qlow::ast::Expression>>* expressionList;
+    qlow::ast::ArgumentDeclaration* argumentDeclaration;
+    qlow::ast::DoEndBlock* doEndBlock;    
+    qlow::ast::Statement* statement;
+    qlow::ast::Expression* expression;
+    qlow::ast::Operation::Operator op;
+
+    qlow::ast::MethodDefinition* methodDefinition;
+
+    qlow::ast::FeatureCall* featureCall;
+    qlow::ast::AssignmentStatement* assignmentStatement;
+    qlow::ast::NewVariableStatement* newVariableStatement;
+
+    qlow::ast::UnaryOperation* unaryOperation;
+    qlow::ast::BinaryOperation* binaryOperation;
 
     const char* cString;
+    std::string* string;
     int token;
 };
 
@@ -70,26 +89,28 @@ std::unique_ptr<ClassList> parsedClasses;
 
 %type <classes> classes
 %type <classDefinition> classDefinition
-%type <featureDeclaration> featureDeclaration fieldDeclaration methodDeclaration
+%type <featureDeclaration> featureDeclaration fieldDeclaration methodDefinition
 %type <featureList> featureList
+%type <argumentList> argumentList
+%type <statements> statements
+%type <expressionList> expressionList
+%type <argumentDeclaration> argumentDeclaration
+%type <doEndBlock> doEndBlock
+%type <statement> statement
+%type <expression> expression operationExpression paranthesesExpression
+%type <op> operator
+%type <featureCall> featureCall
+%type <assignmentStatement> assignmentStatement 
+%type <newVariableStatement> newVariableStatement
+%type <unaryOperation> unaryOperation
+%type <binaryOperation> binaryOperation
 
 %left ASTERISK SLASH
 %left PLUS MINUS
 
-%start compilationUnit
+%start classes
 
 %%
-
-
-compilationUnit:
-    /* empty */ {
-        parsedClasses = std::make_unique<ClassList>();
-    }
-    |
-    compilationUnit classes {
-        parsedClasses = $2;
-    };
-
 
 /* possible newline characters
 pnl:
@@ -102,20 +123,19 @@ pnl:
 
 /* list of class definitions */
 classes:
-    classDefinition {
-        $$ = new std::vector<std::unique_ptr<ClassDefinition>>();
-        $$->push_back($1);
+    /* empty */ {
+       parsedClasses = std::make_unique<ClassList>();
     }
     |
     classes classDefinition {
-        $$->push_back($3);
+        parsedClasses->push_back(std::move(std::unique_ptr<Class>($2)));
     };
 
 
 classDefinition:
     CLASS IDENTIFIER featureList END {
-        $$ = new ClassDefinition(*$2, *$3);
-        delete $2; $2 = 0; $3 = 0;
+        $$ = new Class(*$2, *$3);
+        delete $2; delete $3; $2 = 0; $3 = 0;
     };
 
 
@@ -126,7 +146,7 @@ featureList:
     |
     featureList featureDeclaration {
         $$ = $1;
-        $$->push_back($2);
+        $$->push_back(std::move(std::unique_ptr<FeatureDeclaration>($2)));
     };
 
 
@@ -135,7 +155,7 @@ featureDeclaration:
         $$ = $1;
     }
     |
-    methodDeclaration {
+    methodDefinition {
         $$ = $1;
     };
 
@@ -149,36 +169,36 @@ fieldDeclaration:
 
 methodDefinition:
     IDENTIFIER COLON IDENTIFIER doEndBlock {
-        $$ = new MethodDefinition(*$3, *$1, $4);
+        $$ = new MethodDefinition(*$3, *$1, std::move(std::unique_ptr<DoEndBlock>($4)));
         delete $3; delete $1; $1 = $3 = 0;
     }
     |
     IDENTIFIER doEndBlock {
-        $$ = new MethodDefinition("", *$1, $2);
+        $$ = new MethodDefinition("", *$1, std::move(std::unique_ptr<DoEndBlock>($2)));
         delete $1; $1 = 0;
     }
     |
     IDENTIFIER
         ROUND_LEFT argumentList ROUND_RIGHT COLON IDENTIFIER doEndBlock {
-        $$ = new MethodDefinition(*$6, *$1, $7);
-        delete $6; delete $1; $1 = $6 = 0;
+        $$ = new MethodDefinition(*$6, *$1, std::move(*$3), std::move(std::unique_ptr<DoEndBlock>($7)));
+        delete $6; delete $1; delete $3; $1 = $6 = nullptr; $3 = nullptr;
     }
     |
     IDENTIFIER ROUND_LEFT argumentList ROUND_RIGHT doEndBlock {
-        $$ = new MethodDefinition("", *$1, $5);
-        delete $1; $1 = 0;
+        $$ = new MethodDefinition("", *$1, std::move(*$3), std::move(std::unique_ptr<DoEndBlock>($5)));
+        delete $1; delete $3; $1 = nullptr; $3 = nullptr;
     };
 
 
 argumentList:
     argumentDeclaration {
         $$ = new std::vector<std::unique_ptr<ArgumentDeclaration>>();
-        $$->push_back($1);
+        $$->push_back(std::unique_ptr<ArgumentDeclaration>($1));
     }
     |
     argumentList COMMA argumentDeclaration {
         $$ = $1;
-        $$->push_back($3);
+        $$->push_back(std::unique_ptr<ArgumentDeclaration>($3));
     };
 
 
@@ -191,7 +211,7 @@ argumentDeclaration:
 
 doEndBlock:
     DO statements END {
-        $$ = new DoEndBlock(*$2);
+        $$ = new DoEndBlock(std::move(*$2));
         delete $2; $2 = 0;
     };
 
@@ -203,12 +223,12 @@ statements:
     |
     statements statement {
         $$ = $1;
-        $$->push_back($2);
+        $$->push_back(std::move(std::unique_ptr<Statement>($2)));
     };
 
 
 statement:
-    callOrVariableStatement {
+    featureCall {
         $$ = $1;
     }
     |
@@ -221,24 +241,25 @@ statement:
     };
 
 
-callOrVariableStatement:
+featureCall:
     IDENTIFIER {
-        $$ = new CallOrVariableStatement(0, *$1);
+        $$ = new FeatureCall(nullptr, *$1);
         delete $1; $1 = 0;
     }
     |
     IDENTIFIER ROUND_LEFT expressionList ROUND_RIGHT {
-        $$ = new CallOrVariableStatement(0, *$1, *$3);
+        $$ = new FeatureCall(nullptr, *$1, std::move(*$3));
         delete $1; delete $3; $1 = 0; $3 = 0;
     }
     |
     expression DOT IDENTIFIER {
-        $$ = new CallOrVariableStatement($1, *$3);
+        $$ = new FeatureCall(std::move(std::unique_ptr<Expression>($1)), *$3);
         delete $3; $3 = 0;
     }
     |
     expression DOT IDENTIFIER ROUND_LEFT expressionList ROUND_RIGHT {
-        $$ = new CallOrVariableStatement($1, *$3, *$5);
+        $$ = new FeatureCall(std::move(std::unique_ptr<Expression>($1)), *$3,
+            std::move(*$5));
         delete $3; $3 = 0; delete $5; $5 = 0;
     };
 
@@ -247,17 +268,17 @@ callOrVariableStatement:
 expressionList:
     expression {
         $$ = new std::vector<std::unique_ptr<Expression>>();
-        $$->push_back($1);
+        $$->push_back(std::move(std::unique_ptr<Expression>($1)));
     }
     |
     expressionList COMMA expression {
         $$ = $1;
-        $$->push_back($3);
+        $$->push_back(std::move(std::unique_ptr<Expression>($3)));
     };
 
 
 expression:
-    callOrVariableStatement {
+    featureCall {
         $$ = $1;
     }
     |
@@ -271,41 +292,42 @@ expression:
 
 
 operationExpression:
-    binaryOperationExpression {
+    binaryOperation {
         $$ = $1;
     }
     |
-    unaryOperationExpression {
+    unaryOperation {
         $$ = $1;
     };
 
 
-binaryOperationExpression:
+binaryOperation:
     expression operator expression {
-        $$ = new BinaryOperationExpression($1, $3, $2);
+        $$ = new BinaryOperation(std::unique_ptr<Expression>($1), 
+            std::unique_ptr<Expression>($3), $2);
     };
 
 
-unaryOperationExpression:
+unaryOperation:
     expression operator {
-        $$ = new UnaryOperationExpression($1,
-            UnaryOperationExpression::SUFFIX, $2);
+        $$ = new UnaryOperation(std::unique_ptr<Expression>($1),
+            UnaryOperation::SUFFIX, $2);
     }
     |
     operator expression {
-        $$ = new UnaryOperationExpression($2,
-            UnaryOperationExpression::PREFIX, $1);
+        $$ = new UnaryOperation(std::unique_ptr<Expression>($2),
+            UnaryOperation::PREFIX, $1);
     };
 
 
 operator:
-    PLUS { $$ = "+"; }
+    PLUS { $$ = qlow::ast::Operation::Operator::PLUS; }
     |
-    MINUS { $$ = "-"; }
+    MINUS { $$ = qlow::ast::Operation::Operator::MINUS; }
     |
-    ASTERISK { $$ = "*"; }
+    ASTERISK { $$ = qlow::ast::Operation::Operator::ASTERISK; }
     |
-    SLASH { $$ = "/"; };
+    SLASH { $$ = qlow::ast::Operation::Operator::SLASH; };
 
 
 paranthesesExpression:
@@ -315,8 +337,9 @@ paranthesesExpression:
 
 
 assignmentStatement:
-    callOrVariableStatement ASSIGN expression {
-        $$ = new AssignmentStatement($1, $3);
+    IDENTIFIER ASSIGN expression {
+        $$ = new AssignmentStatement(std::move(*$1), std::unique_ptr<Expression>($3));
+        delete $1; $1 = 0;
     };
 
 

@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -g -Wall
+CXXFLAGS := -g -Wall -std=c++17
 LINKFLAGS :=
 
 YACC := bison
@@ -10,7 +10,7 @@ LEXFLAGS :=
 OBJECTS := $(patsubst %.cpp, %.o, $(wildcard *.cpp */*.cpp)) \
     parser.o lexer.o
 LIBRARIES := 
-EXECUTABLE := glow
+EXECUTABLE := qlow
 
 
 all: $(EXECUTABLE)

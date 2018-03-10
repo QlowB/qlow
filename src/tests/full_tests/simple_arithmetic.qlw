@@ -1,18 +1,23 @@
 
-// define our variables
-var a : int
-var b : int
-var c : int
 
-// initialize values
-a = 3
-b = 10
 
-// calculate
-c = a + b
+class Main
+    compute do
+        // define our variables
+        var a : int
+        var b : int
+        var c : int
 
-print(c)
+        // initialize values
+        a = 3
+        b = 10
 
-add(a, b, c)
+        // calculate
+        c = a + b
 
+        print(c)
+
+        add(a, b, c)
+    end
+end
 

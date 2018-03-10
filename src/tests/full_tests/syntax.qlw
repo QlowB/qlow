@@ -1,0 +1,11 @@
+class Main
+    compute(asda : wewe, e : int32) : int do
+        a := b + c * d
+        a := 3
+        if a do
+        end
+        asdadd(wew)
+        a := werr.sdd
+    end
+end
+

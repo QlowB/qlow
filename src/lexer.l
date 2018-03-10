@@ -21,14 +21,15 @@
 
 %{
 #include "Ast.h"
+#include "parser.hpp"
 
-//#define yylval qlow_parser_lval
+
+#define yylval qlow_parser_lval
 #define SET_TOKEN(t) (yylval.token = t)
 #define SET_STRING (yylval.string = new std::string(yytext, yyleng))
 
 extern "C" int yywrap()
 {
-    
     return 1; /* do not continue on EOF */
 }
 
@@ -38,6 +39,28 @@ extern "C" int yywrap()
 %option prefix="qlow_parser_"
 
 %%
+
+[\t ]                   ; // Space or tab ignored
+\/\*[.\n]*\*\/          ; // comment
+\n                      ; //return SET_TOKEN(NEW_LINE);
+
+"class"                 return SET_TOKEN(CLASS);
+"do"                    return SET_TOKEN(DO);
+"end"                   return SET_TOKEN(END);
+"if"                    return SET_TOKEN(IF);
+
+":"                     return SET_TOKEN(COLON);
+","                     return SET_TOKEN(COMMA);
+":="                    return SET_TOKEN(ASSIGN);
+"."                     return SET_TOKEN(DOT);
+
+"("                     return SET_TOKEN(ROUND_LEFT);
+")"                     return SET_TOKEN(ROUND_RIGHT);
+
+"+"		        return SET_TOKEN(PLUS);
+"-"		        return SET_TOKEN(MINUS);
+"*"		        return SET_TOKEN(ASTERISK);
+"/"		        return SET_TOKEN(SLASH);
 
 
 [a-zA-Z_][a-zA-Z0-9_]*  SET_STRING; return IDENTIFIER;
