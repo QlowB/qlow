@@ -53,6 +53,7 @@ std::unique_ptr<ClassList> parsedClasses;
 //%name-prefix "uetli_parser_"
 */
 %union {
+    //using qlow::ast::Class;
     std::vector<std::unique_ptr<qlow::ast::Class>>* classes;
     qlow::ast::Class* classDefinition;
     qlow::ast::FeatureDeclaration* featureDeclaration;
