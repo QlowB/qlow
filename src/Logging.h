@@ -6,7 +6,20 @@
 
 namespace qlow
 {
+    // indenting ostream
     class Out;
+
+
+    enum class LogLevel
+    {
+        NONE,
+        ERROR,
+        WARNING,
+        INFO,
+        DEBUG,
+        TRACE,
+        OFF,
+    };
 }
 
 
@@ -19,6 +32,10 @@ protected:
     bool firstChar;
     int indentVal;
 
+    // type of current logging
+    LogLevel logType = LogLevel::OFF;
+    LogLevel logLevel = LogLevel::INFO;
+
 public:
     Out(std::ostream& target);
     ~Out(void) = default;
@@ -26,12 +43,17 @@ public:
     inline void indent(int width = 4) { indentVal += width; }
     inline void unindent(int width = 4) { indentVal -= width; }
 
+    inline void setLogType(LogLevel l) { logType = l; }
+
     static Out stdout;
 
 protected:
     virtual int overflow(int c);
     //virtual std::streamsize xsputn (const char* s, std::streamsize n);
 };
+
+
+std::ostream& operator << (std::ostream& o, qlow::LogLevel l);
 
 
 #endif // QLOW_LOGGING_H

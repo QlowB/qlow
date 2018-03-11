@@ -22,11 +22,34 @@ int Out::overflow(int c)
         for (int i = 0; i < indentVal; i++)
             target.put(' ');
 
-    target.put(char(c));
+    if (logType <= logLevel)
+        target.put(char(c));
 
-    firstChar = c == '\n';
+    if (c == '\n') {
+        // remove formatting
+        target << "\033[0m";
+        logType = LogLevel::NONE;
+        firstChar = true;
+    }
+    else
+        firstChar = false;
 
     return 0;
+}
+
+
+std::ostream& operator << (std::ostream& o, qlow::LogLevel l)
+{
+    switch(l)
+    {
+        case qlow::LogLevel::WARNING:
+            try {
+                dynamic_cast<qlow::Out&>(o).setLogType(l);
+            }
+            catch(...) {}
+            return o << "\033[33m";
+    }
+    return o;
 }
 
 
@@ -36,15 +59,16 @@ int Out::overflow(int c)
 }*/
 
 
-int main()
+/*int main()
 {
     qlow::Out& l = Out::stdout;
     l << "aha" << std::endl;
     l.indent(10);
     l << "aha" << std::endl;
+    l << qlow::LogLevel::WARNING << "ee";
     l.unindent(10);
     l << "aha" << std::endl;
-}
+}*/
 
 
 

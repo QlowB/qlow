@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -g -Wall -std=c++17
+CXXFLAGS := -Wall -std=c++17
 LINKFLAGS :=
 
 YACC := bison
@@ -15,6 +15,13 @@ EXECUTABLE := qlow
 
 all: $(EXECUTABLE)
 
+
+
+release: CXXFLAGS += -O3
+release: all
+
+debug: CXXFLAGS += -DDEBUGGING -g
+debug: all
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $^ $(LINKFLAGS) -o $@
