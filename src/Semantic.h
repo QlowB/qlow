@@ -2,12 +2,16 @@
 #define QLOW_SEMANTIC_H
 
 #include <string>
+#include <map>
 #include "Util.h"
 
 namespace qlow
 {
     namespace sem
     {
+
+        template<typename T>
+        using std::map<std::string, std::unique_ptr<T>> SymbolTable;
 
         struct Class;
 
@@ -20,14 +24,16 @@ namespace qlow
 struct Class
 {
     std::string name;
-    util::OwningList<Field> fields;
-    util::OwningList<Method> methods;
+    SymbolTable<Field> fields;
+    SymbolTable<Method> methods;
 };
 
 
 struct Field
 {
     Class* type;
+
+
 }
 
 
