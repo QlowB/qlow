@@ -27,14 +27,18 @@
 #include <memory>
 #include <utility>
 
+//#include "AstVisitor.h"
 
 namespace qlow
 {
+    class AstVisitor;
     namespace ast
     {
         template<typename T>
         using List = std::vector<std::unique_ptr<T>>;
 
+        // base class
+        struct AstObject;
 
         struct Class;
 
@@ -62,8 +66,12 @@ namespace qlow
 }
 
 
+struct qlow::ast::AstObject : public Visitable<AstVisitor>
+{
+};
 
-struct qlow::ast::Class
+
+struct qlow::ast::Class : public AstObject
 {
     std::string name;
     List<FeatureDeclaration> features;
@@ -72,10 +80,12 @@ struct qlow::ast::Class
         name(name), features(std::move(features))
     {
     }
+
+    void accept(AstVisitor& v);
 };
 
 
-struct qlow::ast::FeatureDeclaration
+struct qlow::ast::FeatureDeclaration : public AstObject
 {
     std::string name;
     std::string type;
@@ -84,6 +94,8 @@ struct qlow::ast::FeatureDeclaration
         name(name), type(type)
     {
     }
+
+    void accept(AstVisitor& v);
 };
 
 
@@ -93,6 +105,8 @@ struct qlow::ast::FieldDeclaration : public FeatureDeclaration
         FeatureDeclaration(type, name)
     {
     }
+
+    void accept(AstVisitor& v);
 };
 
 
@@ -116,10 +130,12 @@ struct qlow::ast::MethodDefinition : public FeatureDeclaration
         body(std::move(body))
     {
     }
+
+    void accept(AstVisitor& v);
 };
 
 
-struct qlow::ast::VariableDeclaration 
+struct qlow::ast::VariableDeclaration  : public AstObject
 {
     std::string type;
     std::string name;
@@ -127,6 +143,8 @@ struct qlow::ast::VariableDeclaration
         type(type), name(name)
     {
     }
+
+    void accept(AstVisitor& v);
 };
 
 
@@ -137,10 +155,12 @@ struct qlow::ast::ArgumentDeclaration :
         VariableDeclaration(type, name)
     {
     }
+
+    void accept(AstVisitor& v);
 };
 
 
-struct qlow::ast::DoEndBlock
+struct qlow::ast::DoEndBlock : public AstObject
 {
     List<Statement> statements;
     
@@ -148,17 +168,22 @@ struct qlow::ast::DoEndBlock
         statements(std::move(statements))
     {
     }
+
+    void accept(AstVisitor& v);
 };
 
 
-struct qlow::ast::Statement
+struct qlow::ast::Statement : public virtual AstObject
 {
     virtual ~Statement(void);
+
+    void accept(AstVisitor& v);
 };
 
 
-struct qlow::ast::Expression
+struct qlow::ast::Expression : public virtual AstObject
 {
+    void accept(AstVisitor& v);
 };
 
 
@@ -179,6 +204,8 @@ struct qlow::ast::FeatureCall : public Expression, public Statement
         target(std::move(target)), name(name), arguments(std::move(arguments))
     {
     }
+
+    void accept(AstVisitor& v);
 };
 
 
@@ -191,6 +218,8 @@ struct qlow::ast::AssignmentStatement : public Statement
         target(target), expr(std::move(expr))
     {
     }
+
+    void accept(AstVisitor& v);
 };
 
 
@@ -202,6 +231,8 @@ struct qlow::ast::NewVariableStatement : public Statement
        name(name), type(type)
     {
     } 
+
+    void accept(AstVisitor& v);
 };
 
 
@@ -216,6 +247,8 @@ struct qlow::ast::Operation : public Expression
         op(op)
     {
     }
+
+    void accept(AstVisitor& v);
 };
 
 
@@ -236,6 +269,8 @@ struct qlow::ast::UnaryOperation : public Operation
         expr(std::move(expr))
     {
     }
+
+    void accept(AstVisitor& v);
 };
 
 
@@ -249,6 +284,8 @@ struct qlow::ast::BinaryOperation : public Operation
         left(std::move(left)), right(std::move(right))
     {
     }
+
+    void accept(AstVisitor& v);
 };
 
 

@@ -11,8 +11,9 @@ namespace qlow
     {
 
         template<typename T>
-        using std::map<std::string, std::unique_ptr<T>> SymbolTable;
+        using SymbolTable = std::map<std::string, std::unique_ptr<T>>;
 
+        struct SemanticObject;
         struct Class;
 
         struct Field;
@@ -32,8 +33,7 @@ struct Class
 struct Field
 {
     Class* type;
-
-
+    std::string name;
 }
 
 
