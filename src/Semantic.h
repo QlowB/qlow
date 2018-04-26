@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include "Util.h"
+#include "Ast.h"
 
 namespace qlow
 {
@@ -18,11 +19,19 @@ namespace qlow
 
         struct Field;
         struct Method;
+
+        void createFromAst(std::vector<std::unique_ptr<qlow::ast::Class>>& classes);
     }
 }
 
 
-struct Class
+struct qlow::sem::SemanticObject
+{
+    virtual ~SemanticObject(void);
+};
+
+
+struct qlow::sem::Class : public SemanticObject
 {
     std::string name;
     SymbolTable<Field> fields;
@@ -30,11 +39,18 @@ struct Class
 };
 
 
-struct Field
+struct qlow::sem::Field : public SemanticObject
 {
     Class* type;
     std::string name;
-}
+};
+
+
+struct qlow::sem::Method : public SemanticObject
+{
+    Class* returnType;
+    std::string name;
+};
 
 
 

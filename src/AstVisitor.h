@@ -86,7 +86,6 @@ public:
     ReturnType visit(ast::FeatureCall& ast) override;
     ReturnType visit(ast::AssignmentStatement& ast) override;
     ReturnType visit(ast::NewVariableStatement& ast) override;
-    ReturnType visit(ast::Operation& ast) override;
     ReturnType visit(ast::UnaryOperation& ast) override;
     ReturnType visit(ast::BinaryOperation& ast) override;
 };
