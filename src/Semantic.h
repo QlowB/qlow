@@ -11,6 +11,9 @@ namespace qlow
     namespace sem
     {
 
+        /*!
+         * \brief contains owning pointers to elements
+         */
         template<typename T>
         using SymbolTable = std::map<std::string, std::unique_ptr<T>>;
 
@@ -20,7 +23,7 @@ namespace qlow
         struct Field;
         struct Method;
 
-        void createFromAst(std::vector<std::unique_ptr<qlow::ast::Class>>& classes);
+        SymbolTable<qlow::sem::Class> createFromAst(std::vector<std::unique_ptr<qlow::ast::Class>>& classes);
     }
 }
 

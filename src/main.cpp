@@ -13,7 +13,14 @@ int main()
         ::qlow_parser_parse();
         std::cout << parsedClasses->size() << std::endl;
 
+        std::cout << "parsing completed!" << std::endl;
+
         qlow::sem::createFromAst(*parsedClasses.get());
+        qlow::sem::SymbolTable<qlow::sem::Class> semClasses;
+
+        for (auto& [a, b] : semClasses) {
+            std::cout << "ay: " << a << std::endl;
+        }
     }
     catch (const char* err)
     {

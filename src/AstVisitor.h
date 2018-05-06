@@ -66,7 +66,6 @@ class qlow::AstVisitor :
         ast::FeatureCall,
         ast::AssignmentStatement,
         ast::NewVariableStatement,
-        ast::Operation,
         ast::UnaryOperation,
         ast::BinaryOperation
     >
