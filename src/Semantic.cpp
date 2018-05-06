@@ -8,8 +8,6 @@ namespace qlow
 {
     namespace sem
     {
-
-
         template<typename T, typename U>
         std::unique_ptr<T> unique_dynamic_cast(std::unique_ptr<U>&& p)
         {
@@ -23,13 +21,13 @@ namespace qlow
         {
             AstVisitor av;
 
+            // create classes
             SymbolTable<sem::Class> semClasses;
             for (auto& astClass : classes) {
-                auto semObj = av.visit(*astClass.get());
                 semClasses.insert(
                     {
                         astClass->name,
-                        unique_dynamic_cast<sem::Class>(std::move(semObj))
+                        std::make_unique<sem::Class>(astClass->name)
                     }
                 );
             }

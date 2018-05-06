@@ -38,6 +38,11 @@ struct qlow::sem::Class : public SemanticObject
     std::string name;
     SymbolTable<Field> fields;
     SymbolTable<Method> methods;
+
+    inline Class(const std::string& name) :
+        name{ name }
+    {
+    }
 };
 
 
