@@ -66,7 +66,7 @@ namespace qlow
 
     namespace sem
     {
-        class SemanticObject;
+        struct SemanticObject;
     }
 }
 

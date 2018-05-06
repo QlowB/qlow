@@ -10,7 +10,6 @@ namespace qlow
 {
     namespace sem
     {
-
         /*!
          * \brief contains owning pointers to elements
          */

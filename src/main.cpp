@@ -15,8 +15,7 @@ int main()
 
         std::cout << "parsing completed!" << std::endl;
 
-        qlow::sem::createFromAst(*parsedClasses.get());
-        qlow::sem::SymbolTable<qlow::sem::Class> semClasses;
+        qlow::sem::SymbolTable<qlow::sem::Class> semClasses = qlow::sem::createFromAst(*parsedClasses.get());
 
         for (auto& [a, b] : semClasses) {
             std::cout << "ay: " << a << std::endl;

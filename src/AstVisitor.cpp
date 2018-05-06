@@ -36,6 +36,7 @@ std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::MethodDefinition& as
 
 std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::VariableDeclaration& ast)
 {
+    
 }
 
 
