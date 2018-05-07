@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -Wall -Wextra -std=c++17
+CXXFLAGS := -std=c++17 # -Wall -Wextra 
 LINKFLAGS :=
 
 YACC := bison

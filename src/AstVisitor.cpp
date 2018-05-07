@@ -3,7 +3,7 @@
 
 using namespace qlow;
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::Class& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::Class& ast, const sem::SymbolTable<sem::Class>& classes)
 {
     auto c = std::make_unique<sem::Class> ();
     c->name = ast.name;
@@ -12,13 +12,13 @@ std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::Class& ast)
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::FeatureDeclaration& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::FeatureDeclaration& ast, const sem::SymbolTable<sem::Class>& classes)
 {
     // not needed, because 
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::FieldDeclaration& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::FieldDeclaration& ast, const sem::SymbolTable<sem::Class>& classes)
 {
     auto f = std::make_unique<sem::Field>();
     f->name = ast.name;
@@ -26,7 +26,7 @@ std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::FieldDeclaration& as
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::MethodDefinition& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::MethodDefinition& ast, const sem::SymbolTable<sem::Class>& classes)
 {
     auto m = std::make_unique<sem::Method>();
     m->name = ast.name;
@@ -34,53 +34,53 @@ std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::MethodDefinition& as
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::VariableDeclaration& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::VariableDeclaration& ast, const sem::SymbolTable<sem::Class>& classes)
 {
     
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::ArgumentDeclaration& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::ArgumentDeclaration& ast, const sem::SymbolTable<sem::Class>& classes)
 {
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::DoEndBlock& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::DoEndBlock& ast, const sem::SymbolTable<sem::Class>& classes)
 {
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::Statement& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::Statement& ast, const sem::SymbolTable<sem::Class>& classes)
 {
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::Expression& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::Expression& ast, const sem::SymbolTable<sem::Class>& classes)
 {
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::FeatureCall& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::FeatureCall& ast, const sem::SymbolTable<sem::Class>& classes)
 {
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::AssignmentStatement& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::AssignmentStatement& ast, const sem::SymbolTable<sem::Class>& classes)
 {
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::NewVariableStatement& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::NewVariableStatement& ast, const sem::SymbolTable<sem::Class>& classes)
 {
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::UnaryOperation& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::UnaryOperation& ast, const sem::SymbolTable<sem::Class>& classes)
 {
 }
 
 
-std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::BinaryOperation& ast)
+std::unique_ptr<sem::SemanticObject> AstVisitor::visit(ast::BinaryOperation& ast, const sem::SymbolTable<sem::Class>& classes)
 {
 }
 

@@ -30,19 +30,28 @@ namespace qlow
 struct qlow::sem::SemanticObject
 {
     virtual ~SemanticObject(void);
+    
+    /**
+     * \brief converts the object to a readable string for debugging purposes. 
+     */
+    virtual std::string toString(void) const;
 };
 
 
 struct qlow::sem::Class : public SemanticObject
 {
+    qlow::ast::Class* astNode;
     std::string name;
     SymbolTable<Field> fields;
     SymbolTable<Method> methods;
 
-    inline Class(const std::string& name) :
-        name{ name }
+    Class(void) = default;
+    inline Class(qlow::ast::Class* astNode) :
+        astNode{ astNode }, name{ astNode->name }
     {
     }
+    
+    virtual std::string toString(void) const override;
 };
 
 
@@ -50,6 +59,8 @@ struct qlow::sem::Field : public SemanticObject
 {
     Class* type;
     std::string name;
+    
+    virtual std::string toString(void) const override;
 };
 
 
@@ -57,6 +68,8 @@ struct qlow::sem::Method : public SemanticObject
 {
     Class* returnType;
     std::string name;
+    
+    virtual std::string toString(void) const override;
 };
 
 

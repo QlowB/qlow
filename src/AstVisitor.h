@@ -53,6 +53,7 @@ namespace qlow
 class qlow::AstVisitor :
     public Visitor<
         std::unique_ptr<sem::SemanticObject>,
+        const sem::SymbolTable<sem::Class>&,
 
         ast::Class,
         ast::FeatureDeclaration,
@@ -73,20 +74,20 @@ class qlow::AstVisitor :
 public:
     using ReturnType = std::unique_ptr<sem::SemanticObject>;
 
-    ReturnType visit(ast::Class& ast) override;
-    ReturnType visit(ast::FeatureDeclaration& ast) override;
-    ReturnType visit(ast::FieldDeclaration& ast) override;
-    ReturnType visit(ast::MethodDefinition& ast) override;
-    ReturnType visit(ast::VariableDeclaration& ast) override;
-    ReturnType visit(ast::ArgumentDeclaration& ast) override;
-    ReturnType visit(ast::DoEndBlock& ast) override;
-    ReturnType visit(ast::Statement& ast) override;
-    ReturnType visit(ast::Expression& ast) override;
-    ReturnType visit(ast::FeatureCall& ast) override;
-    ReturnType visit(ast::AssignmentStatement& ast) override;
-    ReturnType visit(ast::NewVariableStatement& ast) override;
-    ReturnType visit(ast::UnaryOperation& ast) override;
-    ReturnType visit(ast::BinaryOperation& ast) override;
+    ReturnType visit(ast::Class& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::FeatureDeclaration& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::FieldDeclaration& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::MethodDefinition& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::VariableDeclaration& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::ArgumentDeclaration& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::DoEndBlock& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::Statement& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::Expression& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::FeatureCall& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::AssignmentStatement& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::NewVariableStatement& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::UnaryOperation& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::BinaryOperation& ast, const sem::SymbolTable<sem::Class>& classes) override;
 };
 
 

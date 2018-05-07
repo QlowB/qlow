@@ -18,7 +18,7 @@ int main()
         qlow::sem::SymbolTable<qlow::sem::Class> semClasses = qlow::sem::createFromAst(*parsedClasses.get());
 
         for (auto& [a, b] : semClasses) {
-            std::cout << "ay: " << a << std::endl;
+            std::cout << a << ": " << b->toString() << std::endl;
         }
     }
     catch (const char* err)

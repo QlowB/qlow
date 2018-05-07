@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <memory>
+#include <sstream>
 
 
 namespace qlow
@@ -11,6 +12,13 @@ namespace qlow
     {
         template<typename T>
         using OwningList = std::vector<std::unique_ptr<T>>;
+
+        inline std::string toString(const void* a)
+        {
+            std::ostringstream o;
+            o << a;
+            return o.str();
+        }
     }
 }
 
@@ -23,5 +31,4 @@ namespace qlow
 
 
 #endif // QLOW_UTIL_H
-
 

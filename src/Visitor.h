@@ -4,43 +4,43 @@
 
 namespace qlow
 {
-    template<typename R, typename... T>
+    template<typename R, typename A, typename... T>
     class Visitor;
 
-    template<typename R>
-    class Visitor<R>
+    template<typename R, typename A>
+    class Visitor<R, A>
     {
     public:
         using ReturnType = R;
     };
     
-    template<typename R, typename T>
-    class Visitor<R, T> :
-        public Visitor<R>
+    template<typename R, typename A, typename T>
+    class Visitor<R, A, T> :
+        public Visitor<R, A>
     {
     public:
         using ReturnType = R;
-        virtual R visit(T& arg) = 0;
+        virtual R visit(T& arg, A& arg2) = 0;
     };
 
 
-    template<typename R, typename T, typename... V>
-    class Visitor<R, T, V...> :
-        public Visitor<R, V...>
+    template<typename R, typename A, typename T, typename... V>
+    class Visitor<R, A, T, V...> :
+        public Visitor<R, A, V...>
     {
     public:
-        using Visitor<R, V...>::visit;
+        using Visitor<R, A, V...>::visit;
         using ReturnType = R;
-        virtual R visit(T& arg) = 0;
+        virtual R visit(T& arg, A& arg2) = 0;
     };
 
 
-    template<typename RT, typename V>
+    template<typename RT, typename A, typename V>
     class Visitable
     {
     public:
         virtual ~Visitable(void) {}
-        virtual RT accept(V& visitor) = 0;
+        virtual RT accept(V& visitor, A& arg2) = 0;
     };
 
 

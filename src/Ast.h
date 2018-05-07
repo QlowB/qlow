@@ -26,6 +26,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include <map>
 
 #include "Visitor.h"
 
@@ -67,12 +68,16 @@ namespace qlow
     namespace sem
     {
         struct SemanticObject;
+        struct Class;
+        
+        template<typename T>
+        using SymbolTable = std::map<std::string, std::unique_ptr<T>>;
     }
 }
 
 
 struct qlow::ast::AstObject :
-    public Visitable<std::unique_ptr<sem::SemanticObject>, AstVisitor>
+    public Visitable<std::unique_ptr<sem::SemanticObject>, const sem::SymbolTable<sem::Class>, AstVisitor>
 {
     virtual ~AstObject(void);
 };
@@ -84,11 +89,11 @@ struct qlow::ast::Class : public AstObject
     List<FeatureDeclaration> features;
     
     inline Class(const std::string& name, List<FeatureDeclaration>& features) :
-        name(name), features(std::move(features))
+        name{ name }, features(std::move(features))
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&) override;
 };
 
 
@@ -102,7 +107,7 @@ struct qlow::ast::FeatureDeclaration : public AstObject
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 
@@ -113,7 +118,7 @@ struct qlow::ast::FieldDeclaration : public FeatureDeclaration
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 
@@ -138,7 +143,7 @@ struct qlow::ast::MethodDefinition : public FeatureDeclaration
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 
@@ -151,7 +156,7 @@ struct qlow::ast::VariableDeclaration  : public AstObject
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 
@@ -163,7 +168,7 @@ struct qlow::ast::ArgumentDeclaration :
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 
@@ -176,7 +181,7 @@ struct qlow::ast::DoEndBlock : public AstObject
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 
@@ -184,13 +189,13 @@ struct qlow::ast::Statement : public virtual AstObject
 {
     virtual ~Statement(void);
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 
 struct qlow::ast::Expression : public virtual AstObject
 {
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 
@@ -212,7 +217,7 @@ struct qlow::ast::FeatureCall : public Expression, public Statement
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 
@@ -226,7 +231,7 @@ struct qlow::ast::AssignmentStatement : public Statement
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 
@@ -239,7 +244,7 @@ struct qlow::ast::NewVariableStatement : public Statement
     {
     } 
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 
@@ -275,7 +280,7 @@ struct qlow::ast::UnaryOperation : public Operation
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 
@@ -290,7 +295,7 @@ struct qlow::ast::BinaryOperation : public Operation
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v);
+    std::unique_ptr<sem::SemanticObject> accept(AstVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
 

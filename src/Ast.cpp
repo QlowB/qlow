@@ -11,9 +11,9 @@ AstObject::~AstObject(void)
 
 
 #define ACCEPT_DEFINITION(ClassName) \
-std::unique_ptr<qlow::sem::SemanticObject> ClassName::accept(AstVisitor& v) \
+std::unique_ptr<qlow::sem::SemanticObject> ClassName::accept(AstVisitor& v, const sem::SymbolTable<sem::Class>& c) \
 { \
-    v.visit(*this); \
+    v.visit(*this, c); \
 }
 
 ACCEPT_DEFINITION(Class)
