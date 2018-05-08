@@ -85,7 +85,7 @@ std::unique_ptr<ClassList> parsedClasses;
 %token <string> IDENTIFIER
 %token <token> CLASS DO END IF
 %token <token> NEW_LINE
-%token <token> COLON COMMA DOT ASSIGN OPERATOR
+%token <token> SEMICOLON COLON COMMA DOT ASSIGN OPERATOR
 %token <token> ROUND_LEFT ROUND_RIGHT
 
 %type <classes> classes
@@ -229,15 +229,15 @@ statements:
 
 
 statement:
-    featureCall {
+    featureCall SEMICOLON {
         $$ = $1;
     }
     |
-    assignmentStatement {
+    assignmentStatement SEMICOLON {
         $$ = $1;
     }
     |
-    newVariableStatement {
+    newVariableStatement SEMICOLON {
         $$ = $1;
     };
 

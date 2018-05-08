@@ -44,7 +44,7 @@ SymbolTable<qlow::sem::Class>
         );
     }
 
-    AstVisitor av;
+    StructureVisitor av;
     
     // create all methods and fields
     for (auto& [name, semClass] : semClasses) {
@@ -102,4 +102,15 @@ std::string Method::toString(void) const
 {
     return "Method[" + this->name + "]";
 }
+
+
+std::string SemanticException::getMessage(void) const
+{
+    std::map<ErrorCode, std::string> error = {
+        {UNKNOWN_TYPE, "unknown type"},
+    };
+    
+    return error[errorCode] + ": " + message;
+}
+
 

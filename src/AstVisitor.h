@@ -46,11 +46,11 @@ namespace qlow
 
 namespace qlow
 {
-    class AstVisitor;
+    class StructureVisitor;
 }
 
 
-class qlow::AstVisitor :
+class qlow::StructureVisitor :
     public Visitor<
         std::unique_ptr<sem::SemanticObject>,
         const sem::SymbolTable<sem::Class>&,
@@ -73,6 +73,8 @@ class qlow::AstVisitor :
 {
 public:
     using ReturnType = std::unique_ptr<sem::SemanticObject>;
+    
+    sem::Class* getType(const std::string& type, const sem::SymbolTable<sem::Class>& classes);
 
     ReturnType visit(ast::Class& ast, const sem::SymbolTable<sem::Class>& classes) override;
     ReturnType visit(ast::FeatureDeclaration& ast, const sem::SymbolTable<sem::Class>& classes) override;

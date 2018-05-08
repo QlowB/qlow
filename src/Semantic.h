@@ -11,7 +11,7 @@ namespace qlow
     namespace sem
     {
         /*!
-         * \brief contains owning pointers to elements
+         * \note contains owning pointers to elements
          */
         template<typename T>
         using SymbolTable = std::map<std::string, std::unique_ptr<T>>;
@@ -21,8 +21,13 @@ namespace qlow
 
         struct Field;
         struct Method;
+        
+        struct Variable;
+        struct Variable;
 
         SymbolTable<qlow::sem::Class> createFromAst(std::vector<std::unique_ptr<qlow::ast::Class>>& classes);
+        
+        class SemanticException;
     }
 }
 
@@ -73,6 +78,32 @@ struct qlow::sem::Method : public SemanticObject
 };
 
 
+struct qlow::sem::Variable : public SemanticObject
+{
+    Class* type;
+    std::string name;
+};
+
+
+
+class qlow::sem::SemanticException
+{
+    std::string message;
+public:
+    enum ErrorCode
+    {
+        UNKNOWN_TYPE,
+    };
+    
+    
+    ErrorCode errorCode;
+public:
+    inline SemanticException(ErrorCode ec, const std::string& arg) :
+        message{ arg }, errorCode{ ec }
+    {}
+
+    std::string getMessage(void) const;
+};
 
 
 
