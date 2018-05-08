@@ -36,12 +36,7 @@ SymbolTable<qlow::sem::Class>
     // create classes
     SymbolTable<sem::Class> semClasses;
     for (auto& astClass : classes) {
-        semClasses.insert(
-            {
-                astClass->name,
-                std::make_unique<sem::Class>(astClass.get())
-            }
-        );
+        semClasses[astClass->name] = std::make_unique<sem::Class>(astClass.get());
     }
 
     StructureVisitor av;
@@ -50,16 +45,10 @@ SymbolTable<qlow::sem::Class>
     for (auto& [name, semClass] : semClasses) {
         for (auto& feature : semClass->astNode->features) {
             if (auto* field = dynamic_cast<qlow::ast::FieldDeclaration*> (feature.get()); field) {
-                semClass->fields.insert({
-                    field->name,
-                    unique_dynamic_cast<Field>(av.visit(*field, semClasses))
-                });
+                semClass->fields[field->name] = unique_dynamic_cast<Field>(av.visit(*field, semClasses));
             }
             if (auto* method = dynamic_cast<qlow::ast::MethodDefinition*> (feature.get()); method) {
-                semClass->methods.insert({
-                    method->name,
-                    unique_dynamic_cast<Method>(av.visit(*method, semClasses))
-                });
+                semClass->methods[method->name] = unique_dynamic_cast<Method>(av.visit(*method, semClasses));
             }
         }
     }
