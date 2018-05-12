@@ -1,4 +1,7 @@
 #include <iostream>
+
+#include <unistd.h>
+
 #include "Ast.h"
 #include "Semantic.h"
 
@@ -6,13 +9,28 @@ extern std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::Class>>> parsedCla
 extern FILE* qlow_parser_in;
 extern int qlow_parser_parse(void);
 
+
 int main(int argc, char** argv)
 {
+    int c;
+    while ((c = getopt(argc, argv, "c:")) != -1) {
+        switch (c) {
+            case 'c':
+                printf("c: %s", optarg);
+            break;
+            default:
+                printf("ay: %c\n", c);
+        }
+    }
+    
+    const char* filename = argv[optind];
+    
     try {
-        qlow_parser_in = stdin;
+        ::qlow_parser_in = stdin;
         
-        if (argc > 1)
-            qlow_parser_in = ::fopen(argv[1], "r");
+        ::qlow_parser_in = fopen(filename, "r");
+        if (!::qlow_parser_in)
+            throw (std::string("File not found: ") + filename).c_str();
         
         ::qlow_parser_parse();
         std::cout << parsedClasses->size() << std::endl;
@@ -36,6 +54,9 @@ int main(int argc, char** argv)
     catch (...)
     {
     }
+    
+    if (::qlow_parser_in != stdin)
+        fclose(::qlow_parser_in);
 }
 
 

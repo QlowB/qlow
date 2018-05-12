@@ -74,6 +74,10 @@ class qlow::StructureVisitor :
 public:
     using ReturnType = std::unique_ptr<sem::SemanticObject>;
     
+    /*!
+     * 
+     * \returns <code>nullptr</code> if type is not found.
+     */
     sem::Class* getType(const std::string& type, const sem::SymbolTable<sem::Class>& classes);
 
     ReturnType visit(ast::Class& ast, const sem::SymbolTable<sem::Class>& classes) override;

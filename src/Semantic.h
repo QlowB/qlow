@@ -89,6 +89,7 @@ struct qlow::sem::Variable : public SemanticObject
 class qlow::sem::SemanticException
 {
     std::string message;
+    qlow::CodePosition where;
 public:
     enum ErrorCode
     {
@@ -101,8 +102,9 @@ public:
     
     ErrorCode errorCode;
 public:
-    inline SemanticException(ErrorCode ec, const std::string& arg) :
-        message{ arg }, errorCode{ ec }
+    inline SemanticException(ErrorCode ec, const std::string& arg, const
+        qlow::CodePosition& where) :
+        message{ arg }, where{ where }, errorCode{ ec }
     {}
 
     std::string getMessage(void) const;

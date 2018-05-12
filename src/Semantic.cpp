@@ -47,14 +47,14 @@ SymbolTable<qlow::sem::Class>
             
             if (auto* field = dynamic_cast<qlow::ast::FieldDeclaration*> (feature.get()); field) {
                 if (semClass->fields.find(field->name) != semClass->fields.end()) // throw, if field already exists
-                    throw SemanticException(SemanticException::DUPLICATE_FIELD_DECLARATION, field->name);
+                    throw SemanticException(SemanticException::DUPLICATE_FIELD_DECLARATION, field->name, field->pos);
                 
                 // otherwise add to the fields list
                 semClass->fields[field->name] = unique_dynamic_cast<Field>(av.visit(*field, semClasses));
             }
             else if (auto* method = dynamic_cast<qlow::ast::MethodDefinition*> (feature.get()); method) {
                 if (semClass->methods.find(method->name) != semClass->methods.end()) // throw, if method already exists
-                    throw SemanticException(SemanticException::DUPLICATE_METHOD_DEFINITION, method->name);
+                    throw SemanticException(SemanticException::DUPLICATE_METHOD_DEFINITION, method->name, method->pos);
                 
                 // otherwise add to the methods list
                 semClass->methods[method->name] = unique_dynamic_cast<Method>(av.visit(*method, semClasses));
@@ -88,10 +88,19 @@ std::string SemanticObject::toString(void) const
 std::string Class::toString(void) const
 {
     std::string val = "Class[";
+    
+    // add fields
     for (auto& field : fields)
         val += field.second->toString() + ", ";
     if (!fields.empty())
         val = val.substr(0, val.length() - 2);
+    
+    // add methods
+    for (auto& method : methods)
+        val += method.second->toString() + ", ";
+    if (!methods.empty())
+        val = val.substr(0, val.length() - 2);
+    
     val += " (";
     val += std::to_string(this->astNode->pos.first_line) + ", ";
     val += std::to_string(this->astNode->pos.first_column);
@@ -119,7 +128,11 @@ std::string SemanticException::getMessage(void) const
         {UNKNOWN_TYPE, "unknown type"},
     };
     
-    return error[errorCode] + ": " + message;
+    std::string pos = std::to_string(where.first_line) + ":" +
+        std::to_string(where.first_column);
+    
+    return pos + ": " + error[errorCode] + ": " + message;
 }
+
 
 

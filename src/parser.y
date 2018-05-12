@@ -42,15 +42,6 @@ int qlow_parser_error(const char*)
 #define QLOW_PARSER_LTYPE_IS_DECLARED
 typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 
-/*
-typedef struct YYLTYPE
-{
-  int first_line;
-  int first_column;
-  int last_line;
-  int last_column;
-} YYLTYPE;
-*/
 
 using ClassList = std::vector<std::unique_ptr<qlow::ast::Class>>;
 std::unique_ptr<ClassList> parsedClasses;

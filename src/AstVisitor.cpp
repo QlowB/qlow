@@ -10,7 +10,7 @@ sem::Class* StructureVisitor::getType(const std::string& type, const sem::Symbol
     if (t != classes.end())
         return t->second.get();
     else
-        throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE, type);
+        return nullptr;
 }
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::Class& ast, const sem::SymbolTable<sem::Class>& classes)
@@ -32,6 +32,12 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
     auto f = std::make_unique<sem::Field>();
     f->name = ast.name;
     f->type = getType(ast.type, classes);
+    if (f->type == nullptr) {
+        throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE,
+            ast.type,
+            ast.pos
+        );
+    }
     return f;
 }
 
@@ -41,6 +47,12 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefiniti
     auto m = std::make_unique<sem::Method>();
     m->name = ast.name;
     m->returnType = getType(ast.type, classes);
+    if (m->returnType == nullptr) {
+        throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE,
+            ast.type,
+            ast.pos
+        );
+    }
     return m;
 }
 
@@ -50,6 +62,12 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::VariableDeclar
     auto v = std::make_unique<sem::Variable>();
     v->name = ast.name;
     v->type = getType(ast.type, classes);
+    if (v->type == nullptr) {
+        throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE,
+            ast.type,
+            ast.pos
+        );
+    }
     return v;
 }
 
