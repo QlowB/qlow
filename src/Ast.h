@@ -32,6 +32,8 @@
 
 namespace qlow
 {
+    struct CodePosition;
+    
     class StructureVisitor;
     namespace ast
     {
@@ -76,9 +78,26 @@ namespace qlow
 }
 
 
+/*!
+ * \brief bison-compatible location struct
+ */
+struct qlow::CodePosition
+{
+    int first_line;
+    int last_line;
+    int first_column;
+    int last_column;
+};
+
+
 struct qlow::ast::AstObject :
     public Visitable<std::unique_ptr<sem::SemanticObject>, const sem::SymbolTable<sem::Class>, StructureVisitor>
 {
+    CodePosition pos;
+    
+    inline AstObject(const CodePosition& cp) :
+        pos{ cp } {}
+        
     virtual ~AstObject(void);
 };
 
@@ -88,7 +107,8 @@ struct qlow::ast::Class : public AstObject
     std::string name;
     List<FeatureDeclaration> features;
     
-    inline Class(const std::string& name, List<FeatureDeclaration>& features) :
+    inline Class(const std::string& name, List<FeatureDeclaration>& features, const CodePosition& cp) :
+        AstObject{ cp },
         name{ name }, features(std::move(features))
     {
     }
@@ -102,7 +122,8 @@ struct qlow::ast::FeatureDeclaration : public AstObject
     std::string name;
     std::string type;
 
-    inline FeatureDeclaration(const std::string& type, const std::string& name) :
+    inline FeatureDeclaration(const std::string& type, const std::string& name, const CodePosition& cp) :
+        AstObject{ cp },
         name(name), type(type)
     {
     }
@@ -113,8 +134,8 @@ struct qlow::ast::FeatureDeclaration : public AstObject
 
 struct qlow::ast::FieldDeclaration : public FeatureDeclaration
 {
-    inline FieldDeclaration(const std::string& type, const std::string& name) :
-        FeatureDeclaration(type, name)
+    inline FieldDeclaration(const std::string& type, const std::string& name, const CodePosition& cp) :
+        FeatureDeclaration(type, name, cp)
     {
     }
 
@@ -128,16 +149,16 @@ struct qlow::ast::MethodDefinition : public FeatureDeclaration
     std::unique_ptr<DoEndBlock> body;
 
     inline MethodDefinition(const std::string& type, const std::string& name,
-            std::unique_ptr<DoEndBlock> body) :
-        FeatureDeclaration(type, name),
+            std::unique_ptr<DoEndBlock> body, const CodePosition& cp) :
+        FeatureDeclaration(type, name, cp),
         body(std::move(body))
     {
     }
 
 
     inline MethodDefinition(const std::string& type, const std::string& name,
-            List<ArgumentDeclaration>&& arguments, std::unique_ptr<DoEndBlock> body) :
-        FeatureDeclaration(type, name),
+            List<ArgumentDeclaration>&& arguments, std::unique_ptr<DoEndBlock> body, const CodePosition& cp) :
+        FeatureDeclaration(type, name, cp),
         arguments(std::move(arguments)),
         body(std::move(body))
     {
@@ -151,7 +172,8 @@ struct qlow::ast::VariableDeclaration  : public AstObject
 {
     std::string type;
     std::string name;
-    inline VariableDeclaration(const std::string& type, const std::string& name) :
+    inline VariableDeclaration(const std::string& type, const std::string& name, const CodePosition& cp) :
+        AstObject{ cp },
         type(type), name(name)
     {
     }
@@ -163,8 +185,8 @@ struct qlow::ast::VariableDeclaration  : public AstObject
 struct qlow::ast::ArgumentDeclaration :
     public VariableDeclaration
 {
-    inline ArgumentDeclaration(const std::string& type, const std::string& name) :
-        VariableDeclaration(type, name)
+    inline ArgumentDeclaration(const std::string& type, const std::string& name, const CodePosition& cp) :
+        VariableDeclaration(type, name, cp)
     {
     }
 
@@ -176,7 +198,8 @@ struct qlow::ast::DoEndBlock : public AstObject
 {
     List<Statement> statements;
     
-    inline DoEndBlock(List<Statement>&& statements) :
+    inline DoEndBlock(List<Statement>&& statements, const CodePosition& cp) :
+        AstObject{ cp },
         statements(std::move(statements))
     {
     }
@@ -187,6 +210,9 @@ struct qlow::ast::DoEndBlock : public AstObject
 
 struct qlow::ast::Statement : public virtual AstObject
 {
+    inline Statement(const CodePosition& cp) :
+        AstObject{ cp } {}
+        
     virtual ~Statement(void);
 
     std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
@@ -195,6 +221,9 @@ struct qlow::ast::Statement : public virtual AstObject
 
 struct qlow::ast::Expression : public virtual AstObject
 {
+    inline Expression(const CodePosition& cp) :
+        AstObject{ cp } {}
+        
     std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
 };
 
@@ -205,14 +234,18 @@ struct qlow::ast::FeatureCall : public Expression, public Statement
     std::string name;
     List<Expression> arguments;
 
-    inline FeatureCall(std::unique_ptr<Expression> target, const std::string& name) :
+    inline FeatureCall(std::unique_ptr<Expression> target, const std::string& name, const CodePosition& cp) :
+        AstObject{ cp },
+        Expression{ cp }, Statement{ cp },
         target(std::move(target)), name(name)
     {
     }
 
 
     inline FeatureCall(std::unique_ptr<Expression> target, const std::string& name,
-            List<Expression>&& arguments) :
+            List<Expression>&& arguments, const CodePosition& cp) :
+        AstObject{ cp },
+        Expression{ cp }, Statement{ cp },
         target(std::move(target)), name(name), arguments(std::move(arguments))
     {
     }
@@ -226,7 +259,9 @@ struct qlow::ast::AssignmentStatement : public Statement
     std::string target;
     std::unique_ptr<Expression> expr;
 
-    inline AssignmentStatement(const std::string& target, std::unique_ptr<Expression> expr) :
+    inline AssignmentStatement(const std::string& target, std::unique_ptr<Expression> expr, const CodePosition& cp) :
+        AstObject{ cp },
+        Statement{ cp },
         target(target), expr(std::move(expr))
     {
     }
@@ -239,7 +274,9 @@ struct qlow::ast::NewVariableStatement : public Statement
 {
     std::string name;
     std::string type;
-    inline NewVariableStatement(const std::string& name, const std::string& type) :
+    inline NewVariableStatement(const std::string& name, const std::string& type, const CodePosition& cp) :
+        AstObject{ cp },
+        Statement{ cp },
        name(name), type(type)
     {
     } 
@@ -255,7 +292,9 @@ struct qlow::ast::Operation : public Expression
     };
     Operator op;
 
-    inline Operation(Operator op) :
+    inline Operation(Operator op, const CodePosition& cp) :
+        AstObject{ cp },
+        Expression{ cp },
         op(op)
     {
     }
@@ -273,8 +312,9 @@ struct qlow::ast::UnaryOperation : public Operation
     Side side;
     std::unique_ptr<Expression> expr;
 
-    inline UnaryOperation(std::unique_ptr<Expression> expr, Side side, Operator op) :
-        Operation(op),
+    inline UnaryOperation(std::unique_ptr<Expression> expr, Side side, Operator op, const CodePosition& cp) :
+        AstObject{ cp },
+        Operation(op, cp),
         side(side),
         expr(std::move(expr))
     {
@@ -289,8 +329,9 @@ struct qlow::ast::BinaryOperation : public Operation
     std::unique_ptr<Expression> left;
     std::unique_ptr<Expression> right;
 
-    inline BinaryOperation(std::unique_ptr<Expression> left, std::unique_ptr<Expression> right, Operator op) :
-        Operation(op),
+    inline BinaryOperation(std::unique_ptr<Expression> left, std::unique_ptr<Expression> right, Operator op, const CodePosition& cp) :
+        AstObject{ cp },
+        Operation(op, cp),
         left(std::move(left)), right(std::move(right))
     {
     }

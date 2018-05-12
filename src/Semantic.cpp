@@ -44,12 +44,27 @@ SymbolTable<qlow::sem::Class>
     // create all methods and fields
     for (auto& [name, semClass] : semClasses) {
         for (auto& feature : semClass->astNode->features) {
+            
             if (auto* field = dynamic_cast<qlow::ast::FieldDeclaration*> (feature.get()); field) {
+                if (semClass->fields.find(field->name) != semClass->fields.end()) // throw, if field already exists
+                    throw SemanticException(SemanticException::DUPLICATE_FIELD_DECLARATION, field->name);
+                
+                // otherwise add to the fields list
                 semClass->fields[field->name] = unique_dynamic_cast<Field>(av.visit(*field, semClasses));
             }
-            if (auto* method = dynamic_cast<qlow::ast::MethodDefinition*> (feature.get()); method) {
+            else if (auto* method = dynamic_cast<qlow::ast::MethodDefinition*> (feature.get()); method) {
+                if (semClass->methods.find(method->name) != semClass->methods.end()) // throw, if method already exists
+                    throw SemanticException(SemanticException::DUPLICATE_METHOD_DEFINITION, method->name);
+                
+                // otherwise add to the methods list
                 semClass->methods[method->name] = unique_dynamic_cast<Method>(av.visit(*method, semClasses));
             }
+            else {
+                // if a feature is neither a method nor a field, something went horribly wrong
+                throw "internal error";
+            }
+            
+            
         }
     }
     return semClasses;
@@ -77,6 +92,11 @@ std::string Class::toString(void) const
         val += field.second->toString() + ", ";
     if (!fields.empty())
         val = val.substr(0, val.length() - 2);
+    val += " (";
+    val += std::to_string(this->astNode->pos.first_line) + ", ";
+    val += std::to_string(this->astNode->pos.first_column);
+    val += " )";
+    
     return val + "]";
 }
 

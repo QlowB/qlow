@@ -93,6 +93,9 @@ public:
     enum ErrorCode
     {
         UNKNOWN_TYPE,
+        DUPLICATE_CLASS_DEFINITION,
+        DUPLICATE_FIELD_DECLARATION,
+        DUPLICATE_METHOD_DEFINITION,
     };
     
     
