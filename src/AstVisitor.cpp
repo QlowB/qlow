@@ -47,6 +47,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefiniti
     auto m = std::make_unique<sem::Method>();
     m->name = ast.name;
     m->returnType = getType(ast.type, classes);
+    m->astNode = &ast;
     if (m->returnType == nullptr) {
         throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE,
             ast.type,
@@ -79,6 +80,11 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::ArgumentDeclar
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& ast, const sem::SymbolTable<sem::Class>& classes)
 {
+    auto body = std::make_unique<sem::DoEndBlock>();
+    for (auto& statement : ast.statements) {
+        body->statements.push_back(unique_dynamic_cast<sem::Statement>(visit(*statement, classes)));
+    }
+    return body;
 }
 
 

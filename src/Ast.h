@@ -29,6 +29,8 @@
 #include <map>
 
 #include "Visitor.h"
+#include "Util.h"
+#include "Util.h"
 
 namespace qlow
 {
@@ -37,9 +39,6 @@ namespace qlow
     class StructureVisitor;
     namespace ast
     {
-        template<typename T>
-        using List = std::vector<std::unique_ptr<T>>;
-
         // base class
         struct AstObject;
 
@@ -106,9 +105,9 @@ struct qlow::ast::AstObject :
 struct qlow::ast::Class : public AstObject
 {
     std::string name;
-    List<FeatureDeclaration> features;
+    OwningList<FeatureDeclaration> features;
     
-    inline Class(const std::string& name, List<FeatureDeclaration>& features, const CodePosition& cp) :
+    inline Class(const std::string& name, OwningList<FeatureDeclaration>& features, const CodePosition& cp) :
         AstObject{ cp },
         name{ name }, features(std::move(features))
     {
@@ -146,7 +145,7 @@ struct qlow::ast::FieldDeclaration : public FeatureDeclaration
 
 struct qlow::ast::MethodDefinition : public FeatureDeclaration
 {
-    List<ArgumentDeclaration> arguments;
+    OwningList<ArgumentDeclaration> arguments;
     std::unique_ptr<DoEndBlock> body;
 
     inline MethodDefinition(const std::string& type, const std::string& name,
@@ -158,7 +157,7 @@ struct qlow::ast::MethodDefinition : public FeatureDeclaration
 
 
     inline MethodDefinition(const std::string& type, const std::string& name,
-            List<ArgumentDeclaration>&& arguments, std::unique_ptr<DoEndBlock> body, const CodePosition& cp) :
+            OwningList<ArgumentDeclaration>&& arguments, std::unique_ptr<DoEndBlock> body, const CodePosition& cp) :
         FeatureDeclaration(type, name, cp),
         arguments(std::move(arguments)),
         body(std::move(body))
@@ -197,9 +196,9 @@ struct qlow::ast::ArgumentDeclaration :
 
 struct qlow::ast::DoEndBlock : public AstObject
 {
-    List<Statement> statements;
+    OwningList<Statement> statements;
     
-    inline DoEndBlock(List<Statement>&& statements, const CodePosition& cp) :
+    inline DoEndBlock(OwningList<Statement>&& statements, const CodePosition& cp) :
         AstObject{ cp },
         statements(std::move(statements))
     {
@@ -233,7 +232,7 @@ struct qlow::ast::FeatureCall : public Expression, public Statement
 {
     std::unique_ptr<Expression> target;
     std::string name;
-    List<Expression> arguments;
+    OwningList<Expression> arguments;
 
     inline FeatureCall(std::unique_ptr<Expression> target, const std::string& name, const CodePosition& cp) :
         AstObject{ cp },
@@ -244,7 +243,7 @@ struct qlow::ast::FeatureCall : public Expression, public Statement
 
 
     inline FeatureCall(std::unique_ptr<Expression> target, const std::string& name,
-            List<Expression>&& arguments, const CodePosition& cp) :
+            OwningList<Expression>&& arguments, const CodePosition& cp) :
         AstObject{ cp },
         Expression{ cp }, Statement{ cp },
         target(std::move(target)), name(name), arguments(std::move(arguments))

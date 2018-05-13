@@ -23,7 +23,19 @@ namespace qlow
         struct Method;
         
         struct Variable;
-        struct Variable;
+        
+        struct DoEndBlock;
+        struct Statement;
+        struct Expression;
+        
+        struct FeatureCallStatement;
+        struct AssignmentStatement;
+
+        struct Operation;
+        struct UnaryOperation;
+        struct BinaryOperation;
+        
+        struct FeatureCallExpression;
 
         SymbolTable<qlow::sem::Class> createFromAst(std::vector<std::unique_ptr<qlow::ast::Class>>& classes);
         
@@ -73,6 +85,8 @@ struct qlow::sem::Method : public SemanticObject
 {
     Class* returnType;
     std::string name;
+    ast::MethodDefinition* astNode;
+    std::unique_ptr<DoEndBlock> body;
     
     virtual std::string toString(void) const override;
 };
@@ -84,6 +98,61 @@ struct qlow::sem::Variable : public SemanticObject
     std::string name;
 };
 
+
+struct qlow::sem::DoEndBlock : public SemanticObject
+{
+    OwningList<Variable> variables;
+    OwningList<Statement> statements;
+};
+
+
+struct qlow::sem::Statement : public SemanticObject
+{
+};
+
+
+struct qlow::sem::FeatureCallStatement : public Statement 
+{
+    Method* callee;
+    OwningList<Expression> arguments;
+};
+
+
+struct qlow::sem::AssignmentStatement : public Statement 
+{
+    Variable* target;
+    std::unique_ptr<Expression> value;
+};
+
+
+struct qlow::sem::Expression : public SemanticObject
+{
+};
+
+
+struct qlow::sem::Operation : public Expression
+{
+    ast::Operation::Operator op;
+};
+
+
+struct qlow::sem::BinaryOperation : public Operation
+{
+    std::unique_ptr<Expression> left;
+    std::unique_ptr<Expression> right;
+};
+
+
+struct qlow::sem::UnaryOperation : public Operation
+{
+    std::unique_ptr<Expression> arg;
+};
+
+struct qlow::sem::FeatureCallExpression : public Expression
+{
+    Method* callee;
+    OwningList<Expression> arguments;
+};
 
 
 class qlow::sem::SemanticException
