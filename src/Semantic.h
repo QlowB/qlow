@@ -10,6 +10,9 @@ namespace qlow
 {
     namespace sem
     {
+        
+        SymbolTable<qlow::sem::Class> createFromAst(std::vector<std::unique_ptr<qlow::ast::Class>>& classes);
+        
         /*!
          * \note contains owning pointers to elements
          */
@@ -21,24 +24,24 @@ namespace qlow
 
         struct Field;
         struct Method;
-        
+
         struct Variable;
-        
+
         struct DoEndBlock;
         struct Statement;
         struct Expression;
-        
+
         struct FeatureCallStatement;
         struct AssignmentStatement;
 
         struct Operation;
         struct UnaryOperation;
         struct BinaryOperation;
-        
-        struct FeatureCallExpression;
 
-        SymbolTable<qlow::sem::Class> createFromAst(std::vector<std::unique_ptr<qlow::ast::Class>>& classes);
+        struct FeatureCallExpression;
         
+        struct Type;
+
         class SemanticException;
     }
 }
@@ -96,6 +99,10 @@ struct qlow::sem::Variable : public SemanticObject
 {
     Class* type;
     std::string name;
+    
+    Variable(void) = default;
+    inline Variable(Class* type, std::string& name) :
+        type{ type }, name{ name } {}
 };
 
 
@@ -111,16 +118,9 @@ struct qlow::sem::Statement : public SemanticObject
 };
 
 
-struct qlow::sem::FeatureCallStatement : public Statement 
-{
-    Method* callee;
-    OwningList<Expression> arguments;
-};
-
-
 struct qlow::sem::AssignmentStatement : public Statement 
 {
-    Variable* target;
+    std::unique_ptr<Expression> target;
     std::unique_ptr<Expression> value;
 };
 
@@ -145,6 +145,7 @@ struct qlow::sem::BinaryOperation : public Operation
 
 struct qlow::sem::UnaryOperation : public Operation
 {
+    qlow::ast::UnaryOperation::Side side;
     std::unique_ptr<Expression> arg;
 };
 
@@ -152,6 +153,20 @@ struct qlow::sem::FeatureCallExpression : public Expression
 {
     Method* callee;
     OwningList<Expression> arguments;
+};
+
+
+struct qlow::sem::FeatureCallStatement : public Statement 
+{
+    std::unique_ptr<FeatureCallExpression> expr;
+    inline FeatureCallStatement(std::unique_ptr<FeatureCallExpression> expr) :
+        expr{ std::move(expr) } {}
+};
+
+
+struct qlow::sem::Type
+{
+    Class* typeClass;
 };
 
 

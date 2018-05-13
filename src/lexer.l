@@ -102,6 +102,8 @@ extern QLOW_PARSER_LTYPE qlow_parser_lloc;
 "/"                     return SET_TOKEN(SLASH);
 
 
+[0-9_]+                 SET_STRING; return INT_LITERAL;
+0x[0-9A-Fa-f]+          SET_STRING; return INT_LITERAL;
 [a-zA-Z_][a-zA-Z0-9_]*  SET_STRING; return IDENTIFIER;
 .                       printf("Unexpected symbol %s.\n", std::string(yytext, yyleng).c_str()); yyterminate();
 

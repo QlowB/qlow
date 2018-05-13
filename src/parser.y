@@ -86,6 +86,7 @@ std::unique_ptr<ClassList> parsedClasses;
 
 
 %token <string> IDENTIFIER
+%token <string> INT_LITERAL
 %token <token> CLASS DO END IF
 %token <token> NEW_LINE
 %token <token> SEMICOLON COLON COMMA DOT ASSIGN OPERATOR
@@ -300,6 +301,10 @@ expression:
     |
     paranthesesExpression {
         $$ = $1;
+    }
+    |
+    INT_LITERAL {
+        $$ = new IntConst($1);
     };
 
 
@@ -349,8 +354,8 @@ paranthesesExpression:
 
 
 assignmentStatement:
-    IDENTIFIER ASSIGN expression {
-        $$ = new AssignmentStatement(std::move(*$1), std::unique_ptr<Expression>($3), @$);
+    expression ASSIGN expression {
+        $$ = new AssignmentStatement(std::unique_ptr<Expression>($1), std::unique_ptr<Expression>($3), @$);
         delete $1; $1 = 0;
     };
 
