@@ -1,0 +1,32 @@
+
+
+class Main
+    foo: Main
+
+    fop: FF do
+        var: Integer;
+        var := 5;
+        var := 102 + var * var;
+        gagagaga;
+        
+        hohohoh;
+    end
+
+    main: Integer do
+        fop
+    end
+end
+
+class FF
+end
+
+class Fudi
+    hoi: Integer
+end
+
+class Integer               end
+
+
+
+
+
