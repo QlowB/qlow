@@ -4,6 +4,8 @@
 #include "Visitor.h"
 #include "Ast.h"
 #include "Semantic.h"
+#include "Scope.h"
+
 
 #include <memory>
 
@@ -36,6 +38,7 @@ namespace qlow
         struct FeatureCall;
         struct AssignmentStatement;
         struct NewVariableStatement;
+        struct IntConst;
 
         struct Operation;
         struct UnaryOperation;
@@ -53,7 +56,7 @@ namespace qlow
 class qlow::StructureVisitor :
     public Visitor<
         std::unique_ptr<sem::SemanticObject>,
-        const sem::SymbolTable<sem::Class>&,
+        sem::Scope&,
 
         ast::Class,
         ast::FeatureDeclaration,
@@ -67,6 +70,7 @@ class qlow::StructureVisitor :
         ast::FeatureCall,
         ast::AssignmentStatement,
         ast::NewVariableStatement,
+        ast::IntConst,
         ast::UnaryOperation,
         ast::BinaryOperation
     >
@@ -78,22 +82,23 @@ public:
      * 
      * \returns <code>nullptr</code> if type is not found.
      */
-    sem::Class* getType(const std::string& type, const sem::SymbolTable<sem::Class>& classes);
+    sem::Class* getType(const std::string& type, sem::Scope& scope);
 
-    ReturnType visit(ast::Class& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::FeatureDeclaration& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::FieldDeclaration& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::MethodDefinition& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::VariableDeclaration& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::ArgumentDeclaration& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::DoEndBlock& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::Statement& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::Expression& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::FeatureCall& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::AssignmentStatement& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::NewVariableStatement& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::UnaryOperation& ast, const sem::SymbolTable<sem::Class>& classes) override;
-    ReturnType visit(ast::BinaryOperation& ast, const sem::SymbolTable<sem::Class>& classes) override;
+    ReturnType visit(ast::Class& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::FeatureDeclaration& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::FieldDeclaration& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::MethodDefinition& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::VariableDeclaration& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::ArgumentDeclaration& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::DoEndBlock& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::Statement& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::Expression& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::FeatureCall& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::AssignmentStatement& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::NewVariableStatement& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::IntConst& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::UnaryOperation& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::BinaryOperation& ast, sem::Scope& scope) override;
 };
 
 

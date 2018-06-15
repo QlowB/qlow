@@ -11,19 +11,27 @@ namespace sem
 {
 
 SymbolTable<qlow::sem::Class>
-    createFromAst(std::vector<std::unique_ptr<qlow::ast::Class>>& classes)
+    createFromAst(const std::vector<std::unique_ptr<qlow::ast::Class>>& classes)
 {
 
+#ifdef DEBUGGING
+    printf("starting building semantic representation\n");
+#endif
+
     // create classes
-    SymbolTable<sem::Class> semClasses;
+    sem::GlobalScope globalScope;
     for (auto& astClass : classes) {
-        semClasses[astClass->name] = std::make_unique<sem::Class>(astClass.get());
+        globalScope.classes[astClass->name] = std::make_unique<sem::Class>(astClass.get());
     }
 
+#ifdef DEBUGGING
+    printf("created symbol table entries for all classes\n");
+#endif 
+        
     StructureVisitor av;
     
     // create all methods and fields
-    for (auto& [name, semClass] : semClasses) {
+    for (auto& [name, semClass] : globalScope.classes) {
         for (auto& feature : semClass->astNode->features) {
             
             if (auto* field = dynamic_cast<qlow::ast::FieldDeclaration*> (feature.get()); field) {
@@ -31,14 +39,14 @@ SymbolTable<qlow::sem::Class>
                     throw SemanticException(SemanticException::DUPLICATE_FIELD_DECLARATION, field->name, field->pos);
                 
                 // otherwise add to the fields list
-                semClass->fields[field->name] = unique_dynamic_cast<Field>(av.visit(*field, semClasses));
+                semClass->fields[field->name] = unique_dynamic_cast<Field>(field->accept(av, globalScope));
             }
             else if (auto* method = dynamic_cast<qlow::ast::MethodDefinition*> (feature.get()); method) {
                 if (semClass->methods.find(method->name) != semClass->methods.end()) // throw, if method already exists
                     throw SemanticException(SemanticException::DUPLICATE_METHOD_DEFINITION, method->name, method->pos);
                 
                 // otherwise add to the methods list
-                semClass->methods[method->name] = unique_dynamic_cast<Method>(av.visit(*method, semClasses));
+                semClass->methods[method->name] = unique_dynamic_cast<Method>(method->accept(av, globalScope));
             }
             else {
                 // if a feature is neither a method nor a field, something went horribly wrong
@@ -47,13 +55,20 @@ SymbolTable<qlow::sem::Class>
         }
     }
     
-    for (auto& [name, semClass] : semClasses) {
+#ifdef DEBUGGING
+    printf("created all methods and fields\n");
+#endif
+    
+    for (auto& [name, semClass] : globalScope.classes) {
         for (auto& [name, method] : semClass->methods) {
-            method->body = unique_dynamic_cast<sem::DoEndBlock>(av.visit(*method->astNode->body, semClasses));
+            method->body = unique_dynamic_cast<sem::DoEndBlock>(av.visit(*method->astNode->body, globalScope));
         }
     }
+#ifdef DEBUGGING
+    printf("created all method bodies\n");
+#endif
     
-    return semClasses;
+    return std::move(globalScope.classes);
 }
 
 }

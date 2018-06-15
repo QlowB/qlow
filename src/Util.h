@@ -14,7 +14,7 @@ namespace qlow
     
     
     
-    /// i don't like this, but I lack better ideas at the moment.
+    /// I don't like this, but I lack better ideas at the moment.
     /// TODO: find better solution
     /*!
     * \brief tries to cast a unique_ptr and throws if it fails

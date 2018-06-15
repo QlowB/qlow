@@ -21,6 +21,9 @@ namespace qlow
     public:
         using ReturnType = R;
         virtual R visit(T& arg, A& arg2) = 0;
+        inline R invokeVisit(T& arg, A& arg2) {
+            arg.accept(*this, arg2);
+        }
     };
 
 
@@ -32,6 +35,9 @@ namespace qlow
         using Visitor<R, A, V...>::visit;
         using ReturnType = R;
         virtual R visit(T& arg, A& arg2) = 0;
+        inline R invokeVisit(T& arg, A& arg2) {
+            arg.accept(*this, arg2);
+        }
     };
 
 

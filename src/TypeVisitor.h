@@ -19,19 +19,19 @@ class qlow::sem::TypeVisitor :
         const sem::SymbolTable<sem::Class>,
         
         sem::Expression,
-        sem::Variable,
         sem::UnaryOperation,
         sem::BinaryOperation,
-        sem::FeatureCallExpression
+        sem::FeatureCallExpression,
+        sem::IntConst
     >
 {
     
 public:
     qlow::sem::Type visit(sem::Expression& expr, const sem::SymbolTable<sem::Class>& classes) override;
-    qlow::sem::Type visit(sem::Expression& expr, const sem::SymbolTable<sem::Class>& classes) override;
-    qlow::sem::Type visit(sem::Expression& expr, const sem::SymbolTable<sem::Class>& classes) override;
-    qlow::sem::Type visit(sem::Expression& expr, const sem::SymbolTable<sem::Class>& classes) override;
-    qlow::sem::Type visit(sem::Expression& expr, const sem::SymbolTable<sem::Class>& classes) override;
+    qlow::sem::Type visit(sem::UnaryOperation& expr, const sem::SymbolTable<sem::Class>& classes) override;
+    qlow::sem::Type visit(sem::BinaryOperation& expr, const sem::SymbolTable<sem::Class>& classes) override;
+    qlow::sem::Type visit(sem::FeatureCallExpression& expr, const sem::SymbolTable<sem::Class>& classes) override;
+    qlow::sem::Type visit(sem::IntConst& expr, const sem::SymbolTable<sem::Class>& classes) override;
 };
 
 #endif // QLOW_SEM_TYPEVISITOR_H

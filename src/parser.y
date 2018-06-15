@@ -209,7 +209,7 @@ argumentDeclaration:
 doEndBlock:
     DO statements END {
         $$ = new DoEndBlock(std::move(*$2), @$);
-        delete $2; $2 = 0;
+        delete $2; $2 = nullptr;
     };
 
 
@@ -304,7 +304,8 @@ expression:
     }
     |
     INT_LITERAL {
-        $$ = new IntConst($1);
+        $$ = new IntConst(std::move(*$1), @$);
+        delete $1;
     };
 
 
@@ -356,13 +357,12 @@ paranthesesExpression:
 assignmentStatement:
     expression ASSIGN expression {
         $$ = new AssignmentStatement(std::unique_ptr<Expression>($1), std::unique_ptr<Expression>($3), @$);
-        delete $1; $1 = 0;
     };
 
 
 newVariableStatement:
     IDENTIFIER COLON IDENTIFIER {
-        $$ = new NewVariableStatement(*$3, *$1, @$);
+        $$ = new NewVariableStatement(std::move(*$1), std::move(*$3), @$);
         delete $3; delete $1; $3 = 0; $1 = 0;
     };
 

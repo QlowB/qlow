@@ -23,6 +23,7 @@ int main(int argc, char** argv)
         }
     }
     
+    {
     const char* filename = argv[optind];
     
     try {
@@ -42,6 +43,23 @@ int main(int argc, char** argv)
         for (auto& [a, b] : semClasses) {
             std::cout << a << ": " << b->toString() << std::endl;
         }
+
+        auto main = semClasses.find("Main");
+        qlow::sem::Class* mainClass = nullptr;
+        if (main == semClasses.end()) {
+            throw "No Main class found!";
+        }
+        else {
+            mainClass = main->second.get();
+        }
+        auto mainmain = mainClass->methods.find("main");
+        qlow::sem::Method* mainMethod = nullptr;
+        if (mainmain == mainClass->methods.end()) {
+            throw "No main method found inside Main class!";
+        }
+        else {
+            mainMethod = mainmain->second.get();
+        }
     }
     catch (qlow::sem::SemanticException& se)
     {
@@ -57,6 +75,11 @@ int main(int argc, char** argv)
     
     if (::qlow_parser_in != stdin)
         fclose(::qlow_parser_in);
+    }
+
+    for (auto&& c : *parsedClasses) {
+        delete c.release();
+    }
 }
 
 

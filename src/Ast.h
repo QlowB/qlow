@@ -30,7 +30,6 @@
 
 #include "Visitor.h"
 #include "Util.h"
-#include "Util.h"
 
 namespace qlow
 {
@@ -72,8 +71,10 @@ namespace qlow
         struct SemanticObject;
         struct Class;
         
-        template<typename T>
-        using SymbolTable = std::map<std::string, std::unique_ptr<T>>;
+        class Scope;
+
+//        template<typename T>
+//        using SymbolTable = std::map<std::string, std::unique_ptr<T>>;
     }
 }
 
@@ -92,7 +93,7 @@ struct qlow::CodePosition
 
 
 struct qlow::ast::AstObject :
-    public Visitable<std::unique_ptr<sem::SemanticObject>, const sem::SymbolTable<sem::Class>, StructureVisitor>
+    public Visitable<std::unique_ptr<sem::SemanticObject>, sem::Scope&, StructureVisitor>
 {
     CodePosition pos;
     
@@ -114,7 +115,7 @@ struct qlow::ast::Class : public AstObject
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&) override;
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&) override;
 };
 
 
@@ -129,7 +130,7 @@ struct qlow::ast::FeatureDeclaration : public AstObject
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -140,7 +141,7 @@ struct qlow::ast::FieldDeclaration : public FeatureDeclaration
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -165,7 +166,7 @@ struct qlow::ast::MethodDefinition : public FeatureDeclaration
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -179,7 +180,7 @@ struct qlow::ast::VariableDeclaration  : public AstObject
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -191,7 +192,7 @@ struct qlow::ast::ArgumentDeclaration :
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -205,7 +206,7 @@ struct qlow::ast::DoEndBlock : public AstObject
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -216,7 +217,7 @@ struct qlow::ast::Statement : public virtual AstObject
         
     virtual ~Statement(void);
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -225,7 +226,7 @@ struct qlow::ast::Expression : public virtual AstObject
     inline Expression(const CodePosition& cp) :
         AstObject{ cp } {}
         
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -251,7 +252,7 @@ struct qlow::ast::FeatureCall : public Expression, public Statement
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -260,14 +261,14 @@ struct qlow::ast::AssignmentStatement : public Statement
     std::unique_ptr<Expression> target;
     std::unique_ptr<Expression> expr;
 
-    inline AssignmentStatement(std::unique_ptr<Expression> target, std::unique_ptr<Expression> expr, const CodePosition& cp) :
+    inline AssignmentStatement(std::unique_ptr<Expression>&& target, std::unique_ptr<Expression>&& expr, const CodePosition& cp) :
         AstObject{ cp },
         Statement{ cp },
         target{ std::move(target) }, expr{ std::move(expr) }
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -275,14 +276,14 @@ struct qlow::ast::NewVariableStatement : public Statement
 {
     std::string name;
     std::string type;
-    inline NewVariableStatement(const std::string& name, const std::string& type, const CodePosition& cp) :
+    inline NewVariableStatement(std::string&& name, std::string&& type, const CodePosition& cp) :
         AstObject{ cp },
         Statement{ cp },
-       name(name), type(type)
+       name{ name }, type{ type }
     {
     } 
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -295,7 +296,8 @@ struct qlow::ast::IntConst : public Expression
         Expression(p),
         value{ v } {}
         
-    IntConst(const std::string& val, const CodePosition& p);
+    IntConst(std::string&& val, const CodePosition& p);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -334,7 +336,7 @@ struct qlow::ast::UnaryOperation : public Operation
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -350,7 +352,7 @@ struct qlow::ast::BinaryOperation : public Operation
     {
     }
 
-    std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, const sem::SymbolTable<sem::Class>&);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 

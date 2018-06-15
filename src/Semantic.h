@@ -10,22 +10,22 @@ namespace qlow
 {
     namespace sem
     {
-        
-        SymbolTable<qlow::sem::Class> createFromAst(std::vector<std::unique_ptr<qlow::ast::Class>>& classes);
-        
         /*!
          * \note contains owning pointers to elements
          */
         template<typename T>
         using SymbolTable = std::map<std::string, std::unique_ptr<T>>;
 
+        
+        SymbolTable<qlow::sem::Class> createFromAst(const std::vector<std::unique_ptr<qlow::ast::Class>>& classes);
+
         struct SemanticObject;
         struct Class;
 
+        struct Variable;
+
         struct Field;
         struct Method;
-
-        struct Variable;
 
         struct DoEndBlock;
         struct Statement;
@@ -40,11 +40,19 @@ namespace qlow
 
         struct FeatureCallExpression;
         
+        struct IntConst;
+        
         struct Type;
 
         class SemanticException;
     }
 }
+
+
+struct qlow::sem::Type
+{
+    Class* typeClass;
+};
 
 
 struct qlow::sem::SemanticObject
@@ -64,32 +72,12 @@ struct qlow::sem::Class : public SemanticObject
     std::string name;
     SymbolTable<Field> fields;
     SymbolTable<Method> methods;
-
+    
     Class(void) = default;
     inline Class(qlow::ast::Class* astNode) :
         astNode{ astNode }, name{ astNode->name }
     {
     }
-    
-    virtual std::string toString(void) const override;
-};
-
-
-struct qlow::sem::Field : public SemanticObject
-{
-    Class* type;
-    std::string name;
-    
-    virtual std::string toString(void) const override;
-};
-
-
-struct qlow::sem::Method : public SemanticObject
-{
-    Class* returnType;
-    std::string name;
-    ast::MethodDefinition* astNode;
-    std::unique_ptr<DoEndBlock> body;
     
     virtual std::string toString(void) const override;
 };
@@ -103,6 +91,27 @@ struct qlow::sem::Variable : public SemanticObject
     Variable(void) = default;
     inline Variable(Class* type, std::string& name) :
         type{ type }, name{ name } {}
+};
+
+
+struct qlow::sem::Field : public Variable
+{
+    Class* type;
+    std::string name;
+    
+    virtual std::string toString(void) const override;
+};
+
+
+struct qlow::sem::Method : public SemanticObject
+{
+    Class* containingType;
+    Type returnType;
+    std::string name;
+    ast::MethodDefinition* astNode;
+    std::unique_ptr<DoEndBlock> body;
+    
+    virtual std::string toString(void) const override;
 };
 
 
@@ -156,17 +165,22 @@ struct qlow::sem::FeatureCallExpression : public Expression
 };
 
 
+struct qlow::sem::IntConst : public Expression
+{
+    unsigned long long value;
+
+    inline IntConst(unsigned long long value) :
+        value{ value }
+    {
+    }
+};
+
+
 struct qlow::sem::FeatureCallStatement : public Statement 
 {
     std::unique_ptr<FeatureCallExpression> expr;
     inline FeatureCallStatement(std::unique_ptr<FeatureCallExpression> expr) :
         expr{ std::move(expr) } {}
-};
-
-
-struct qlow::sem::Type
-{
-    Class* typeClass;
 };
 
 
