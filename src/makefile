@@ -1,6 +1,11 @@
+# building depends on debian packages: "g++" "llvm-dev" "bison" "flex" (and "make", duh)
+# running depends on "llvm"
+
 CXX := g++
-CXXFLAGS := -std=c++17 # -Wall -Wextra 
-LINKFLAGS :=
+
+INCLUDEDIRS := -I`llvm-config --includedir`
+CXXFLAGS := -std=c++17 $(INCLUDEDIRS) # -Wall -Wextra
+LDFLAGS := `llvm-config --ldflags --system-libs --libs all`
 
 YACC := bison
 YACCFLAGS := -d
@@ -13,19 +18,20 @@ OBJECTS := $(patsubst %.cpp, %.o, $(wildcard *.cpp)) \
 LIBRARIES := 
 EXECUTABLE := qlow
 
-
+.PHONY: all
 all: $(EXECUTABLE)
 
 
 
-release: CXXFLAGS += -O3
+release: CXXFLAGS += -O3 -flto
+release: LDFLAGS += -O3 -flto
 release: all
 
 debug: CXXFLAGS += -DDEBUGGING -g
 debug: all
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CXX) $^ $(LINKFLAGS) -o $@
+	$(CXX) $^ $(LDFLAGS) -o $@
 
 
 %.o: %.cpp
@@ -39,6 +45,7 @@ $(EXECUTABLE): $(OBJECTS)
 
 
 
+.PHONY: clean
 clean:
 	rm -f $(EXECUTABLE) *.o parser.cpp parser.hpp lexer.cpp
 

@@ -1,23 +1,46 @@
 #include "CodeGeneration.h"
 
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/IR/Verifier.h>
+
 using namespace qlow;
 
+static llvm::LLVMContext context;
 
-void generateModule(const sem::SymbolTable<sem::Class>& classes)
+std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>& classes)
 {
+    using llvm::Module;
+    std::unique_ptr<Module> module = llvm::make_unique<Module>("qlow_module", context);
 
+    return module;
 }
 
 
-void gen::generateObjectFile(const std::string& name, const sem::SymbolTable<sem::Class>& classes)
+void gen::generateObjectFile(const std::string& name, std::unique_ptr<llvm::Module> module,
+        const sem::SymbolTable<sem::Class>& classes)
 {
+    using llvm::PassManager;
+
+
+    llvm::verifyModule(*module);
+
+    PassManager<llvm::Module> pm;
+    //pm.add(createPrintModulePass(&outs()));
+    //pm.run(module);
+
+
     const char cpu[] = "generic";
     const char features[] = "";
 
+
+    /*
+    auto RM = llvm::Optional<llvm::Reloc::Model>();
     auto targetMachine =
         target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
 
-  TargetOptions opt;
+        */
+/*  TargetOptions opt;
   auto RM = Optional<Reloc::Model>();
   auto TheTargetMachine =
       Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
@@ -46,7 +69,7 @@ void gen::generateObjectFile(const std::string& name, const sem::SymbolTable<sem
 
   outs() << "Wrote " << Filename << "\n";
 
-  return 0;
+  return 0;*/
 }
 
 
