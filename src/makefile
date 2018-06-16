@@ -5,7 +5,12 @@ CXX := g++
 
 INCLUDEDIRS := -I`llvm-config --includedir`
 CXXFLAGS := -std=c++17 $(INCLUDEDIRS) # -Wall -Wextra
+
+ifdef STATIC
+LDFLAGS := `llvm-config --link-static --ldflags --system-libs --libs all` -static
+else
 LDFLAGS := `llvm-config --ldflags --system-libs --libs all`
+endif
 
 YACC := bison
 YACCFLAGS := -d
@@ -21,8 +26,6 @@ EXECUTABLE := qlow
 .PHONY: all
 all: $(EXECUTABLE)
 
-
-
 release: CXXFLAGS += -O3 -flto
 release: LDFLAGS += -O3 -flto
 release: all
@@ -33,6 +36,8 @@ debug: all
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+parser.o: parser.cpp
+	$(CXX) -c -o $@ $< $(CXXFLAGS) -fno-strict-aliasing
 
 %.o: %.cpp
 	$(CXX) -c -o $@ $< $(CXXFLAGS)

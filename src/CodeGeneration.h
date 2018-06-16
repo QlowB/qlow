@@ -8,8 +8,9 @@ namespace qlow
 {
     namespace gen
     {
-        void generateObjectFile(const std::string& name, std::unique_ptr<llvm::Module> module,
-            const sem::SymbolTable<sem::Class>& classes);
+        std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>& classes);
+        void generateObjectFile(const std::string& name, std::unique_ptr<llvm::Module> module);
+            
     }
 }
 

@@ -4,6 +4,7 @@
 
 #include "Ast.h"
 #include "Semantic.h"
+#include "CodeGeneration.h"
 
 extern std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::Class>>> parsedClasses;
 extern FILE* qlow_parser_in;
@@ -60,6 +61,9 @@ int main(int argc, char** argv)
         else {
             mainMethod = mainmain->second.get();
         }
+
+        auto mod = qlow::gen::generateModule(semClasses);
+        qlow::gen::generateObjectFile("obj.o", std::move(mod));
     }
     catch (qlow::sem::SemanticException& se)
     {
