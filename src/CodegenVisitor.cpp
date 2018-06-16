@@ -12,6 +12,11 @@ llvm::Value* ExpressionVisitor::visit(sem::BinaryOperation& binop, llvm::IRBuild
     using llvm::Value;
     Value* left = binop.left->accept(*this, builder);
     Value* right = binop.right->accept(*this, builder);
+    if (left == nullptr) {
+        printf("WOW: %s\n", binop.left->toString().c_str());
+    }
+    
+    
     switch (binop.op) {
         case ast::Operation::Operator::PLUS:
             return builder.CreateAdd(left, right, "add");
@@ -71,8 +76,13 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
 }
 
 
-llvm::Value* StatementVisitor::visit(sem::FeatureCallStatement& assignment, gen::FunctionGenerator& fg)
+llvm::Value* StatementVisitor::visit(sem::FeatureCallStatement& fc, gen::FunctionGenerator& fg)
 {
+    llvm::Module* module = fg.getModule();
+    llvm::IRBuilder<> builder(fg.getContext());
+    builder.SetInsertPoint(fg.getCurrentBlock());
+    llvm::Constant* c = module->getOrInsertFunction(fc.expr->callee->name, {});
+    builder.CreateCall(c, {});
     return llvm::ConstantFP::get(fg.getContext(), llvm::APFloat(5.0));
 }
 

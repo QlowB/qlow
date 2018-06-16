@@ -38,6 +38,8 @@ namespace qlow
 
         struct FeatureCallStatement;
         struct AssignmentStatement;
+        
+        struct LocalVariableExpression;
 
         struct Operation;
         struct UnaryOperation;
@@ -107,6 +109,8 @@ struct qlow::sem::Variable : public SemanticObject
     Variable(void) = default;
     inline Variable(Class* type, std::string& name) :
         type{ type }, name{ name }, allocaInst { nullptr } {}
+        
+    virtual std::string toString(void) const override;
 };
 
 
@@ -149,6 +153,7 @@ struct qlow::sem::AssignmentStatement : public Statement
     std::unique_ptr<Expression> target;
     std::unique_ptr<Expression> value;
 
+    virtual std::string toString(void) const override;
     virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&);
 };
 
@@ -164,12 +169,20 @@ struct qlow::sem::Operation : public Expression
 };
 
 
+struct qlow::sem::LocalVariableExpression : public Expression
+{
+    
+};
+
+
 struct qlow::sem::BinaryOperation : public Operation
 {
     std::unique_ptr<Expression> left;
     std::unique_ptr<Expression> right;
     
     virtual llvm::Value* accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2);
+    
+    virtual std::string toString(void) const override;
 };
 
 
@@ -178,13 +191,17 @@ struct qlow::sem::UnaryOperation : public Operation
     qlow::ast::UnaryOperation::Side side;
     std::unique_ptr<Expression> arg;
     virtual llvm::Value* accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2);
+    virtual std::string toString(void) const override;
 };
+
 
 struct qlow::sem::FeatureCallExpression : public Expression
 {
     Method* callee;
     OwningList<Expression> arguments;
     virtual llvm::Value* accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2);
+    
+    virtual std::string toString(void) const override;
 };
 
 
@@ -207,6 +224,7 @@ struct qlow::sem::FeatureCallStatement : public Statement
     inline FeatureCallStatement(std::unique_ptr<FeatureCallExpression> expr) :
         expr{ std::move(expr) } {}
 
+    virtual std::string toString(void) const override;
     virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&);
 };
 
@@ -222,6 +240,8 @@ public:
         DUPLICATE_CLASS_DEFINITION,
         DUPLICATE_FIELD_DECLARATION,
         DUPLICATE_METHOD_DEFINITION,
+        
+        FEATURE_NOT_FOUND,
     };
     
     

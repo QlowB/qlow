@@ -113,6 +113,12 @@ std::string Class::toString(void) const
 }
 
 
+std::string Variable::toString(void) const
+{
+    return "Variable[" + this->name + "]";
+}
+
+
 std::string Field::toString(void) const
 {
     return "Field[" + this->name + "]";
@@ -140,11 +146,43 @@ ACCEPT_DEFINITION(IntConst, ExpressionVisitor, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(AssignmentStatement, StatementVisitor, qlow::gen::FunctionGenerator&) 
 ACCEPT_DEFINITION(FeatureCallStatement, StatementVisitor, qlow::gen::FunctionGenerator&) 
 
+std::string AssignmentStatement::toString(void) const
+{
+    return "AssignmentStatement[" + this->target->toString() + " := " +
+        this->value->toString() + "]";
+}
+
+
+std::string BinaryOperation::toString(void) const
+{
+    return "BinaryOperation[" + left->toString() + ", " +
+        right->toString() + "]";
+}
+
+
+std::string UnaryOperation::toString(void) const
+{
+    return "UnaryOperation[" + arg->toString() + "]";
+}
+
+
+std::string FeatureCallExpression::toString(void) const
+{
+    return "FeatureCallExpression[" + callee->toString() + "]";
+}
+
+
+std::string FeatureCallStatement::toString(void) const
+{
+    return "FeatureCallStatement[" + expr->callee->toString() + "]";
+}
+
 
 std::string SemanticException::getMessage(void) const
 {
-    std::map<ErrorCode, std::string> error = {
+    static std::map<ErrorCode, std::string> error = {
         {UNKNOWN_TYPE, "unknown type"},
+        {FEATURE_NOT_FOUND, "method or variable not found"}
     };
     
     std::string pos = std::to_string(where.first_line) + ":" +

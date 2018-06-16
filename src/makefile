@@ -3,13 +3,15 @@
 
 CXX := g++
 
-INCLUDEDIRS := -I`llvm-config --includedir`
+LLVMCONFIG := llvm-config
+
+INCLUDEDIRS := -I $(shell $(LLVMCONFIG) --includedir)
 CXXFLAGS := -std=c++17 $(INCLUDEDIRS) # -Wall -Wextra
 
 ifdef STATIC
-LDFLAGS := `llvm-config --link-static --ldflags --system-libs --libs all` -static
+LDFLAGS := $(shell $(LLVMCONFIG) --link-static --ldflags --system-libs --libs all) -static
 else
-LDFLAGS := `llvm-config --ldflags --system-libs --libs all`
+LDFLAGS := $(shell $(LLVMCONFIG) --ldflags --system-libs --libs all)
 endif
 
 YACC := bison

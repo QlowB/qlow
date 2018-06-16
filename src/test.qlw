@@ -13,6 +13,7 @@ class Main
         var := 5;
         var := 102 + var * var;
         var := 102 + var * var;
+
         var := 102 + var * var;
         var := 102 + var * var;
         var := 102 + var * var;
@@ -27,7 +28,6 @@ end
 class FF
     sum_func: Integer do
         variable: Integer;
-        variable := sum_func;
     end
 end
 

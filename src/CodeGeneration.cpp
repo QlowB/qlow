@@ -75,7 +75,7 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
 
 
     printf("verifying mod\n");
-    module->dump();
+    module->print(llvm::errs(), nullptr);
     llvm::verifyModule(*module);
     printf("mod verified\n");
 
@@ -197,14 +197,19 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     }
     
     for (auto& statement : method.body->statements) {
-        printf("statement visit\n");
+#ifdef DEBUGGING
+        printf("statement visit %s\n", statement->toString().c_str());
+#endif
         statement->accept(statementVisitor, *this);
     }
     
 
+#ifdef DEBUGGING
+    printf("End of Function\n");
+#endif
     
-    Value* val = llvm::ConstantFP::get(context, llvm::APFloat(5.0));
-    builder.CreateRet(val);
+    //Value* val = llvm::ConstantFP::get(context, llvm::APFloat(5.0));
+    builder.CreateRetVoid();
 
     return func;
 }
