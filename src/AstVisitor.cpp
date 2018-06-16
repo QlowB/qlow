@@ -141,16 +141,12 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
     auto* var = scope.getVariable(ast.name);
     
     if (var) {
-        
     }
     else if (method) {
-    auto fce = std::make_unique<sem::FeatureCallExpression>();
-    //fce->target = unique_dynamic_cast<sem::Expression>(ast.target.accept(*this, classes));
-    fce->callee = scope.getMethod(ast.name);
-    return fce;
+ce;
     }
     else {
-        throw sem::SemanticException(sem::SemanticException::METHOD_NOT_FOUND, ast.name, ast.pos);
+        throw sem::SemanticException(sem::SemanticException::FEATURE_NOT_FOUND, ast.name, ast.pos);
     }
 }
 
