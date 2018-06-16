@@ -5,6 +5,10 @@
 #include <map>
 #include "Util.h"
 #include "Ast.h"
+#include "Visitor.h"
+
+#include <llvm/IR/Value.h>
+#include <llvm/IR/IRBuilder.h>
 
 namespace qlow
 {
@@ -46,6 +50,8 @@ namespace qlow
 
         class SemanticException;
     }
+    
+    class CodegenVisitor;
 }
 
 
@@ -134,7 +140,7 @@ struct qlow::sem::AssignmentStatement : public Statement
 };
 
 
-struct qlow::sem::Expression : public SemanticObject
+struct qlow::sem::Expression : public SemanticObject, public Visitable<llvm::Value*, llvm::IRBuilder<>, qlow::CodegenVisitor>
 {
 };
 
@@ -149,6 +155,8 @@ struct qlow::sem::BinaryOperation : public Operation
 {
     std::unique_ptr<Expression> left;
     std::unique_ptr<Expression> right;
+    
+    virtual llvm::Value* accept(CodegenVisitor& visitor, llvm::IRBuilder<>& arg2);
 };
 
 
@@ -156,12 +164,14 @@ struct qlow::sem::UnaryOperation : public Operation
 {
     qlow::ast::UnaryOperation::Side side;
     std::unique_ptr<Expression> arg;
+    virtual llvm::Value* accept(CodegenVisitor& visitor, llvm::IRBuilder<>& arg2);
 };
 
 struct qlow::sem::FeatureCallExpression : public Expression
 {
     Method* callee;
     OwningList<Expression> arguments;
+    virtual llvm::Value* accept(CodegenVisitor& visitor, llvm::IRBuilder<>& arg2);
 };
 
 
@@ -173,6 +183,8 @@ struct qlow::sem::IntConst : public Expression
         value{ value }
     {
     }
+    
+    virtual llvm::Value* accept(CodegenVisitor& visitor, llvm::IRBuilder<>& arg2);
 };
 
 

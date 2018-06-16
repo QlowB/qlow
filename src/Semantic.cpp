@@ -1,6 +1,8 @@
 #include "Semantic.h"
 #include "AstVisitor.h"
 
+#include "CodegenVisitor.h"
+
 #include "Util.h"
 
 using namespace qlow::sem;
@@ -123,6 +125,19 @@ std::string Method::toString(void) const
 }
 
 
+
+#define ACCEPT_DEFINITION(ClassName, Visitor) \
+llvm::Value* ClassName::accept(Visitor& v, llvm::IRBuilder<>& context) \
+{ \
+    return v.visit(*this, context); \
+}
+
+ACCEPT_DEFINITION(BinaryOperation, CodegenVisitor)
+ACCEPT_DEFINITION(UnaryOperation, CodegenVisitor)
+ACCEPT_DEFINITION(FeatureCallExpression, CodegenVisitor)
+ACCEPT_DEFINITION(IntConst, CodegenVisitor)
+
+
 std::string SemanticException::getMessage(void) const
 {
     std::map<ErrorCode, std::string> error = {
@@ -134,6 +149,8 @@ std::string SemanticException::getMessage(void) const
     
     return pos + ": " + error[errorCode] + ": " + message;
 }
+
+
 
 
 
