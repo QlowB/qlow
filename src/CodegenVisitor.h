@@ -3,6 +3,7 @@
 
 #include <llvm/IR/Value.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/BasicBlock.h>
 
 #include "Visitor.h"
 #include "Semantic.h"
@@ -16,18 +17,19 @@ namespace qlow
 {
     namespace gen
     {
-        
+        class FunctionGenerator;        
     }
 }
 
 
 namespace qlow
 {
-    class CodegenVisitor;
+    class ExpressionVisitor;
+    class StatementVisitor;
 }
 
 
-class qlow::CodegenVisitor :
+class qlow::ExpressionVisitor :
     public Visitor<
         llvm::Value*,
         llvm::IRBuilder<>,
@@ -45,6 +47,20 @@ public:
     llvm::Value* visit(sem::IntConst& node, llvm::IRBuilder<>&) override;
 };
 
+
+class qlow::StatementVisitor :
+    public Visitor<
+        llvm::Value*,
+        gen::FunctionGenerator,
+
+        sem::AssignmentStatement,
+        sem::FeatureCallStatement
+    >
+{
+public:
+    llvm::Value* visit(sem::AssignmentStatement& node, gen::FunctionGenerator&) override;
+    llvm::Value* visit(sem::FeatureCallStatement& node, gen::FunctionGenerator&) override;
+};
 
 #endif // QLOW_CODEGEN_VISITOR_H
 

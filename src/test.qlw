@@ -3,13 +3,20 @@
 class Main
     foo: Main
 
+    wow: Integer do
+        var: Integer;
+        var := 5;
+    end
+
     fop: FF do
         var: Integer;
         var := 5;
         var := 102 + var * var;
-        gagagaga;
-        
-        hohohoh;
+        var := 102 + var * var;
+        var := 102 + var * var;
+        var := 102 + var * var;
+        var := 102 + var * var;
+        var := 102 + var * var;
     end
 
     main: Integer do
@@ -18,6 +25,10 @@ class Main
 end
 
 class FF
+    sum_func: Integer do
+        variable: Integer;
+        variable := sum_func;
+    end
 end
 
 class Fudi

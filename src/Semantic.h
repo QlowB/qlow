@@ -9,6 +9,7 @@
 
 #include <llvm/IR/Value.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/BasicBlock.h>
 
 namespace qlow
 {
@@ -51,7 +52,12 @@ namespace qlow
         class SemanticException;
     }
     
-    class CodegenVisitor;
+    class ExpressionVisitor;
+    class StatementVisitor;
+    namespace gen
+    {
+        class FunctionGenerator;
+    }
 }
 
 
@@ -93,10 +99,14 @@ struct qlow::sem::Variable : public SemanticObject
 {
     Class* type;
     std::string name;
+
+    /// if this is a local variable, this stores a reference to the llvm
+    /// instance of this variable.
+    llvm::AllocaInst* allocaInst;
     
     Variable(void) = default;
     inline Variable(Class* type, std::string& name) :
-        type{ type }, name{ name } {}
+        type{ type }, name{ name }, allocaInst { nullptr } {}
 };
 
 
@@ -128,8 +138,9 @@ struct qlow::sem::DoEndBlock : public SemanticObject
 };
 
 
-struct qlow::sem::Statement : public SemanticObject
+struct qlow::sem::Statement : public SemanticObject, public Visitable<llvm::Value*, gen::FunctionGenerator, qlow::StatementVisitor>
 {
+    virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) = 0;
 };
 
 
@@ -137,10 +148,12 @@ struct qlow::sem::AssignmentStatement : public Statement
 {
     std::unique_ptr<Expression> target;
     std::unique_ptr<Expression> value;
+
+    virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&);
 };
 
 
-struct qlow::sem::Expression : public SemanticObject, public Visitable<llvm::Value*, llvm::IRBuilder<>, qlow::CodegenVisitor>
+struct qlow::sem::Expression : public SemanticObject, public Visitable<llvm::Value*, llvm::IRBuilder<>, qlow::ExpressionVisitor>
 {
 };
 
@@ -156,7 +169,7 @@ struct qlow::sem::BinaryOperation : public Operation
     std::unique_ptr<Expression> left;
     std::unique_ptr<Expression> right;
     
-    virtual llvm::Value* accept(CodegenVisitor& visitor, llvm::IRBuilder<>& arg2);
+    virtual llvm::Value* accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2);
 };
 
 
@@ -164,14 +177,14 @@ struct qlow::sem::UnaryOperation : public Operation
 {
     qlow::ast::UnaryOperation::Side side;
     std::unique_ptr<Expression> arg;
-    virtual llvm::Value* accept(CodegenVisitor& visitor, llvm::IRBuilder<>& arg2);
+    virtual llvm::Value* accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2);
 };
 
 struct qlow::sem::FeatureCallExpression : public Expression
 {
     Method* callee;
     OwningList<Expression> arguments;
-    virtual llvm::Value* accept(CodegenVisitor& visitor, llvm::IRBuilder<>& arg2);
+    virtual llvm::Value* accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2);
 };
 
 
@@ -184,7 +197,7 @@ struct qlow::sem::IntConst : public Expression
     {
     }
     
-    virtual llvm::Value* accept(CodegenVisitor& visitor, llvm::IRBuilder<>& arg2);
+    virtual llvm::Value* accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2);
 };
 
 
@@ -193,6 +206,8 @@ struct qlow::sem::FeatureCallStatement : public Statement
     std::unique_ptr<FeatureCallExpression> expr;
     inline FeatureCallStatement(std::unique_ptr<FeatureCallExpression> expr) :
         expr{ std::move(expr) } {}
+
+    virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&);
 };
 
 

@@ -36,20 +36,30 @@ std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>&
     std::unique_ptr<Module> module = llvm::make_unique<Module>("qlow_module", context);
     
     std::vector<Type*> doubles(1, Type::getDoubleTy(context));
-    FunctionType* funcType = FunctionType::get(Type::getDoubleTy(context), doubles, false);
-    Function* func = Function::Create(funcType, Function::ExternalLinkage, "qlow_function", module.get());
-    BasicBlock* bb = BasicBlock::Create(context, "entry", func);
-    IRBuilder<> builder(context);
-    builder.SetInsertPoint(bb);
+    for (auto& [name, cl] : classes){
+        for (auto& [name, method] : cl->methods) {
 
-    Function::arg_iterator args = func->arg_begin();
+            FunctionGenerator fg(*method, module.get());
+            fg.generate();
 
-    Argument* arg = &(*args);
-    
-    Value* val = llvm::ConstantFP::get(context, llvm::APFloat(5.0));
-    Value* val2 = llvm::ConstantFP::get(context, llvm::APFloat(1.0));
-    Value* result = builder.CreateFAdd(arg, val2, "add_constants");
-    builder.CreateRet(result);
+            /*
+            FunctionType* funcType = FunctionType::get(Type::getDoubleTy(context), doubles, false);
+            Function* func = Function::Create(funcType, Function::ExternalLinkage, "qlow_function", module.get());
+            BasicBlock* bb = BasicBlock::Create(context, "entry", func);
+            IRBuilder<> builder(context);
+            builder.SetInsertPoint(bb);
+
+            Function::arg_iterator args = func->arg_begin();
+
+            Argument* arg = &(*args);
+            
+            Value* val = llvm::ConstantFP::get(context, llvm::APFloat(5.0));
+            Value* val2 = llvm::ConstantFP::get(context, llvm::APFloat(1.0));
+            Value* result = builder.CreateFAdd(arg, val2, "add_constants");
+            builder.CreateRet(result);
+            */
+        }
+    }
     return module;
 }
 
@@ -64,7 +74,10 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
     using llvm::TargetOptions;
 
 
+    printf("verifying mod\n");
+    module->dump();
     llvm::verifyModule(*module);
+    printf("mod verified\n");
 
 
     llvm::InitializeAllTargetInfos();
@@ -145,7 +158,56 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
   return 0;*/
 }
 
+} // namespace gen
+} // namespace qlow
+
+
+llvm::Function* qlow::gen::FunctionGenerator::generate(void)
+{
+    using llvm::Function;
+    using llvm::Argument;
+    using llvm::Type;
+    using llvm::FunctionType;
+    using llvm::BasicBlock;
+    using llvm::Value;
+    using llvm::IRBuilder;
+
+    std::vector<Type*> doubles(1, Type::getDoubleTy(context));
+    FunctionType* funcType = FunctionType::get(Type::getDoubleTy(context), doubles, false);
+    Function* func = Function::Create(funcType, Function::ExternalLinkage, method.name, module);
+    BasicBlock* bb = BasicBlock::Create(context, "entry", func);
+    
+    /*Function::arg_iterator args = func->arg_begin();
+
+    Argument* arg = &(*args);
+    
+    Value* val = llvm::ConstantFP::get(context, llvm::APFloat(5.0));
+    Value* val2 = llvm::ConstantFP::get(context, llvm::APFloat(1.0));
+    Value* result = builder.CreateFAdd(arg, val2, "add_constants");
+    builder.CreateRet(result);
+    */
+
+    pushBlock(bb);
+
+    IRBuilder<> builder(context);
+    builder.SetInsertPoint(bb);
+    for (auto& var : method.body->variables) {
+        llvm::AllocaInst* v = builder.CreateAlloca(Type::getDoubleTy(context));
+        var->allocaInst = v;
+    }
+    
+    for (auto& statement : method.body->statements) {
+        printf("statement visit\n");
+        statement->accept(statementVisitor, *this);
+    }
+    
+
+    
+    Value* val = llvm::ConstantFP::get(context, llvm::APFloat(5.0));
+    builder.CreateRet(val);
+
+    return func;
 }
-}
+
 
 
