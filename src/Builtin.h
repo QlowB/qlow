@@ -9,8 +9,9 @@ namespace qlow
 {
     namespace sem
     {
-        extern Class Int32;
-        extern Class String;
+
+        //extern Class Int32;
+        //extern Class String;
     }
 }
 

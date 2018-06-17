@@ -3,11 +3,6 @@
 class Main
     foo: Main
 
-    wow: Integer do
-        var: Integer;
-        var := 5;
-    end
-
     fop: FF do
         var: Integer;
         var := 5;

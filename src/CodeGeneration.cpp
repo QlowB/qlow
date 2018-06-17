@@ -35,7 +35,15 @@ std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>&
 
     std::unique_ptr<Module> module = llvm::make_unique<Module>("qlow_module", context);
     
-    std::vector<Type*> doubles(1, Type::getDoubleTy(context));
+    for (auto& [name, cl] : classes){
+        for (auto& [name, method] : cl->methods) {
+            std::vector<Type*> doubles(1, Type::getDoubleTy(context));
+            FunctionType* funcType = FunctionType::get(Type::getDoubleTy(context), doubles, false);
+            Function* func = Function::Create(funcType, Function::ExternalLinkage, method->name, module.get());
+            method->llvmNode = func;
+        }
+    }
+
     for (auto& [name, cl] : classes){
         for (auto& [name, method] : cl->methods) {
 
@@ -174,7 +182,13 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
 
     std::vector<Type*> doubles(1, Type::getDoubleTy(context));
     FunctionType* funcType = FunctionType::get(Type::getDoubleTy(context), doubles, false);
-    Function* func = Function::Create(funcType, Function::ExternalLinkage, method.name, module);
+    //Function* func = Function::Create(funcType, Function::ExternalLinkage, method.name, module);
+    Function* func = module->getFunction(method.name);
+
+    if (func == nullptr) {
+        throw "internal error: function not found";
+    }
+
     BasicBlock* bb = BasicBlock::Create(context, "entry", func);
     
     /*Function::arg_iterator args = func->arg_begin();
@@ -191,7 +205,7 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
 
     IRBuilder<> builder(context);
     builder.SetInsertPoint(bb);
-    for (auto& var : method.body->variables) {
+    for (auto& [name, var] : method.body->scope.getLocals()) {
         llvm::AllocaInst* v = builder.CreateAlloca(Type::getDoubleTy(context));
         var->allocaInst = v;
     }

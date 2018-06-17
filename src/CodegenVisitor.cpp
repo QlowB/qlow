@@ -7,6 +7,14 @@
 
 using namespace qlow;
 
+llvm::Value* ExpressionVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
+{
+    llvm::Value* val = builder.CreateLoad(lve.var->allocaInst);
+    return val;
+}
+
+
+
 llvm::Value* ExpressionVisitor::visit(sem::BinaryOperation& binop, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
@@ -40,9 +48,9 @@ llvm::Value* ExpressionVisitor::visit(sem::UnaryOperation& unop, llvm::IRBuilder
             return builder.CreateNeg(value, "negate");
 
         case ast::Operation::Operator::PLUS:
-        [[fallthrough]]
+        [[fallthrough]];
         case ast::Operation::Operator::ASTERISK:
-        [[fallthrough]]
+        [[fallthrough]];
         case ast::Operation::Operator::SLASH:
             throw "operator not supported";
     }
@@ -71,7 +79,7 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
     llvm::IRBuilder<> builder(fg.getContext());
     builder.SetInsertPoint(fg.getCurrentBlock());
     llvm::Value* val = assignment.value->accept(fg.expressionVisitor, builder);
-    builder.CreateRet(val);
+    //builder.CreateRet(val);
     return llvm::ConstantFP::get(fg.getContext(), llvm::APFloat(5.0));
 }
 
@@ -81,8 +89,9 @@ llvm::Value* StatementVisitor::visit(sem::FeatureCallStatement& fc, gen::Functio
     llvm::Module* module = fg.getModule();
     llvm::IRBuilder<> builder(fg.getContext());
     builder.SetInsertPoint(fg.getCurrentBlock());
-    llvm::Constant* c = module->getOrInsertFunction(fc.expr->callee->name, {});
-    builder.CreateCall(c, {});
+    //llvm::Constant* c = module->getOrInsertFunction(fc.expr->callee->name, {});
+    llvm::Function* f = fc.expr->callee->llvmNode;
+    builder.CreateCall(f, {});
     return llvm::ConstantFP::get(fg.getContext(), llvm::APFloat(5.0));
 }
 

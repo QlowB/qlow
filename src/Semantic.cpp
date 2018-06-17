@@ -12,7 +12,7 @@ namespace qlow
 namespace sem
 {
 
-SymbolTable<qlow::sem::Class>
+std::unique_ptr<GlobalScope>
     createFromAst(const std::vector<std::unique_ptr<qlow::ast::Class>>& classes)
 {
 
@@ -21,9 +21,9 @@ SymbolTable<qlow::sem::Class>
 #endif
 
     // create classes
-    sem::GlobalScope globalScope;
+    std::unique_ptr<sem::GlobalScope> globalScope = std::make_unique<sem::GlobalScope>();
     for (auto& astClass : classes) {
-        globalScope.classes[astClass->name] = std::make_unique<sem::Class>(astClass.get());
+        globalScope->classes[astClass->name] = std::make_unique<sem::Class>(astClass.get(), *globalScope);
     }
 
 #ifdef DEBUGGING
@@ -33,7 +33,7 @@ SymbolTable<qlow::sem::Class>
     StructureVisitor av;
     
     // create all methods and fields
-    for (auto& [name, semClass] : globalScope.classes) {
+    for (auto& [name, semClass] : globalScope->classes) {
         for (auto& feature : semClass->astNode->features) {
             
             if (auto* field = dynamic_cast<qlow::ast::FieldDeclaration*> (feature.get()); field) {
@@ -41,14 +41,14 @@ SymbolTable<qlow::sem::Class>
                     throw SemanticException(SemanticException::DUPLICATE_FIELD_DECLARATION, field->name, field->pos);
                 
                 // otherwise add to the fields list
-                semClass->fields[field->name] = unique_dynamic_cast<Field>(field->accept(av, globalScope));
+                semClass->fields[field->name] = unique_dynamic_cast<Field>(field->accept(av, semClass->scope));
             }
             else if (auto* method = dynamic_cast<qlow::ast::MethodDefinition*> (feature.get()); method) {
                 if (semClass->methods.find(method->name) != semClass->methods.end()) // throw, if method already exists
                     throw SemanticException(SemanticException::DUPLICATE_METHOD_DEFINITION, method->name, method->pos);
                 
                 // otherwise add to the methods list
-                semClass->methods[method->name] = unique_dynamic_cast<Method>(method->accept(av, globalScope));
+                semClass->methods[method->name] = unique_dynamic_cast<Method>(method->accept(av, semClass->scope));
             }
             else {
                 // if a feature is neither a method nor a field, something went horribly wrong
@@ -61,16 +61,16 @@ SymbolTable<qlow::sem::Class>
     printf("created all methods and fields\n");
 #endif
     
-    for (auto& [name, semClass] : globalScope.classes) {
+    for (auto& [name, semClass] : globalScope->classes) {
         for (auto& [name, method] : semClass->methods) {
-            method->body = unique_dynamic_cast<sem::DoEndBlock>(av.visit(*method->astNode->body, globalScope));
+            method->body = unique_dynamic_cast<sem::DoEndBlock>(av.visit(*method->astNode->body, method->scope));
         }
     }
 #ifdef DEBUGGING
     printf("created all method bodies\n");
 #endif
     
-    return std::move(globalScope.classes);
+    return globalScope;
 }
 
 }
@@ -138,6 +138,7 @@ llvm::Value* ClassName::accept(Visitor& v, Arg arg) \
     return v.visit(*this, arg); \
 }
 
+ACCEPT_DEFINITION(LocalVariableExpression, ExpressionVisitor, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(BinaryOperation, ExpressionVisitor, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(UnaryOperation, ExpressionVisitor, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(FeatureCallExpression, ExpressionVisitor, llvm::IRBuilder<>&)
@@ -152,6 +153,11 @@ std::string AssignmentStatement::toString(void) const
         this->value->toString() + "]";
 }
 
+
+std::string LocalVariableExpression::toString(void) const
+{
+    return "LocalVariableExpression[" + var->name + "]";
+}
 
 std::string BinaryOperation::toString(void) const
 {

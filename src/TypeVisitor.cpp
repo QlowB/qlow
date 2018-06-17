@@ -29,7 +29,9 @@ sem::Type sem::TypeVisitor::visit(sem::FeatureCallExpression& expr, const sem::S
 
 sem::Type sem::TypeVisitor::visit(sem::IntConst& expr, const sem::SymbolTable<sem::Class>& classes)
 {
-    return Type{ new sem::Class() };
+    //return Type{ new sem::Class() };
+    //TODO implement
+    return Type { nullptr };
 }
 
 

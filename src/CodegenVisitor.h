@@ -34,6 +34,7 @@ class qlow::ExpressionVisitor :
         llvm::Value*,
         llvm::IRBuilder<>,
 
+        sem::LocalVariableExpression,
         sem::BinaryOperation,
         sem::UnaryOperation,
         sem::FeatureCallExpression,
@@ -41,6 +42,7 @@ class qlow::ExpressionVisitor :
     >
 {
 public:
+    llvm::Value* visit(sem::LocalVariableExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::BinaryOperation& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::UnaryOperation& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::FeatureCallExpression& node, llvm::IRBuilder<>&) override;

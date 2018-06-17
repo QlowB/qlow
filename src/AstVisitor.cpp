@@ -19,9 +19,10 @@ sem::Class* StructureVisitor::getType(const std::string& type, sem::Scope& scope
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::Class& ast, sem::Scope& scope)
 {
-    auto c = std::make_unique<sem::Class>();
-    c->name = ast.name;
-    return c;
+    //auto c = std::make_unique<sem::Class>();
+    //c->name = ast.name;
+    //return c;
+    throw "shouldn't be called";
 }
 
 
@@ -52,7 +53,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefinition& ast, sem::Scope& scope)
 {
-    auto m = std::make_unique<sem::Method>();
+    auto m = std::make_unique<sem::Method>(scope);
     m->name = ast.name;
     auto returnType = scope.getType(ast.type);
     if (returnType) {
@@ -66,6 +67,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefiniti
     }
     m->astNode = &ast;
     return m;
+    //throw "  std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefinition& ast, sem::Scope& scope) shouldn't be called";
 }
 
 
@@ -95,21 +97,21 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::ArgumentDeclar
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& ast, sem::Scope& scope)
 {
-    auto body = std::make_unique<sem::DoEndBlock>();
+    auto body = std::make_unique<sem::DoEndBlock>(scope);
     for (auto& statement : ast.statements) {
         
         if (ast::NewVariableStatement* nvs = dynamic_cast<ast::NewVariableStatement*>(statement.get()); nvs) {
-            auto type = scope.getType(nvs->type);
+            auto type = body->scope.getType(nvs->type);
 
             if (!type)
                 throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE, nvs->type, nvs->pos);
 
             auto var = std::make_unique<sem::Variable>(type.value().typeClass, nvs->name);
-            body->variables.push_back(std::move(var));
+            body->scope.putVariable(nvs->name, std::move(var));
             continue;
         }
         
-        auto v = statement->accept(*this, scope);
+        auto v = statement->accept(*this, body->scope);
         if (dynamic_cast<sem::FeatureCallExpression*>(v.get()) != nullptr) {
             body->statements.push_back(std::make_unique<sem::FeatureCallStatement>(unique_dynamic_cast<sem::FeatureCallExpression>(std::move(v))));
         }
@@ -141,11 +143,20 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
     auto* var = scope.getVariable(ast.name);
     
     if (var) {
+        auto lve = std::make_unique<sem::LocalVariableExpression>();
+        lve->var = var;
+        return lve;
     }
     else if (method) {
-ce;
+        auto fce = std::make_unique<sem::FeatureCallExpression>();
+        fce->callee = method;
+        return fce;
     }
     else {
+#ifdef DEBUGGING
+        printf("var not found: %s\n", ast.name.c_str());
+        printf("current scope: %s\n", scope.toString().c_str());
+#endif
         throw sem::SemanticException(sem::SemanticException::FEATURE_NOT_FOUND, ast.name, ast.pos);
     }
 }

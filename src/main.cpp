@@ -39,15 +39,16 @@ int main(int argc, char** argv)
 
         std::cout << "parsing completed!" << std::endl;
 
-        qlow::sem::SymbolTable<qlow::sem::Class> semClasses = qlow::sem::createFromAst(*parsedClasses.get());
+        std::unique_ptr<qlow::sem::GlobalScope> semClasses =
+            qlow::sem::createFromAst(*parsedClasses.get());
 
-        for (auto& [a, b] : semClasses) {
+        for (auto& [a, b] : semClasses->classes) {
             std::cout << a << ": " << b->toString() << std::endl;
         }
 
-        auto main = semClasses.find("Main");
+        auto main = semClasses->classes.find("Main");
         qlow::sem::Class* mainClass = nullptr;
-        if (main == semClasses.end()) {
+        if (main == semClasses->classes.end()) {
             throw "No Main class found!";
         }
         else {
@@ -62,7 +63,7 @@ int main(int argc, char** argv)
             mainMethod = mainmain->second.get();
         }
 
-        auto mod = qlow::gen::generateModule(semClasses);
+        auto mod = qlow::gen::generateModule(semClasses->classes);
         qlow::gen::generateObjectFile("obj.o", std::move(mod));
     }
     catch (qlow::sem::SemanticException& se)

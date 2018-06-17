@@ -2,19 +2,37 @@
 #define QLOW_SEM_SCOPE_H
 
 #include <optional>
-
-#include "Semantic.h"
+#include <map>
+#include <memory>
 
 namespace qlow
 {
     namespace sem
     {
+        /*!
+         * \note contains owning pointers to elements
+         */
+        template<typename T>
+        using SymbolTable = std::map<std::string, std::unique_ptr<T>>;
+
+
+        struct Class;
+        struct Method;
+        struct Variable;
+        struct Type;
+
         class Scope;
         class GlobalScope;
         class ClassScope;
-        class MethodScope;
+        class LocalScope;
     }
 }
+
+
+struct qlow::sem::Type
+{
+    Class* typeClass;
+};
 
 
 class qlow::sem::Scope
@@ -24,6 +42,8 @@ public:
     virtual Variable* getVariable(const std::string& name) = 0;
     virtual Method* getMethod(const std::string& name) = 0;
     virtual std::optional<Type> getType(const std::string& name) = 0;
+
+    virtual std::string toString(void) = 0;
 };
 
 
@@ -35,6 +55,8 @@ public:
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
     virtual std::optional<Type> getType(const std::string& name);
+
+    virtual std::string toString(void);
 };
 
 
@@ -50,21 +72,26 @@ public:
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
     virtual std::optional<Type> getType(const std::string& name);
+    virtual std::string toString(void);
 };
 
 
-class qlow::sem::MethodScope : public Scope
+class qlow::sem::LocalScope : public Scope
 {
     Scope& parentScope;
     SymbolTable<Variable> localVariables;
 public:
-    inline MethodScope(Scope& parentScope) :
+    inline LocalScope(Scope& parentScope) :
         parentScope{ parentScope }
     {
     }
+    void putVariable(const std::string& name, std::unique_ptr<Variable> v);
+    SymbolTable<Variable>& getLocals(void);
+
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
     virtual std::optional<Type> getType(const std::string& name);
+    virtual std::string toString(void);
 };
 
 
