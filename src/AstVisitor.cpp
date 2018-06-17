@@ -8,11 +8,16 @@
 using namespace qlow;
 
 
+[[deprecated]]
 sem::Class* StructureVisitor::getType(const std::string& type, sem::Scope& scope)
 {
     auto t = scope.getType(type);
-    if (t)
-        return t.value().typeClass;
+    if (t) {
+        if (auto* ct = dynamic_cast<sem::ClassType*>(t.value()); ct)
+            return ct->getClass();
+        else
+            return nullptr;
+    }
     else
         return nullptr;
 }
@@ -39,7 +44,11 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
     f->name = ast.name;
     auto type = scope.getType(ast.type);
     if (type) {
-        f->type = type.value().typeClass;
+        if (auto* ct = dynamic_cast<sem::ClassType*>(type.value()); ct) {
+            f->type = ct->getClass();
+        }
+        else
+            throw "TODO implement";
     }
     else {
         throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE,

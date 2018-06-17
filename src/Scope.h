@@ -5,6 +5,8 @@
 #include <map>
 #include <memory>
 
+#include "Type.h"
+
 namespace qlow
 {
     namespace sem
@@ -19,7 +21,6 @@ namespace qlow
         struct Class;
         struct Method;
         struct Variable;
-        struct Type;
 
         class Scope;
         class GlobalScope;
@@ -29,19 +30,13 @@ namespace qlow
 }
 
 
-struct qlow::sem::Type
-{
-    Class* typeClass;
-};
-
-
 class qlow::sem::Scope
 {
 public:
     virtual ~Scope(void);
     virtual Variable* getVariable(const std::string& name) = 0;
     virtual Method* getMethod(const std::string& name) = 0;
-    virtual std::optional<Type> getType(const std::string& name) = 0;
+    virtual std::optional<Type*> getType(const std::string& name) = 0;
 
     virtual std::string toString(void) = 0;
 };
@@ -54,7 +49,7 @@ public:
 public:
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::optional<Type> getType(const std::string& name);
+    virtual std::optional<Type*> getType(const std::string& name);
 
     virtual std::string toString(void);
 };
@@ -71,7 +66,7 @@ public:
     }
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::optional<Type> getType(const std::string& name);
+    virtual std::optional<Type*> getType(const std::string& name);
     virtual std::string toString(void);
 };
 
@@ -90,7 +85,7 @@ public:
 
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::optional<Type> getType(const std::string& name);
+    virtual std::optional<Type*> getType(const std::string& name);
     virtual std::string toString(void);
 };
 

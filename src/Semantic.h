@@ -113,7 +113,7 @@ struct qlow::sem::Field : public Variable
 struct qlow::sem::Method : public SemanticObject
 {
     Class* containingType;
-    Type returnType;
+    std::unique_ptr<Type> returnType;
     std::string name;
     ast::MethodDefinition* astNode;
     std::unique_ptr<DoEndBlock> body;
