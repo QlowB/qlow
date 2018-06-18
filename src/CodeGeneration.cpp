@@ -3,6 +3,7 @@
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/Type.h>
+#include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Verifier.h>
@@ -34,11 +35,34 @@ std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>&
     using llvm::IRBuilder;
 
     std::unique_ptr<Module> module = llvm::make_unique<Module>("qlow_module", context);
+
+    // create llvm structs
+    // TODO implement detection of circles
+    for (auto& [name, cl] : classes){
+        llvm::StructType* st;
+        std::vector<llvm::Type*> fields;
+#ifdef DEBUGGING
+        printf("creating llvm struct for %s\n", name.c_str());
+#endif 
+        for (auto& [name, field] : cl->fields) {
+            fields.push_back(field->type.getLlvmType(context));
+            if (fields[fields.size() - 1] == nullptr)
+                throw "internal error: possible circular dependency";
+        }
+        st = llvm::StructType::create(context, fields, name);
+        cl->llvmType = st;
+    }
     
     for (auto& [name, cl] : classes){
         for (auto& [name, method] : cl->methods) {
             std::vector<Type*> doubles(1, Type::getDoubleTy(context));
-            FunctionType* funcType = FunctionType::get(Type::getDoubleTy(context), doubles, false);
+#ifdef DEBUGGING
+            printf("looking up llvm type of %s\n", name.c_str());
+#endif 
+            llvm::Type* returnType = method->returnType.getLlvmType(context);
+            if (returnType == nullptr)
+                throw "invalid return type";
+            FunctionType* funcType = FunctionType::get(returnType, doubles, false);
             Function* func = Function::Create(funcType, Function::ExternalLinkage, method->name, module.get());
             method->llvmNode = func;
         }

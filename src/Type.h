@@ -1,6 +1,11 @@
 #ifndef QLOW_SEM_TYPE_H
 #define QLOW_SEM_TYPE_H
 
+namespace llvm {
+    class Type;
+    class LLVMContext;
+}
+
 namespace qlow
 {
     namespace sem
@@ -51,7 +56,7 @@ public:
     bool isNative(void) const;
 
     Class* getClassType(void);
-
+    llvm::Type* getLlvmType(llvm::LLVMContext& context) const;
 
     static const Type INTEGER;
 

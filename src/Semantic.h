@@ -75,6 +75,8 @@ struct qlow::sem::Class : public SemanticObject
     SymbolTable<Method> methods;
     ClassScope scope;
 
+    llvm::Type* llvmType;
+
     inline Class(qlow::ast::Class* astNode, GlobalScope& globalScope) :
         astNode{ astNode }, name{ astNode->name }, scope{ globalScope, this }
     {

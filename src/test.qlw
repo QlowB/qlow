@@ -1,8 +1,7 @@
 
 
 class Main
-    foo: Main
-
+    hoi: Fudi 
     fop: FF do
         var: Integer;
         var := 5;
@@ -27,7 +26,6 @@ class FF
 end
 
 class Fudi
-    hoi: Integer
 end
 
 class Integer               end
