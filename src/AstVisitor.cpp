@@ -8,20 +8,6 @@
 using namespace qlow;
 
 
-[[deprecated]]
-sem::Class* StructureVisitor::getType(const std::string& type, sem::Scope& scope)
-{
-    auto t = scope.getType(type);
-    if (t) {
-        if (auto* ct = dynamic_cast<sem::ClassType*>(t.value()); ct)
-            return ct->getClass();
-        else
-            return nullptr;
-    }
-    else
-        return nullptr;
-}
-
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::Class& ast, sem::Scope& scope)
 {
     //auto c = std::make_unique<sem::Class>();
@@ -44,11 +30,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
     f->name = ast.name;
     auto type = scope.getType(ast.type);
     if (type) {
-        if (auto* ct = dynamic_cast<sem::ClassType*>(type.value()); ct) {
-            f->type = ct->getClass();
-        }
-        else
-            throw "TODO implement";
+        f->type = type.value();
     }
     else {
         throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE,
@@ -62,18 +44,15 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefinition& ast, sem::Scope& scope)
 {
-    auto m = std::make_unique<sem::Method>(scope);
-    m->name = ast.name;
     auto returnType = scope.getType(ast.type);
-    if (returnType) {
-        m->returnType = returnType.value();
-    }
-    else {
+    if (!returnType) {
         throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE,
             ast.type,
             ast.pos
         );
     }
+    auto m = std::make_unique<sem::Method>(scope, returnType.value());
+    m->name = ast.name;
     m->astNode = &ast;
     return m;
     //throw "  std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefinition& ast, sem::Scope& scope) shouldn't be called";
@@ -86,7 +65,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::VariableDeclar
     v->name = ast.name;
     auto type = scope.getType(ast.type);
     if (type) {
-        v->type = type.value().typeClass;
+        v->type = type.value();
     }
     else {
         throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE,
@@ -115,7 +94,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
             if (!type)
                 throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE, nvs->type, nvs->pos);
 
-            auto var = std::make_unique<sem::Variable>(type.value().typeClass, nvs->name);
+            auto var = std::make_unique<sem::Variable>(type.value(), nvs->name);
             body->scope.putVariable(nvs->name, std::move(var));
             continue;
         }

@@ -86,7 +86,7 @@ struct qlow::sem::Class : public SemanticObject
 
 struct qlow::sem::Variable : public SemanticObject
 {
-    Class* type;
+    Type type;
     std::string name;
 
     /// if this is a local variable, this stores a reference to the llvm
@@ -94,7 +94,7 @@ struct qlow::sem::Variable : public SemanticObject
     llvm::AllocaInst* allocaInst;
     
     Variable(void) = default;
-    inline Variable(Class* type, std::string& name) :
+    inline Variable(Type type, std::string& name) :
         type{ type }, name{ name }, allocaInst { nullptr } {}
         
     virtual std::string toString(void) const override;
@@ -103,7 +103,7 @@ struct qlow::sem::Variable : public SemanticObject
 
 struct qlow::sem::Field : public Variable
 {
-    Class* type;
+    Type type;
     std::string name;
     
     virtual std::string toString(void) const override;
@@ -113,7 +113,7 @@ struct qlow::sem::Field : public Variable
 struct qlow::sem::Method : public SemanticObject
 {
     Class* containingType;
-    std::unique_ptr<Type> returnType;
+    Type returnType;
     std::string name;
     ast::MethodDefinition* astNode;
     std::unique_ptr<DoEndBlock> body;
@@ -122,8 +122,8 @@ struct qlow::sem::Method : public SemanticObject
 
     llvm::Function* llvmNode;
 
-    inline Method(Scope& parentScope) :
-        scope{ parentScope } {}
+    inline Method(Scope& parentScope, const Type& returnType) :
+        returnType{ returnType }, scope{ parentScope } {}
     
     virtual std::string toString(void) const override;
 };

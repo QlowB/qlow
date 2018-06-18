@@ -20,11 +20,17 @@ sem::Method* sem::GlobalScope::getMethod(const std::string& name)
 }
 
 
-std::optional<sem::Type*> sem::GlobalScope::getType(const std::string& name)
+std::optional<sem::Type> sem::GlobalScope::getType(const std::string& name)
 {
     auto t = classes.find(name);
     if (t != classes.end())
-        return std::make_optional(new ClassType{ t->second.get() });
+        return std::make_optional(Type(t->second.get()));
+    return std::nullopt;
+}
+
+
+std::optional<sem::Type> sem::GlobalScope::getReturnableType(void)
+{
     return std::nullopt;
 }
 
@@ -81,9 +87,15 @@ std::string sem::ClassScope::toString(void)
 }
 
 
-std::optional<sem::Type*> sem::ClassScope::getType(const std::string& name)
+std::optional<sem::Type> sem::ClassScope::getType(const std::string& name)
 {
     return parentScope.getType(name);
+}
+
+
+std::optional<sem::Type> sem::ClassScope::getReturnableType(void)
+{
+    return std::nullopt;
 }
 
 
@@ -109,15 +121,21 @@ sem::Variable* sem::LocalScope::getVariable(const std::string& name)
 }
 
 
-sem::Method * sem::LocalScope::getMethod(const std::string& name)
+sem::Method* sem::LocalScope::getMethod(const std::string& name)
 {
     return parentScope.getMethod(name);
 }
 
 
-std::optional<sem::Type*> sem::LocalScope::getType(const std::string& name)
+std::optional<sem::Type> sem::LocalScope::getType(const std::string& name)
 {
     return parentScope.getType(name);
+}
+
+
+std::optional<sem::Type> sem::LocalScope::getReturnableType(void)
+{
+    return returnType;
 }
 
 

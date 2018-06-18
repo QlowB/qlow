@@ -6,16 +6,14 @@ namespace qlow
     namespace sem
     {
         // forward declarations
-        class Class;
+        struct Class;
+        struct NativeType;
     }
 
 
     namespace sem
     {
         class Type;
-
-        class ClassType;
-        class NativeType;
     }
 }
 
@@ -23,31 +21,40 @@ namespace qlow
 class qlow::sem::Type
 {
 public:
-    virtual ~Type(void);
+    enum class Kind
+    {
+        NULL_TYPE,
+        INTEGER,
+        CLASS,
+    };
 
-    virtual bool isNative(void) const = 0;
-};
+private:
+    union Data
+    {
+        Class* classType;
+    };
 
+    Kind kind;
+    Data data;
 
-class qlow::sem::ClassType : public Type
-{
-    Class* classType;
 public:
 
-    inline ClassType(Class* classType) :
-        classType{ classType } {}
+    inline Type(void) :
+        kind{ Kind::NULL_TYPE }, data{ nullptr } {}
 
-    Class* getClass(void) { return classType; }
+    Type(Class* classType);
 
-    virtual bool isNative(void) const;
-};
+    inline Type(Kind kind) :
+        kind{ kind }, data{ nullptr } {}
+
+    bool isClassType(void) const;
+    bool isNative(void) const;
+
+    Class* getClassType(void);
 
 
-class qlow::sem::NativeType : public Type
-{
-public:
+    static const Type INTEGER;
 
-    virtual bool isNative(void) const;
 };
 
 

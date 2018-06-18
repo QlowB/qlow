@@ -36,7 +36,8 @@ public:
     virtual ~Scope(void);
     virtual Variable* getVariable(const std::string& name) = 0;
     virtual Method* getMethod(const std::string& name) = 0;
-    virtual std::optional<Type*> getType(const std::string& name) = 0;
+    virtual std::optional<Type> getType(const std::string& name) = 0;
+    virtual std::optional<Type> getReturnableType(void) = 0;
 
     virtual std::string toString(void) = 0;
 };
@@ -49,7 +50,8 @@ public:
 public:
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::optional<Type*> getType(const std::string& name);
+    virtual std::optional<Type> getType(const std::string& name);
+    virtual std::optional<Type> getReturnableType(void);
 
     virtual std::string toString(void);
 };
@@ -66,7 +68,8 @@ public:
     }
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::optional<Type*> getType(const std::string& name);
+    virtual std::optional<Type> getType(const std::string& name);
+    virtual std::optional<Type> getReturnableType(void);
     virtual std::string toString(void);
 };
 
@@ -75,17 +78,31 @@ class qlow::sem::LocalScope : public Scope
 {
     Scope& parentScope;
     SymbolTable<Variable> localVariables;
+    Type returnType;
 public:
+    inline LocalScope(Scope& parentScope, const Type& returnType) :
+        parentScope{ parentScope }, returnType{ returnType }
+    {}
+
     inline LocalScope(Scope& parentScope) :
         parentScope{ parentScope }
     {
+        std::optional<Type> returnable = parentScope.getReturnableType();
+        if (returnable) {
+            returnType = returnable.value();
+        }
+        else {
+            returnType = Type(Type::Kind::NULL_TYPE);
+        }
     }
+
     void putVariable(const std::string& name, std::unique_ptr<Variable> v);
     SymbolTable<Variable>& getLocals(void);
 
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::optional<Type*> getType(const std::string& name);
+    virtual std::optional<Type> getType(const std::string& name);
+    virtual std::optional<Type> getReturnableType(void);
     virtual std::string toString(void);
 };
 

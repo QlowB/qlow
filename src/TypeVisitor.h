@@ -15,7 +15,7 @@ namespace qlow
 
 class qlow::sem::TypeVisitor :
     public Visitor<
-        std::unique_ptr<qlow::sem::Type>,
+        qlow::sem::Type,
         const sem::SymbolTable<sem::Class>,
         
         sem::Expression,
@@ -27,11 +27,11 @@ class qlow::sem::TypeVisitor :
 {
     
 public:
-    std::unique_ptr<qlow::sem::Type> visit(sem::Expression& expr, const sem::SymbolTable<sem::Class>& classes) override;
-    std::unique_ptr<qlow::sem::Type> visit(sem::UnaryOperation& expr, const sem::SymbolTable<sem::Class>& classes) override;
-    std::unique_ptr<qlow::sem::Type> visit(sem::BinaryOperation& expr, const sem::SymbolTable<sem::Class>& classes) override;
-    std::unique_ptr<qlow::sem::Type> visit(sem::FeatureCallExpression& expr, const sem::SymbolTable<sem::Class>& classes) override;
-    std::unique_ptr<qlow::sem::Type> visit(sem::IntConst& expr, const sem::SymbolTable<sem::Class>& classes) override;
+    qlow::sem::Type visit(sem::Expression& expr, const sem::SymbolTable<sem::Class>& classes) override;
+    qlow::sem::Type visit(sem::UnaryOperation& expr, const sem::SymbolTable<sem::Class>& classes) override;
+    qlow::sem::Type visit(sem::BinaryOperation& expr, const sem::SymbolTable<sem::Class>& classes) override;
+    qlow::sem::Type visit(sem::FeatureCallExpression& expr, const sem::SymbolTable<sem::Class>& classes) override;
+    qlow::sem::Type visit(sem::IntConst& expr, const sem::SymbolTable<sem::Class>& classes) override;
 };
 
 #endif // QLOW_SEM_TYPEVISITOR_H

@@ -3,21 +3,32 @@
 
 using namespace qlow;
 
-sem::Type::~Type(void)
+sem::Type::Type(sem::Class* classType) :
+    kind{ Kind::CLASS }
 {
+    data.classType = classType;
+}
+
+bool sem::Type::isClassType(void) const
+{
+    return kind == Kind::CLASS;
 }
 
 
-bool sem::ClassType::isNative(void) const
+bool sem::Type::isNative(void) const
 {
-    return false;
+    return kind != Kind::CLASS;
 }
 
 
-bool sem::NativeType::isNative(void) const
+sem::Class* sem::Type::getClassType(void)
 {
-    return true;
+    if (kind != Kind::CLASS)
+        throw "internal error";
+    return data.classType;
 }
 
+
+const sem::Type sem::Type::INTEGER = sem::Type{ sem::Type::Kind::INTEGER };
 
 
