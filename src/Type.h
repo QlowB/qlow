@@ -48,6 +48,7 @@ public:
         kind{ Kind::NULL_TYPE }, data{ nullptr } {}
 
     Type(Class* classType);
+    Type(Kind kind, qlow::sem::Class* classType);
 
     inline Type(Kind kind) :
         kind{ kind }, data{ nullptr } {}
@@ -57,9 +58,12 @@ public:
 
     Class* getClassType(void);
     llvm::Type* getLlvmType(llvm::LLVMContext& context) const;
+    
+    bool operator == (const Type& other) const;
+    bool operator != (const Type& other) const;
 
+    static const Type NULL_TYPE;
     static const Type INTEGER;
-
 };
 
 

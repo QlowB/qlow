@@ -3,20 +3,18 @@
 
 
 #include "Semantic.h"
+#include "Scope.h"
 
 
 namespace qlow
 {
     namespace sem
     {
-
-        //extern Class Int32;
+        extern GlobalScope nativeGlobalScope;
+        extern Class Int32;
         //extern Class String;
     }
 }
-
-
-
 
 
 

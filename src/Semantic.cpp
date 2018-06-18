@@ -132,20 +132,21 @@ std::string Method::toString(void) const
 
 
 
-#define ACCEPT_DEFINITION(ClassName, Visitor, Arg) \
-llvm::Value* ClassName::accept(Visitor& v, Arg arg) \
+#define COMMA ,
+#define ACCEPT_DEFINITION(ClassName, Visitor, ReturnType, Arg) \
+ReturnType ClassName::accept(Visitor& v, Arg arg) \
 { \
     return v.visit(*this, arg); \
 }
 
-ACCEPT_DEFINITION(LocalVariableExpression, ExpressionVisitor, llvm::IRBuilder<>&)
-ACCEPT_DEFINITION(BinaryOperation, ExpressionVisitor, llvm::IRBuilder<>&)
-ACCEPT_DEFINITION(UnaryOperation, ExpressionVisitor, llvm::IRBuilder<>&)
-ACCEPT_DEFINITION(FeatureCallExpression, ExpressionVisitor, llvm::IRBuilder<>&)
-ACCEPT_DEFINITION(IntConst, ExpressionVisitor, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(LocalVariableExpression, ExpressionVisitor, std::pair<llvm::Value* COMMA Type>, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(BinaryOperation, ExpressionVisitor, std::pair<llvm::Value* COMMA Type>, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(UnaryOperation, ExpressionVisitor, std::pair<llvm::Value* COMMA Type>, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(FeatureCallExpression, ExpressionVisitor, std::pair<llvm::Value* COMMA Type>, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(IntConst, ExpressionVisitor, std::pair<llvm::Value* COMMA Type>, llvm::IRBuilder<>&)
 
-ACCEPT_DEFINITION(AssignmentStatement, StatementVisitor, qlow::gen::FunctionGenerator&) 
-ACCEPT_DEFINITION(FeatureCallStatement, StatementVisitor, qlow::gen::FunctionGenerator&) 
+ACCEPT_DEFINITION(AssignmentStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
+ACCEPT_DEFINITION(FeatureCallStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 
 std::string AssignmentStatement::toString(void) const
 {

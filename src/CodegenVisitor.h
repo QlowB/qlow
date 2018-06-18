@@ -8,6 +8,7 @@
 #include "Visitor.h"
 #include "Semantic.h"
 #include "Scope.h"
+#include "Type.h"
 
 
 #include <memory>
@@ -31,7 +32,7 @@ namespace qlow
 
 class qlow::ExpressionVisitor :
     public Visitor<
-        llvm::Value*,
+        std::pair<llvm::Value*, sem::Type>,
         llvm::IRBuilder<>,
 
         sem::LocalVariableExpression,
@@ -42,11 +43,11 @@ class qlow::ExpressionVisitor :
     >
 {
 public:
-    llvm::Value* visit(sem::LocalVariableExpression& node, llvm::IRBuilder<>&) override;
-    llvm::Value* visit(sem::BinaryOperation& node, llvm::IRBuilder<>&) override;
-    llvm::Value* visit(sem::UnaryOperation& node, llvm::IRBuilder<>&) override;
-    llvm::Value* visit(sem::FeatureCallExpression& node, llvm::IRBuilder<>&) override;
-    llvm::Value* visit(sem::IntConst& node, llvm::IRBuilder<>&) override;
+    std::pair<llvm::Value*, sem::Type> visit(sem::LocalVariableExpression& node, llvm::IRBuilder<>&) override;
+    std::pair<llvm::Value*, sem::Type> visit(sem::BinaryOperation& node, llvm::IRBuilder<>&) override;
+    std::pair<llvm::Value*, sem::Type> visit(sem::UnaryOperation& node, llvm::IRBuilder<>&) override;
+    std::pair<llvm::Value*, sem::Type> visit(sem::FeatureCallExpression& node, llvm::IRBuilder<>&) override;
+    std::pair<llvm::Value*, sem::Type> visit(sem::IntConst& node, llvm::IRBuilder<>&) override;
 };
 
 

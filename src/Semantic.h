@@ -75,10 +75,14 @@ struct qlow::sem::Class : public SemanticObject
     SymbolTable<Method> methods;
     ClassScope scope;
 
+    /// \brief generated during llvm code generation, not availab
     llvm::Type* llvmType;
 
     inline Class(qlow::ast::Class* astNode, GlobalScope& globalScope) :
-        astNode{ astNode }, name{ astNode->name }, scope{ globalScope, this }
+        astNode{ astNode },
+        name{ astNode->name },
+        scope{ globalScope, this },
+        llvmType{ nullptr }
     {
     }
     
@@ -157,7 +161,11 @@ struct qlow::sem::AssignmentStatement : public Statement
 };
 
 
-struct qlow::sem::Expression : public SemanticObject, public Visitable<llvm::Value*, llvm::IRBuilder<>, qlow::ExpressionVisitor>
+struct qlow::sem::Expression :
+    public SemanticObject,
+    public Visitable<std::pair<llvm::Value*, sem::Type>,
+                     llvm::IRBuilder<>,
+                     qlow::ExpressionVisitor>
 {
 };
 
@@ -172,7 +180,7 @@ struct qlow::sem::LocalVariableExpression : public Expression
 {
     Variable* var;
 
-    virtual llvm::Value* accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual std::pair<llvm::Value*, sem::Type> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     virtual std::string toString(void) const override;
 };
 
@@ -182,7 +190,7 @@ struct qlow::sem::BinaryOperation : public Operation
     std::unique_ptr<Expression> left;
     std::unique_ptr<Expression> right;
     
-    virtual llvm::Value* accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual std::pair<llvm::Value*, sem::Type> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     
     virtual std::string toString(void) const override;
 };
@@ -192,7 +200,7 @@ struct qlow::sem::UnaryOperation : public Operation
 {
     qlow::ast::UnaryOperation::Side side;
     std::unique_ptr<Expression> arg;
-    virtual llvm::Value* accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual std::pair<llvm::Value*, sem::Type> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     virtual std::string toString(void) const override;
 };
 
@@ -201,7 +209,7 @@ struct qlow::sem::FeatureCallExpression : public Expression
 {
     Method* callee;
     OwningList<Expression> arguments;
-    virtual llvm::Value* accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual std::pair<llvm::Value*, sem::Type> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     
     virtual std::string toString(void) const override;
 };
@@ -216,7 +224,7 @@ struct qlow::sem::IntConst : public Expression
     {
     }
     
-    virtual llvm::Value* accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual std::pair<llvm::Value*, sem::Type> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
 };
 
 
