@@ -1,5 +1,6 @@
 #include "Scope.h"
 #include "Semantic.h"
+#include "Builtin.h"
 
 using namespace qlow;
 
@@ -22,6 +23,11 @@ sem::Method* sem::GlobalScope::getMethod(const std::string& name)
 
 std::optional<sem::Type> sem::GlobalScope::getType(const std::string& name)
 {
+    auto native = NativeScope::getInstance().getType(name);
+    if (native) {
+        return native;
+    }
+    
     auto t = classes.find(name);
     if (t != classes.end())
         return std::make_optional(Type(t->second.get()));
@@ -44,6 +50,28 @@ std::string sem::GlobalScope::toString(void)
         ret += c->toString() + "\n";
     }
     return ret;
+}
+
+
+std::optional<sem::Type> sem::NativeScope::getType(const std::string& name)
+{
+    auto t = types.find(name);
+    if (t != types.end())
+        return *t->second;
+    return std::nullopt;
+}
+
+
+sem::NativeScope sem::NativeScope::instance = sem::generateNativeScope();
+sem::NativeScope& sem::NativeScope::getInstance(void)
+{
+    return instance;
+}
+
+
+std::string sem::NativeScope::toString(void)
+{
+    return "NativeScope";
 }
 
 

@@ -54,6 +54,21 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefiniti
     auto m = std::make_unique<sem::Method>(scope, returnType.value());
     m->name = ast.name;
     m->astNode = &ast;
+    
+    for (auto& arg : ast.arguments) {
+        auto var = arg->accept(*this, scope);
+        if (dynamic_cast<sem::Variable*>(var.get())) {
+            std::unique_ptr<sem::Variable> variable =
+                unique_dynamic_cast<sem::Variable>(std::move(var));
+            m->arguments.push_back(variable.get());
+            std::string varname = variable->name;
+            m->scope.putVariable(varname, std::move(variable));
+        }
+        else {
+            throw "internal error creating argument";
+        }
+    }
+    
     return m;
     //throw "  std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefinition& ast, sem::Scope& scope) shouldn't be called";
 }
@@ -77,12 +92,6 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::VariableDeclar
 }
 
 
-std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::ArgumentDeclaration& ast, sem::Scope& scope)
-{
-    throw "shouldn't be called";
-}
-
-
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& ast, sem::Scope& scope)
 {
     auto body = std::make_unique<sem::DoEndBlock>(scope);
@@ -101,7 +110,9 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
         
         auto v = statement->accept(*this, body->scope);
         if (dynamic_cast<sem::FeatureCallExpression*>(v.get()) != nullptr) {
-            body->statements.push_back(std::make_unique<sem::FeatureCallStatement>(unique_dynamic_cast<sem::FeatureCallExpression>(std::move(v))));
+            body->statements.push_back(
+                std::make_unique<sem::FeatureCallStatement>(
+                unique_dynamic_cast<sem::FeatureCallExpression>(std::move(v))));
         }
         else {
             body->statements.push_back(unique_dynamic_cast<sem::Statement>(std::move(v)));
@@ -137,6 +148,15 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
     }
     else if (method) {
         auto fce = std::make_unique<sem::FeatureCallExpression>();
+        for (auto& arg : ast.arguments) {
+            auto argument = arg->accept(*this, scope);
+            if (dynamic_cast<sem::Expression*>(argument.get())) {
+                fce->arguments.push_back(unique_dynamic_cast<sem::Expression>(std::move(argument)));
+            }
+            else {
+                throw "internal error: non-expression passed as function parameter";
+            }
+        }
         fce->callee = method;
         return fce;
     }
@@ -158,6 +178,14 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::AssignmentStat
 //    as->target = unique_dynamic_cast<sem::Expression>(visit(*ast.target, classes));
     as->value = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
     as->target = unique_dynamic_cast<sem::Expression>(ast.target->accept(*this, scope));
+    return as;
+}
+
+
+std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::ReturnStatement& ast, sem::Scope& scope)
+{
+    auto as = std::make_unique<sem::ReturnStatement>();
+    as->value = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
     return as;
 }
 

@@ -58,6 +58,7 @@ namespace qlow
 
         struct FeatureCall;
         struct AssignmentStatement;
+        struct ReturnStatement;
         struct NewVariableStatement;
         struct IntConst;
 
@@ -192,7 +193,7 @@ struct qlow::ast::ArgumentDeclaration :
     {
     }
 
-    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
+    //virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
@@ -249,6 +250,21 @@ struct qlow::ast::FeatureCall : public Expression, public Statement
         AstObject{ cp },
         Expression{ cp }, Statement{ cp },
         target(std::move(target)), name(name), arguments(std::move(arguments))
+    {
+    }
+
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
+};
+
+
+struct qlow::ast::ReturnStatement : public Statement
+{
+    std::unique_ptr<Expression> expr;
+
+    inline ReturnStatement(std::unique_ptr<Expression>&& expr, const CodePosition& cp) :
+        AstObject{ cp },
+        Statement{ cp },
+        expr{ std::move(expr) }
     {
     }
 

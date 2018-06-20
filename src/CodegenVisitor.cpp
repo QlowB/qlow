@@ -11,8 +11,14 @@ using namespace qlow;
 
 std::pair<llvm::Value*, sem::Type> ExpressionVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
 {
-    llvm::Value* val = builder.CreateLoad(lve.var->allocaInst);
-    return { val, lve.var->type };
+    assert(lve.var->allocaInst != nullptr);
+    if (dynamic_cast<llvm::AllocaInst*>(lve.var->allocaInst)) {
+        llvm::Value* val = builder.CreateLoad(lve.var->allocaInst);
+        return { val, lve.var->type };
+    }
+    else {
+        return { lve.var->allocaInst, lve.var->type };
+    }
 }
 
 
@@ -69,13 +75,25 @@ std::pair<llvm::Value*, sem::Type> ExpressionVisitor::visit(sem::FeatureCallExpr
 {
     using llvm::Value;
     std::vector<Value*> arguments;
-    for (auto& arg : call.arguments) {
+    if (call.arguments.size() != call.callee->arguments.size()) {
+        throw "wrong number of arguments";
+    }
+    for (size_t i = 0; i < call.arguments.size(); i++) {
+        // : call.arguments) {
+        auto& arg = call.arguments[i];
         auto [value, type] = arg->accept(*this, builder);
-        // TODO implement type check
+        
+        if (type != call.callee->arguments[i]->type) {
+            throw "argument type mismatch";
+        }
+        
         arguments.push_back(value);
     }
-    //return builder.CreateCall(nullptr, arguments);
-    return { nullptr, sem::Type::NULL_TYPE };
+    auto returnType = call.callee->returnType;
+    llvm::CallInst* callInst = builder.CreateCall(call.callee->llvmNode, arguments);
+    
+    return { callInst, returnType };
+    //return { nullptr, sem::Type::NULL_TYPE };
 }
 
 std::pair<llvm::Value*, sem::Type> ExpressionVisitor::visit(sem::IntConst& node, llvm::IRBuilder<>& builder)
@@ -93,8 +111,24 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
     llvm::IRBuilder<> builder(fg.getContext());
     builder.SetInsertPoint(fg.getCurrentBlock());
     auto [val, type] = assignment.value->accept(fg.expressionVisitor, builder);
-    //builder.CreateRet(val);
-    return llvm::ConstantFP::get(fg.getContext(), llvm::APFloat(5.0));
+    if (auto* targetVar =
+        dynamic_cast<sem::LocalVariableExpression*>(assignment.target.get()); targetVar) {
+        builder.CreateStore(val, targetVar->var->allocaInst);
+    }
+    else
+        throw "only local variables are assignable at the moment";
+    return llvm::ConstantFP::get(fg.getContext(), llvm::APFloat(5123.0));
+}
+
+
+llvm::Value* StatementVisitor::visit(sem::ReturnStatement& returnStatement,
+        qlow::gen::FunctionGenerator& fg)
+{
+    llvm::IRBuilder<> builder(fg.getContext());
+    builder.SetInsertPoint(fg.getCurrentBlock());
+    auto [val, type] = returnStatement.value->accept(fg.expressionVisitor, builder);
+    builder.CreateRet(val);
+    return val;
 }
 
 

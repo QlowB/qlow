@@ -57,7 +57,7 @@ int main(int argc, char** argv)
         auto mainmain = mainClass->methods.find("main");
         qlow::sem::Method* mainMethod = nullptr;
         if (mainmain == mainClass->methods.end()) {
-            throw "No main method found inside Main class!";
+            //throw "No main method found inside Main class!";
         }
         else {
             mainMethod = mainmain->second.get();

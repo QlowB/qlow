@@ -24,6 +24,7 @@ namespace qlow
 
         class Scope;
         class GlobalScope;
+        class NativeScope;
         class ClassScope;
         class LocalScope;
     }
@@ -55,6 +56,21 @@ public:
 
     virtual std::string toString(void);
 };
+
+
+class qlow::sem::NativeScope : public GlobalScope
+{
+    static NativeScope instance;
+public:
+    SymbolTable<Type> types;
+public:
+    virtual std::optional<Type> getType(const std::string& name);
+
+    virtual std::string toString(void);
+    
+    static NativeScope& getInstance(void);
+};
+
 
 
 class qlow::sem::ClassScope : public Scope

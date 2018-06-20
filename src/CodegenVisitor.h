@@ -57,11 +57,13 @@ class qlow::StatementVisitor :
         gen::FunctionGenerator,
 
         sem::AssignmentStatement,
+        sem::ReturnStatement,
         sem::FeatureCallStatement
     >
 {
 public:
     llvm::Value* visit(sem::AssignmentStatement& node, gen::FunctionGenerator&) override;
+    llvm::Value* visit(sem::ReturnStatement& node, gen::FunctionGenerator&) override;
     llvm::Value* visit(sem::FeatureCallStatement& node, gen::FunctionGenerator&) override;
 };
 

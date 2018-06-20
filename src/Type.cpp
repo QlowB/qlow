@@ -76,6 +76,6 @@ bool sem::Type::operator != (const Type& other) const
 
 
 const sem::Type sem::Type::NULL_TYPE = sem::Type{ sem::Type::Kind::NULL_TYPE };
-const sem::Type sem::Type::INTEGER = sem::Type{ sem::Type::Kind::INTEGER, &sem::Int32 };
+const sem::Type sem::Type::INTEGER = sem::Type{ sem::Type::Kind::INTEGER, &sem::int32 };
 
 

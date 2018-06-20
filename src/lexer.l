@@ -66,15 +66,15 @@ extern QLOW_PARSER_LTYPE qlow_parser_lloc;
 <COMMENT>\n             ;
 <COMMENT>.              ; // inside comment, ignore everything
 
-<LINE_COMMENT>\n        yy_push_state(INITIAL);
+<LINE_COMMENT>\n        yy_pop_state(); //yy_push_state(INITIAL);
 <LINE_COMMENT>.         ; // inside comment, ignore everything
 
 <STRING>"\""            yy_pop_state();
 <STRING>[^\"^]*         printf("%s\n", std::string(yytext, yyleng).c_str());
 
-<INITIAL>"/*"           yy_push_state(COMMENT); commentDepth = 1;
-<INITIAL>"//"           yy_push_state(LINE_COMMENT);
-<INITIAL>"\""           yy_push_state(STRING);
+"/*"                    yy_push_state(COMMENT); commentDepth = 1;
+"//"                    yy_push_state(LINE_COMMENT);
+"\""                    yy_push_state(STRING);
 
 
 [\t ]                   ; // Space or tab ignored
@@ -86,6 +86,7 @@ extern QLOW_PARSER_LTYPE qlow_parser_lloc;
 <METHOD>"end"           yy_pop_state(); return SET_TOKEN(END);
 <INITIAL>"end"          return SET_TOKEN(END);
 "if"                    return SET_TOKEN(IF);
+"return"                return SET_TOKEN(RETURN);
 
 ":"                     return SET_TOKEN(COLON);
 ";"                     return SET_TOKEN(SEMICOLON);
@@ -108,29 +109,3 @@ extern QLOW_PARSER_LTYPE qlow_parser_lloc;
 .                       printf("Unexpected symbol %s.\n", std::string(yytext, yyleng).c_str()); yyterminate();
 
 %%
-
-
-/*
-
-[\t ]                   ; // Space or tab ignored
-\/\*[.\n]*\*\/          ; // comment
-\n                      return SET_TOKEN(NEW_LINE);
-
-":"                     return SET_TOKEN(COLON);
-","                     return SET_TOKEN(COMMA);
-":="                    return SET_TOKEN(ASSIGN);
-"."                     return SET_TOKEN(DOT);
-
-"+"		        return SET_TOKEN(PLUS);
-"-"		        return SET_TOKEN(MINUS);
-"*"		        return SET_TOKEN(ASTERISK);
-"/"		        return SET_TOKEN(SLASH);
-
-"("                     return SET_TOKEN(ROUND_LEFT);
-")"                     return SET_TOKEN(ROUND_RIGHT);
-
-"class"                 return SET_TOKEN(CLASS);
-"do"                    return SET_TOKEN(DO);
-"end"                   return SET_TOKEN(END);
-"if"                    return SET_TOKEN(IF);
-*/

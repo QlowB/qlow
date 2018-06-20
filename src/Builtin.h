@@ -10,9 +10,8 @@ namespace qlow
 {
     namespace sem
     {
-        extern GlobalScope nativeGlobalScope;
-        extern Class Int32;
-        //extern Class String;
+        extern Class int32;
+        NativeScope generateNativeScope(void);
     }
 }
 

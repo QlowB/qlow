@@ -1,16 +1,24 @@
 #include "Builtin.h"
+#include "Scope.h"
 
 using namespace qlow;
 
-sem::Class initInt32(void)
+sem::Class sem::int32 = sem::Class{ "Integer", sem::NativeScope::getInstance() };
+
+sem::NativeScope qlow::sem::generateNativeScope(void)
 {
-    sem::Class c{ nullptr, sem::nativeGlobalScope };
-    return c;
+    using sem::Class;
+    
+    sem::NativeScope scope;
+    
+    std::unique_ptr<sem::Type> int32 =
+        std::make_unique<sem::Type>(sem::Type::Kind::INTEGER, &sem::int32);
+    
+    scope.types.insert({"Integer", std::move(int32)});
+    return scope;
 }
 
 
-sem::GlobalScope sem::nativeGlobalScope{};
-sem::Class sem::Int32 = initInt32();
 
 
 

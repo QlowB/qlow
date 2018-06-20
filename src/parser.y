@@ -74,6 +74,7 @@ std::unique_ptr<ClassList> parsedClasses;
 
     qlow::ast::FeatureCall* featureCall;
     qlow::ast::AssignmentStatement* assignmentStatement;
+    qlow::ast::ReturnStatement* returnStatement;
     qlow::ast::NewVariableStatement* newVariableStatement;
 
     qlow::ast::UnaryOperation* unaryOperation;
@@ -87,7 +88,7 @@ std::unique_ptr<ClassList> parsedClasses;
 
 %token <string> IDENTIFIER
 %token <string> INT_LITERAL
-%token <token> CLASS DO END IF
+%token <token> CLASS DO END IF RETURN
 %token <token> NEW_LINE
 %token <token> SEMICOLON COLON COMMA DOT ASSIGN OPERATOR
 %token <token> ROUND_LEFT ROUND_RIGHT
@@ -106,6 +107,7 @@ std::unique_ptr<ClassList> parsedClasses;
 %type <op> operator
 %type <featureCall> featureCall
 %type <assignmentStatement> assignmentStatement 
+%type <returnStatement> returnStatement 
 %type <newVariableStatement> newVariableStatement
 %type <unaryOperation> unaryOperation
 %type <binaryOperation> binaryOperation
@@ -218,7 +220,7 @@ statements:
         $$ = new std::vector<std::unique_ptr<Statement>>();
     }
     |
-    statements statement pnl {
+    statements statement {
         $$ = $1;
         $$->push_back(std::unique_ptr<Statement>($2));
     };
@@ -243,14 +245,18 @@ statement:
         $$ = $1;
     }
     |
+    returnStatement statementEnd {
+        $$ = $1;
+    }
+    |
     newVariableStatement statementEnd {
         $$ = $1;
     };
     
 statementEnd:
-    SEMICOLON {}
+    SEMICOLON pnl {}
     |
-    NEW_LINE {}
+    NEW_LINE pnl {}
     ;
 
 
@@ -359,6 +365,10 @@ assignmentStatement:
         $$ = new AssignmentStatement(std::unique_ptr<Expression>($1), std::unique_ptr<Expression>($3), @$);
     };
 
+returnStatement:
+    RETURN expression {
+        $$ = new ReturnStatement(std::unique_ptr<Expression>($2), @$);
+    };
 
 newVariableStatement:
     IDENTIFIER COLON IDENTIFIER {

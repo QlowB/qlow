@@ -63,12 +63,12 @@ class qlow::StructureVisitor :
         ast::FieldDeclaration,
         ast::MethodDefinition,
         ast::VariableDeclaration,
-        ast::ArgumentDeclaration,
         ast::DoEndBlock,
         ast::Statement,
         ast::Expression,
         ast::FeatureCall,
         ast::AssignmentStatement,
+        ast::ReturnStatement,
         ast::NewVariableStatement,
         ast::IntConst,
         ast::UnaryOperation,
@@ -83,12 +83,12 @@ public:
     ReturnType visit(ast::FieldDeclaration& ast, sem::Scope& scope) override;
     ReturnType visit(ast::MethodDefinition& ast, sem::Scope& scope) override;
     ReturnType visit(ast::VariableDeclaration& ast, sem::Scope& scope) override;
-    ReturnType visit(ast::ArgumentDeclaration& ast, sem::Scope& scope) override;
     ReturnType visit(ast::DoEndBlock& ast, sem::Scope& scope) override;
     ReturnType visit(ast::Statement& ast, sem::Scope& scope) override;
     ReturnType visit(ast::Expression& ast, sem::Scope& scope) override;
     ReturnType visit(ast::FeatureCall& ast, sem::Scope& scope) override;
     ReturnType visit(ast::AssignmentStatement& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::ReturnStatement& ast, sem::Scope& scope) override;
     ReturnType visit(ast::NewVariableStatement& ast, sem::Scope& scope) override;
     ReturnType visit(ast::IntConst& ast, sem::Scope& scope) override;
     ReturnType visit(ast::UnaryOperation& ast, sem::Scope& scope) override;

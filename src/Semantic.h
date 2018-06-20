@@ -33,6 +33,7 @@ namespace qlow
 
         struct FeatureCallStatement;
         struct AssignmentStatement;
+        struct ReturnStatement;
         
         struct LocalVariableExpression;
 
@@ -85,6 +86,14 @@ struct qlow::sem::Class : public SemanticObject
         llvmType{ nullptr }
     {
     }
+
+    inline Class(const std::string& nativeName, GlobalScope& globalScope) :
+        astNode{ nullptr },
+        name{ nativeName },
+        scope{ globalScope, this },
+        llvmType{ nullptr }
+    {
+    }
     
     virtual std::string toString(void) const override;
 };
@@ -97,7 +106,7 @@ struct qlow::sem::Variable : public SemanticObject
 
     /// if this is a local variable, this stores a reference to the llvm
     /// instance of this variable.
-    llvm::AllocaInst* allocaInst;
+    llvm::Value* allocaInst;
     
     Variable(void) = default;
     inline Variable(Type type, std::string& name) :
@@ -120,6 +129,7 @@ struct qlow::sem::Method : public SemanticObject
 {
     Class* containingType;
     Type returnType;
+    std::vector<Variable*> arguments;
     std::string name;
     ast::MethodDefinition* astNode;
     std::unique_ptr<DoEndBlock> body;
@@ -154,6 +164,15 @@ struct qlow::sem::Statement : public SemanticObject, public Visitable<llvm::Valu
 struct qlow::sem::AssignmentStatement : public Statement 
 {
     std::unique_ptr<Expression> target;
+    std::unique_ptr<Expression> value;
+
+    virtual std::string toString(void) const override;
+    virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) override;
+};
+
+
+struct qlow::sem::ReturnStatement : public Statement 
+{
     std::unique_ptr<Expression> value;
 
     virtual std::string toString(void) const override;

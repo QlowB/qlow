@@ -3,32 +3,55 @@
 class Main
     hoi: Fudi 
     fop: FF do
-        var: Integer;
+        var: Integer
+
+        var := 5
+        var := 10 + 4 * 6 + 1
+
+        /*
+        // initialize variable
         var := 5;
         var := 102 + var * var;
         var := 102 + var * var;
 
+        // more additions
         var := 102 + var * var;
         var := 102 + var * var;
         var := 102 + var * var;
         var := 102 + var * var;
+        */
     end
 
-    main: Integer do
+    mainn: Integer do
         fop
+        return 12
     end
 end
+
 
 class FF
+    field1: Integer
+    field2: Integer
+
+    calc: Integer do
+        return 100000
+    end
+
+    verdoppel(x: Integer): Integer do
+        return x + x
+    end
+
     sum_func: Integer do
-        variable: Integer;
+        variable: Integer
+        variable2: FF
+        variable := verdoppel(51)
+        return variable2.field1
     end
 end
+
 
 class Fudi
 end
-
-class Integer               end
 
 
 

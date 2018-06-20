@@ -53,43 +53,44 @@ std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>&
         cl->llvmType = st;
     }
     
-    for (auto& [name, cl] : classes){
+    // create all llvm functions
+    for (auto& [name, cl] : classes) {
         for (auto& [name, method] : cl->methods) {
-            std::vector<Type*> doubles(1, Type::getDoubleTy(context));
+            std::vector<Type*> argumentTypes;
+            Type* returnType = method->returnType.getLlvmType(context);
+            for (auto& arg : method->arguments) {
+                Type* argumentType = arg->type.getLlvmType(context);
+                argumentTypes.push_back(argumentType);
+            }
+            
+            FunctionType* funcType = FunctionType::get(
+                returnType, argumentTypes, false);
 #ifdef DEBUGGING
             printf("looking up llvm type of %s\n", name.c_str());
 #endif 
-            llvm::Type* returnType = method->returnType.getLlvmType(context);
             if (returnType == nullptr)
                 throw "invalid return type";
-            FunctionType* funcType = FunctionType::get(returnType, doubles, false);
             Function* func = Function::Create(funcType, Function::ExternalLinkage, method->name, module.get());
             method->llvmNode = func;
+            size_t index = 0;
+            for (auto& arg : func->args()) {
+                method->arguments[index]->allocaInst = &arg;
+#ifdef DEBUGGING
+                printf("allocaInst of arg '%s': %p\n", method->arguments[index]->name.c_str(), method->arguments[index]->allocaInst);
+#endif 
+                index++;
+            }
         }
     }
 
     for (auto& [name, cl] : classes){
         for (auto& [name, method] : cl->methods) {
-
             FunctionGenerator fg(*method, module.get());
-            fg.generate();
-
-            /*
-            FunctionType* funcType = FunctionType::get(Type::getDoubleTy(context), doubles, false);
-            Function* func = Function::Create(funcType, Function::ExternalLinkage, "qlow_function", module.get());
-            BasicBlock* bb = BasicBlock::Create(context, "entry", func);
-            IRBuilder<> builder(context);
-            builder.SetInsertPoint(bb);
-
-            Function::arg_iterator args = func->arg_begin();
-
-            Argument* arg = &(*args);
-            
-            Value* val = llvm::ConstantFP::get(context, llvm::APFloat(5.0));
-            Value* val2 = llvm::ConstantFP::get(context, llvm::APFloat(1.0));
-            Value* result = builder.CreateFAdd(arg, val2, "add_constants");
-            builder.CreateRet(result);
-            */
+            Function* f = fg.generate();
+            llvm::verifyFunction(*f, &llvm::errs());
+#ifdef DEBUGGING
+            printf("verified function: %s\n", method->name.c_str());
+#endif
         }
     }
     return module;
@@ -145,49 +146,6 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
     dest.close();
 
     return;
-
-    //pm.add(createPrintModulePass(&outs()));
-    //pm.run(module);
-
-
-
-
-    /*
-    auto RM = llvm::Optional<llvm::Reloc::Model>();
-    auto targetMachine =
-        target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
-
-        */
-/*  TargetOptions opt;
-  auto RM = Optional<Reloc::Model>();
-  auto TheTargetMachine =
-      Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
-
-  TheModule->setDataLayout(TheTargetMachine->createDataLayout());
-
-  auto Filename = "output.o";
-  std::error_code EC;
-  raw_fd_ostream dest(Filename, EC, sys::fs::F_None);
-
-  if (EC) {
-    errs() << "Could not open file: " << EC.message();
-    return 1;
-  }
-
-  legacy::PassManager pass;
-  auto FileType = TargetMachine::CGFT_ObjectFile;
-
-  if (TheTargetMachine->addPassesToEmitFile(pass, dest, llvm::LLVMTargetMachine::CGFT_ObjectFile, FileType)) {
-    errs() << "TheTargetMachine can't emit a file of this type";
-    return 1;
-  }
-
-  pass.run(*TheModule);
-  dest.flush();
-
-  outs() << "Wrote " << Filename << "\n";
-
-  return 0;*/
 }
 
 } // namespace gen
@@ -204,9 +162,6 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     using llvm::Value;
     using llvm::IRBuilder;
 
-    std::vector<Type*> doubles(1, Type::getDoubleTy(context));
-    FunctionType* funcType = FunctionType::get(Type::getDoubleTy(context), doubles, false);
-    //Function* func = Function::Create(funcType, Function::ExternalLinkage, method.name, module);
     Function* func = module->getFunction(method.name);
 
     if (func == nullptr) {
@@ -214,23 +169,13 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     }
 
     BasicBlock* bb = BasicBlock::Create(context, "entry", func);
-    
-    /*Function::arg_iterator args = func->arg_begin();
-
-    Argument* arg = &(*args);
-    
-    Value* val = llvm::ConstantFP::get(context, llvm::APFloat(5.0));
-    Value* val2 = llvm::ConstantFP::get(context, llvm::APFloat(1.0));
-    Value* result = builder.CreateFAdd(arg, val2, "add_constants");
-    builder.CreateRet(result);
-    */
 
     pushBlock(bb);
 
     IRBuilder<> builder(context);
     builder.SetInsertPoint(bb);
     for (auto& [name, var] : method.body->scope.getLocals()) {
-        llvm::AllocaInst* v = builder.CreateAlloca(Type::getDoubleTy(context));
+        llvm::AllocaInst* v = builder.CreateAlloca(var->type.getLlvmType(context));
         var->allocaInst = v;
     }
     

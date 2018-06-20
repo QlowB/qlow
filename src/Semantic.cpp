@@ -146,6 +146,7 @@ ACCEPT_DEFINITION(FeatureCallExpression, ExpressionVisitor, std::pair<llvm::Valu
 ACCEPT_DEFINITION(IntConst, ExpressionVisitor, std::pair<llvm::Value* COMMA Type>, llvm::IRBuilder<>&)
 
 ACCEPT_DEFINITION(AssignmentStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
+ACCEPT_DEFINITION(ReturnStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 ACCEPT_DEFINITION(FeatureCallStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 
 std::string AssignmentStatement::toString(void) const
@@ -155,10 +156,17 @@ std::string AssignmentStatement::toString(void) const
 }
 
 
+std::string ReturnStatement::toString(void) const
+{
+    return "ReturnStatement[" + this->value->toString() + "]";
+}
+
+
 std::string LocalVariableExpression::toString(void) const
 {
     return "LocalVariableExpression[" + var->name + "]";
 }
+
 
 std::string BinaryOperation::toString(void) const
 {
