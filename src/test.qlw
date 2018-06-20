@@ -45,7 +45,7 @@ class FF
         variable: Integer
         variable2: FF
         variable := verdoppel(51)
-        return variable2.field1
+        return variable
     end
 end
 

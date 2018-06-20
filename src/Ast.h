@@ -53,6 +53,8 @@ namespace qlow
 
         struct DoEndBlock;
 
+        struct IfElseBlock;
+
         struct Statement;
         struct Expression;
 
@@ -204,6 +206,24 @@ struct qlow::ast::DoEndBlock : public AstObject
     inline DoEndBlock(OwningList<Statement>&& statements, const CodePosition& cp) :
         AstObject{ cp },
         statements(std::move(statements))
+    {
+    }
+
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
+};
+
+
+struct qlow::ast::IfElseBlock : public AstObject
+{
+    std::unique_ptr<DoEndBlock> ifBlock;
+    std::unique_ptr<DoEndBlock> elseBlock;
+    
+    inline IfElseBlock(std::unique_ptr<DoEndBlock> ifBlock,
+                       std::unique_ptr<DoEndBlock> elseBlock,
+                       const CodePosition& cp) :
+        AstObject{ cp },
+        ifBlock{ std::move(ifBlock) },
+        elseBlock{ std::move(elseBlock) }
     {
     }
 

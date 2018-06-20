@@ -12,7 +12,7 @@ using namespace qlow;
 std::pair<llvm::Value*, sem::Type> ExpressionVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
 {
     assert(lve.var->allocaInst != nullptr);
-    if (dynamic_cast<llvm::AllocaInst*>(lve.var->allocaInst)) {
+    if (llvm::dyn_cast<llvm::AllocaInst>(lve.var->allocaInst)) {
         llvm::Value* val = builder.CreateLoad(lve.var->allocaInst);
         return { val, lve.var->type };
     }
