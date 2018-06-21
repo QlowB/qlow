@@ -86,6 +86,7 @@ extern QLOW_PARSER_LTYPE qlow_parser_lloc;
 <METHOD>"end"           yy_pop_state(); return SET_TOKEN(END);
 <INITIAL>"end"          return SET_TOKEN(END);
 "if"                    return SET_TOKEN(IF);
+"else"                  return SET_TOKEN(ELSE);
 "return"                return SET_TOKEN(RETURN);
 
 ":"                     return SET_TOKEN(COLON);

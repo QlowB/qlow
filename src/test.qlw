@@ -43,9 +43,13 @@ class FF
 
     sum_func: Integer do
         variable: Integer
-        variable2: FF
         variable := verdoppel(51)
-        return variable
+        if variable do
+            variable := 1
+        else
+            variable := 2
+        end
+        return variable + 2
     end
 end
 

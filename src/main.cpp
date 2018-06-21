@@ -62,13 +62,21 @@ int main(int argc, char** argv)
         else {
             mainMethod = mainmain->second.get();
         }
+        
+        std::cout << "starting code generation!" << std::endl;
 
         auto mod = qlow::gen::generateModule(semClasses->classes);
         qlow::gen::generateObjectFile("obj.o", std::move(mod));
+        
+        std::cout << "object exported!" << std::endl;
     }
     catch (qlow::sem::SemanticException& se)
     {
         std::cerr << se.getMessage() << std::endl;
+    }
+    catch (const std::string& err)
+    {
+        std::cerr << err << std::endl;
     }
     catch (const char* err)
     {
@@ -76,6 +84,7 @@ int main(int argc, char** argv)
     }
     catch (...)
     {
+        std::cerr << "an unknown error occurred" << std::endl;
     }
     
     if (::qlow_parser_in != stdin)

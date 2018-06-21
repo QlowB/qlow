@@ -51,11 +51,11 @@ namespace qlow
         struct VariableDeclaration;
         struct ArgumentDeclaration;
 
+        struct Statement;
+        
         struct DoEndBlock;
-
         struct IfElseBlock;
 
-        struct Statement;
         struct Expression;
 
         struct FeatureCall;
@@ -199,12 +199,24 @@ struct qlow::ast::ArgumentDeclaration :
 };
 
 
-struct qlow::ast::DoEndBlock : public AstObject
+struct qlow::ast::Statement : public virtual AstObject
+{
+    inline Statement(const CodePosition& cp) :
+        AstObject{ cp } {}
+        
+    virtual ~Statement(void);
+
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
+};
+
+
+struct qlow::ast::DoEndBlock : public Statement 
 {
     OwningList<Statement> statements;
     
     inline DoEndBlock(OwningList<Statement>&& statements, const CodePosition& cp) :
         AstObject{ cp },
+        Statement{ cp },
         statements(std::move(statements))
     {
     }
@@ -213,30 +225,23 @@ struct qlow::ast::DoEndBlock : public AstObject
 };
 
 
-struct qlow::ast::IfElseBlock : public AstObject
+struct qlow::ast::IfElseBlock : public Statement
 {
+    std::unique_ptr<Expression> condition;
     std::unique_ptr<DoEndBlock> ifBlock;
     std::unique_ptr<DoEndBlock> elseBlock;
     
-    inline IfElseBlock(std::unique_ptr<DoEndBlock> ifBlock,
+    inline IfElseBlock(std::unique_ptr<Expression> condition,
+                       std::unique_ptr<DoEndBlock> ifBlock,
                        std::unique_ptr<DoEndBlock> elseBlock,
                        const CodePosition& cp) :
         AstObject{ cp },
+        Statement{ cp },
+        condition{ std::move(condition) },
         ifBlock{ std::move(ifBlock) },
         elseBlock{ std::move(elseBlock) }
     {
     }
-
-    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
-};
-
-
-struct qlow::ast::Statement : public virtual AstObject
-{
-    inline Statement(const CodePosition& cp) :
-        AstObject{ cp } {}
-        
-    virtual ~Statement(void);
 
     virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };

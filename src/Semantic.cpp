@@ -146,6 +146,8 @@ ACCEPT_DEFINITION(FeatureCallExpression, ExpressionVisitor, std::pair<llvm::Valu
 ACCEPT_DEFINITION(IntConst, ExpressionVisitor, std::pair<llvm::Value* COMMA Type>, llvm::IRBuilder<>&)
 
 ACCEPT_DEFINITION(AssignmentStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
+ACCEPT_DEFINITION(DoEndBlock, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
+ACCEPT_DEFINITION(IfElseBlock, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 ACCEPT_DEFINITION(ReturnStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 ACCEPT_DEFINITION(FeatureCallStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 

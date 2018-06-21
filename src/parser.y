@@ -66,7 +66,7 @@ std::unique_ptr<ClassList> parsedClasses;
     std::vector<std::unique_ptr<qlow::ast::Expression>>* expressionList;
     qlow::ast::ArgumentDeclaration* argumentDeclaration;
     qlow::ast::DoEndBlock* doEndBlock;    
-    qlow::ast::ifElseBlock* ifElseBlock;    
+    qlow::ast::IfElseBlock* ifElseBlock;    
     qlow::ast::Statement* statement;
     qlow::ast::Expression* expression;
     qlow::ast::Operation::Operator op;
@@ -219,12 +219,19 @@ doEndBlock:
     
 ifElseBlock:
     IF expression doEndBlock {
-        $$ = new IfElseBlock($3, new DoEndBlock(@$), @$);
-        $2 = nullptr;
+        $$ = new IfElseBlock(std::unique_ptr<Expression>($2),
+                             std::unique_ptr<DoEndBlock>($3),
+                             std::unique_ptr<DoEndBlock>(nullptr), @$);
+        $2 = nullptr; $3 = nullptr;
     }
     |
-    IF DO statements ELSE statements END {
-    
+    IF expression DO statements ELSE statements END {
+        $$ = new IfElseBlock(std::unique_ptr<Expression>($2),
+                             std::make_unique<DoEndBlock>(std::move(*$4), @$),
+                             std::make_unique<DoEndBlock>(std::move(*$6), @$), @$);
+        $2 = nullptr;
+        delete $4;
+        delete $6;
     };
 
 
@@ -264,7 +271,12 @@ statement:
     |
     newVariableStatement statementEnd {
         $$ = $1;
-    };
+    }
+    |
+    ifElseBlock statementEnd {
+        $$ = $1;
+    }
+    ;
     
 statementEnd:
     SEMICOLON pnl {}

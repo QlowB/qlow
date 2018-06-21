@@ -92,6 +92,14 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::VariableDeclar
 }
 
 
+std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::Statement& ast, sem::Scope& scope)
+{
+    printf("at: %d:%d to %d:%d\n", ast.pos.first_line, ast.pos.first_column, ast.pos.last_line, ast.pos.last_column);
+    printf("type: %s\n", typeid(ast).name());
+    throw "visit(Statement) shouldn't be called";
+}
+
+
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& ast, sem::Scope& scope)
 {
     auto body = std::make_unique<sem::DoEndBlock>(scope);
@@ -122,11 +130,9 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
 }
 
 
-std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::Statement& ast, sem::Scope& scope)
+std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::IfElseBlock& ast, sem::Scope& scope)
 {
-    printf("at: %d:%d to %d:%d\n", ast.pos.first_line, ast.pos.first_column, ast.pos.last_line, ast.pos.last_column);
-    printf("type: %s\n", typeid(ast).name());
-    throw "visit(Statement) shouldn't be called";
+    
 }
 
 

@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <sstream>
+//#include <typeinfo>
 
 
 namespace qlow
@@ -27,7 +28,8 @@ namespace qlow
             return std::unique_ptr<T> (casted);
         else {
             delete released;
-            throw "invalid unique_dynamic_cast";
+            throw "failed unique dynamic cast";
+            //throw std::string("invalid unique_dynamic_cast to ") + typeid(T).name();
         }
     }
 

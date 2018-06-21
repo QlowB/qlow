@@ -27,10 +27,11 @@ namespace qlow
         struct Field;
         struct Method;
 
-        struct DoEndBlock;
         struct Statement;
         struct Expression;
 
+        struct DoEndBlock;
+        struct IfElseBlock;
         struct FeatureCallStatement;
         struct AssignmentStatement;
         struct ReturnStatement;
@@ -145,19 +146,39 @@ struct qlow::sem::Method : public SemanticObject
 };
 
 
-struct qlow::sem::DoEndBlock : public SemanticObject
+struct qlow::sem::Statement : public SemanticObject, public Visitable<llvm::Value*, gen::FunctionGenerator, qlow::StatementVisitor>
+{
+    virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) = 0;
+};
+
+
+struct qlow::sem::DoEndBlock : public Statement
 {
     LocalScope scope;
     OwningList<Statement> statements;
 
     inline DoEndBlock(Scope& parentScope) :
         scope{ parentScope } {}
+    
+    virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) override;
 };
 
 
-struct qlow::sem::Statement : public SemanticObject, public Visitable<llvm::Value*, gen::FunctionGenerator, qlow::StatementVisitor>
+struct qlow::sem::IfElseBlock : public Statement
 {
-    virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) = 0;
+    std::unique_ptr<Expression> condition;
+    std::unique_ptr<DoEndBlock> ifBlock;
+    std::unique_ptr<DoEndBlock> elseBlock;
+    inline IfElseBlock(std::unique_ptr<Expression> condition,
+                       std::unique_ptr<DoEndBlock> ifBlock,
+                       std::unique_ptr<DoEndBlock> elseBlock) :
+        condition{ std::move(condition) },
+        ifBlock{ std::move(ifBlock) },
+        elseBlock{ std::move(elseBlock) }
+    {
+    }
+    
+    virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) override;
 };
 
 

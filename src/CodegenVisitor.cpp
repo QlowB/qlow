@@ -105,6 +105,48 @@ std::pair<llvm::Value*, sem::Type> ExpressionVisitor::visit(sem::IntConst& node,
 }
 
 
+llvm::Value* StatementVisitor::visit(sem::DoEndBlock& assignment,
+        qlow::gen::FunctionGenerator& fg)
+{
+    for (auto& statement : assignment.statements) {
+        statement->accept(*this, fg);
+    }
+    return nullptr;
+}
+
+
+llvm::Value* StatementVisitor::visit(sem::IfElseBlock& ifElseBlock,
+        qlow::gen::FunctionGenerator& fg)
+{
+    using llvm::Value;
+    using llvm::BasicBlock;
+    
+    llvm::IRBuilder<> builder(fg.getContext());
+    builder.SetInsertPoint(fg.getCurrentBlock());
+    auto [condition, condType] = ifElseBlock.condition->accept(fg.expressionVisitor, builder);
+    
+    llvm::Function* function = fg.getCurrentBlock()->getParent();
+    
+    BasicBlock* thenB = BasicBlock::Create(fg.getContext(), "then", function);
+    BasicBlock* elseB = BasicBlock::Create(fg.getContext(), "else");
+    BasicBlock* merge = BasicBlock::Create(fg.getContext(), "merge");
+    
+    fg.pushBlock(thenB);
+    ifElseBlock.ifBlock->accept(*this, fg);
+    builder.SetInsertPoint(thenB);
+    builder.CreateBr(merge);
+    fg.popBlock();
+    fg.pushBlock(elseB);
+    ifElseBlock.elseBlock->accept(*this, fg);
+    builder.SetInsertPoint(elseB);
+    builder.CreateBr(merge);
+    fg.popBlock();
+    
+    builder.CreateCondBr(condition, thenB, elseB); 
+    fg.pushBlock(merge);
+}
+
+
 llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
         qlow::gen::FunctionGenerator& fg)
 {

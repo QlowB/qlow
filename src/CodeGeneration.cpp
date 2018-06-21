@@ -33,6 +33,10 @@ std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>&
     using llvm::BasicBlock;
     using llvm::Value;
     using llvm::IRBuilder;
+    
+#ifdef DEBUGGING
+        printf("creating llvm module\n"); 
+#endif 
 
     std::unique_ptr<Module> module = llvm::make_unique<Module>("qlow_module", context);
 
@@ -161,6 +165,10 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     using llvm::BasicBlock;
     using llvm::Value;
     using llvm::IRBuilder;
+    
+#ifdef DEBUGGING
+    printf("generate function %s\n", method.name.c_str()); 
+#endif
 
     Function* func = module->getFunction(method.name);
 
@@ -175,6 +183,8 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     IRBuilder<> builder(context);
     builder.SetInsertPoint(bb);
     for (auto& [name, var] : method.body->scope.getLocals()) {
+        if (var.get() == nullptr)
+            throw "wtf null variable";
         llvm::AllocaInst* v = builder.CreateAlloca(var->type.getLlvmType(context));
         var->allocaInst = v;
     }
