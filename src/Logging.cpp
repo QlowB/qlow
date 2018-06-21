@@ -1,39 +1,76 @@
 #include "Logging.h"
 
-using qlow::Out;
+#include "Ast.h"
+
+using qlow::Logger;
 
 
-Out Out::stdout(std::cout);
+Logger Logger::instance(std::cout);
 
 
-Out::Out(std::ostream& target) :
-    std::ostream(this),
-    target(target),
-    indentVal(0),
-    firstChar(true)
+Logger::Logger(std::ostream& target) :
+    std::ostream{ this },
+    target{ target },
+    indentVal{ 0 },
+    firstChar{ true }
 {
 }
 
 
-int Out::overflow(int c)
+void Logger::foreground(Color color, bool bright)
 {
-    // needs indenting on first char
-    if (firstChar)
-        for (int i = 0; i < indentVal; i++)
-            target.put(' ');
+    using std::string;
+    string cchar = string(1, '0' + color);
+    string isbright = bright ? "9" : "3";
+    *this << "\033[" << isbright << cchar << "m";
+}
 
-    if (logType <= logLevel)
-        target.put(char(c));
 
-    if (c == '\n') {
-        // remove formatting
-        target << "\033[0m";
-        logType = LogLevel::NONE;
-        firstChar = true;
-    }
-    else
-        firstChar = false;
+void Logger::background(Color color, bool bright)
+{
+    using std::string;
+    string cchar = string(1, '0' + color);
+    string isbright = bright ? "10" : "4";
+    *this << "\033[" << isbright << cchar << "m"; 
+}
 
+
+void Logger::bold(void)
+{
+    *this << "\033[1m";
+}
+
+
+void Logger::removeFormatting(void)
+{
+    *this << "\033[0m";
+}
+
+
+void Logger::logError(const std::string& errMsg)
+{
+    bold();
+    foreground(RED, true);
+    *this << "error: ";
+    removeFormatting();
+    *this << errMsg << std::endl;
+}
+
+
+void Logger::logError(const std::string& errMsg, const qlow::CodePosition& cp)
+{
+    bold();
+    *this << cp.filename << ":" << cp.first_line << ":" << cp.first_column << ": ";
+    foreground(RED, true);
+    *this << "error: ";
+    removeFormatting();
+    *this << errMsg << std::endl;
+}
+
+
+int Logger::overflow(int c)
+{
+    target.put(char(c));
     return 0;
 }
 
@@ -44,7 +81,7 @@ std::ostream& operator << (std::ostream& o, qlow::LogLevel l)
     {
         case qlow::LogLevel::WARNING:
             try {
-                dynamic_cast<qlow::Out&>(o).setLogType(l);
+                dynamic_cast<qlow::Logger&>(o).setLogType(l);
             }
             catch(...) {}
             return o << "\033[33m";
@@ -53,7 +90,7 @@ std::ostream& operator << (std::ostream& o, qlow::LogLevel l)
 }
 
 
-/*std::streamsize Out::xsputn(const char* s, std::streamsize n)
+/*std::streamsize Logger::xsputn(const char* s, std::streamsize n)
 {
     target.write(s, n);
 }*/
@@ -61,7 +98,7 @@ std::ostream& operator << (std::ostream& o, qlow::LogLevel l)
 
 /*int main()
 {
-    qlow::Out& l = Out::stdout;
+    qlow::Logger& l = Logger::stdout;
     l << "aha" << std::endl;
     l.indent(10);
     l << "aha" << std::endl;

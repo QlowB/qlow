@@ -48,9 +48,10 @@ namespace qlow
 
         class SemanticException;
     }
-    
+
     class ExpressionVisitor;
     class StatementVisitor;
+
     namespace gen
     {
         class FunctionGenerator;
@@ -95,7 +96,7 @@ struct qlow::sem::Class : public SemanticObject
         llvmType{ nullptr }
     {
     }
-    
+
     virtual std::string toString(void) const override;
 };
 
@@ -106,7 +107,7 @@ struct qlow::sem::Variable : public SemanticObject
     std::string name;
 
     /// if this is a local variable, this stores a reference to the llvm
-    /// instance of this variable.
+    /// instance of this variable. If it is a parameter, the parameter value
     llvm::Value* allocaInst;
     
     Variable(void) = default;

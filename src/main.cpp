@@ -6,6 +6,9 @@
 #include "Semantic.h"
 #include "CodeGeneration.h"
 
+#include "Driver.h"
+
+
 extern std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::Class>>> parsedClasses;
 extern FILE* qlow_parser_in;
 extern int qlow_parser_parse(void);
@@ -23,6 +26,9 @@ int main(int argc, char** argv)
                 printf("ay: %c\n", c);
         }
     }
+    
+    qlow::Driver driver(argc, argv);
+    driver.run();
     
     {
     const char* filename = argv[optind];

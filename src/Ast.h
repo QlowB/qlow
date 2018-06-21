@@ -87,7 +87,7 @@ namespace qlow
  */
 struct qlow::CodePosition
 {
-    const char* filename;
+    const char* filename = "";
     int first_line;
     int last_line;
     int first_column;
