@@ -37,6 +37,7 @@ std::pair<llvm::Value*, sem::Type> ExpressionVisitor::visit(sem::BinaryOperation
     }
     
     
+    // TODO insert type checks
     switch (binop.op) {
         case ast::Operation::Operator::PLUS:
             return { builder.CreateAdd(left, right, "add"), Type::INTEGER };
@@ -46,6 +47,14 @@ std::pair<llvm::Value*, sem::Type> ExpressionVisitor::visit(sem::BinaryOperation
             return { builder.CreateMul(left, right, "mul"), Type::INTEGER };
         case ast::Operation::Operator::SLASH:
             return { builder.CreateSDiv(left, right, "add"), Type::INTEGER };
+        case ast::Operation::Operator::EQUALS:
+            return { builder.CreateICmpEQ(left, right, "equals"), Type::BOOLEAN };
+        case ast::Operation::Operator::AND:
+            return { builder.CreateAnd(left, right, "and"), Type::BOOLEAN };
+        case ast::Operation::Operator::OR:
+            return { builder.CreateOr(left, right, "or"), Type::BOOLEAN };
+        case ast::Operation::Operator::XOR:
+            return { builder.CreateXor(left, right, "xor"), Type::BOOLEAN };
     }
 }
 
@@ -61,12 +70,9 @@ std::pair<llvm::Value*, sem::Type> ExpressionVisitor::visit(sem::UnaryOperation&
     switch (unop.op) {
         case ast::Operation::Operator::MINUS:
             return { builder.CreateNeg(value, "negate"), sem::Type::INTEGER };
-
-        case ast::Operation::Operator::PLUS:
-        [[fallthrough]];
-        case ast::Operation::Operator::ASTERISK:
-        [[fallthrough]];
-        case ast::Operation::Operator::SLASH:
+        case ast::Operation::Operator::NOT:
+            return { builder.CreateNot(value, "not"), sem::Type::BOOLEAN };
+        default:
             throw "operator not supported";
     }
 }
@@ -128,8 +134,12 @@ llvm::Value* StatementVisitor::visit(sem::IfElseBlock& ifElseBlock,
     llvm::Function* function = fg.getCurrentBlock()->getParent();
     
     BasicBlock* thenB = BasicBlock::Create(fg.getContext(), "then", function);
-    BasicBlock* elseB = BasicBlock::Create(fg.getContext(), "else");
-    BasicBlock* merge = BasicBlock::Create(fg.getContext(), "merge");
+    BasicBlock* elseB = BasicBlock::Create(fg.getContext(), "else", function);
+    BasicBlock* merge = BasicBlock::Create(fg.getContext(), "merge", function);
+    
+    Value* boolCond = builder.CreateIntCast(condition, llvm::Type::getInt1Ty(fg.getContext()), false);
+    
+    builder.CreateCondBr(boolCond, thenB, elseB);  
     
     fg.pushBlock(thenB);
     ifElseBlock.ifBlock->accept(*this, fg);
@@ -141,8 +151,7 @@ llvm::Value* StatementVisitor::visit(sem::IfElseBlock& ifElseBlock,
     builder.SetInsertPoint(elseB);
     builder.CreateBr(merge);
     fg.popBlock();
-    
-    builder.CreateCondBr(condition, thenB, elseB); 
+    fg.popBlock();
     fg.pushBlock(merge);
 }
 

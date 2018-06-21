@@ -202,6 +202,8 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
 #endif
     
     //Value* val = llvm::ConstantFP::get(context, llvm::APFloat(5.0));
+    
+    builder.SetInsertPoint(getCurrentBlock());
     builder.CreateRetVoid();
 
     return func;

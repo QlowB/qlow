@@ -30,6 +30,7 @@ public:
     {
         NULL_TYPE,
         INTEGER,
+        BOOLEAN,
         CLASS,
     };
 
@@ -64,6 +65,7 @@ public:
 
     static const Type NULL_TYPE;
     static const Type INTEGER;
+    static const Type BOOLEAN;
 };
 
 

@@ -49,6 +49,8 @@ llvm::Type* sem::Type::getLlvmType(llvm::LLVMContext& context) const
             return llvm::Type::getVoidTy(context);
         case Kind::INTEGER:
             return llvm::Type::getInt32Ty(context);
+        case Kind::BOOLEAN:
+            return llvm::Type::getInt1Ty(context);
         case Kind::CLASS:
             return data.classType->llvmType;
     }
@@ -77,5 +79,6 @@ bool sem::Type::operator != (const Type& other) const
 
 const sem::Type sem::Type::NULL_TYPE = sem::Type{ sem::Type::Kind::NULL_TYPE };
 const sem::Type sem::Type::INTEGER = sem::Type{ sem::Type::Kind::INTEGER, &sem::int32 };
+const sem::Type sem::Type::BOOLEAN = sem::Type{ sem::Type::Kind::BOOLEAN, &sem::boolean };
 
 

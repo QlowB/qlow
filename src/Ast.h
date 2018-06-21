@@ -345,7 +345,15 @@ struct qlow::ast::IntConst : public Expression
 struct qlow::ast::Operation : public Expression
 {
     enum Operator {
-        PLUS, MINUS, ASTERISK, SLASH
+        PLUS,
+        MINUS,
+        ASTERISK,
+        SLASH,
+        EQUALS,
+        AND,
+        OR,
+        XOR,
+        NOT
     };
     Operator op;
 

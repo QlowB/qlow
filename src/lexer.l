@@ -86,6 +86,7 @@ extern QLOW_PARSER_LTYPE qlow_parser_lloc;
 <METHOD>"end"           yy_pop_state(); return SET_TOKEN(END);
 <INITIAL>"end"          return SET_TOKEN(END);
 "if"                    return SET_TOKEN(IF);
+"while"                 return SET_TOKEN(WHILE);
 "else"                  return SET_TOKEN(ELSE);
 "return"                return SET_TOKEN(RETURN);
 
@@ -95,14 +96,22 @@ extern QLOW_PARSER_LTYPE qlow_parser_lloc;
 ":="                    return SET_TOKEN(ASSIGN);
 "."                     return SET_TOKEN(DOT);
 
-"("                     return SET_TOKEN(ROUND_LEFT);
-")"                     return SET_TOKEN(ROUND_RIGHT);
+"=="                    return SET_TOKEN(EQUALS);
+"and"                   return SET_TOKEN(AND);
+"or"                    return SET_TOKEN(OR);
+"xor"                   return SET_TOKEN(XOR);
+"not"                   return SET_TOKEN(NOT);
 
 "+"                     return SET_TOKEN(PLUS);
 "-"                     return SET_TOKEN(MINUS);
 "*"                     return SET_TOKEN(ASTERISK);
 "/"                     return SET_TOKEN(SLASH);
 
+"("                     return SET_TOKEN(ROUND_LEFT);
+")"                     return SET_TOKEN(ROUND_RIGHT);
+
+"false"                 return SET_TOKEN(FALSE);
+"true"                  return SET_TOKEN(TRUE);
 
 [0-9_]+                 SET_STRING; return INT_LITERAL;
 0x[0-9A-Fa-f]+          SET_STRING; return INT_LITERAL;

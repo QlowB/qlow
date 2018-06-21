@@ -132,7 +132,22 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::IfElseBlock& ast, sem::Scope& scope)
 {
+    auto condition = ast.condition->accept(*this, scope);
+    auto ifB = ast.ifBlock->accept(*this, scope);
+    auto eB= ast.elseBlock->accept(*this, scope);
     
+    if (!dynamic_cast<sem::DoEndBlock*>(ifB.get())
+        || !dynamic_cast<sem::DoEndBlock*>(eB.get())
+        || !dynamic_cast<sem::Expression*>(condition.get()))
+        throw "internal error";
+    
+    auto condExpr = unique_dynamic_cast<sem::Expression>(std::move(condition));
+    auto ifBBlock = unique_dynamic_cast<sem::DoEndBlock>(std::move(ifB));
+    auto eBBlock= unique_dynamic_cast<sem::DoEndBlock>(std::move(eB));
+    
+    auto ieb = std::make_unique<sem::IfElseBlock>(std::move(condExpr), std::move(ifBBlock), std::move(eBBlock));
+    
+    return ieb;
 }
 
 

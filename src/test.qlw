@@ -41,14 +41,20 @@ class FF
         return x + x
     end
 
+    istfumf(x: Integer): Integer do
+        if x == 5 do
+            return 1
+        else
+            return 0
+        end
+        return 100;
+    end
+
     sum_func: Integer do
         variable: Integer
         variable := verdoppel(51)
-        if variable do
-            variable := 1
-        else
-            variable := 2
-        end
+        variable := istfumf(variable)
+        variable := 3 == 3
         return variable + 2
     end
 end

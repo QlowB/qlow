@@ -89,9 +89,10 @@ std::unique_ptr<ClassList> parsedClasses;
 
 %token <string> IDENTIFIER
 %token <string> INT_LITERAL
-%token <token> CLASS DO END IF ELSE RETURN
+%token <token> TRUE FALSE
+%token <token> CLASS DO END IF ELSE WHILE RETURN
 %token <token> NEW_LINE
-%token <token> SEMICOLON COLON COMMA DOT ASSIGN OPERATOR
+%token <token> SEMICOLON COLON COMMA DOT ASSIGN
 %token <token> ROUND_LEFT ROUND_RIGHT
 
 %type <classes> classes
@@ -116,6 +117,10 @@ std::unique_ptr<ClassList> parsedClasses;
 
 %left ASTERISK SLASH
 %left PLUS MINUS
+%left EQUALS
+%left NOT
+%left AND
+%left OR XOR
 
 %start classes
 
@@ -376,7 +381,15 @@ operator:
     |
     ASTERISK { $$ = qlow::ast::Operation::Operator::ASTERISK; }
     |
-    SLASH { $$ = qlow::ast::Operation::Operator::SLASH; };
+    SLASH { $$ = qlow::ast::Operation::Operator::SLASH; }
+    |
+    EQUALS { $$ = qlow::ast::Operation::Operator::EQUALS; }
+    |
+    AND { $$ = qlow::ast::Operation::Operator::AND; }
+    |
+    OR { $$ = qlow::ast::Operation::Operator::OR; }
+    |
+    XOR { $$ = qlow::ast::Operation::Operator::XOR; };
 
 
 paranthesesExpression:
