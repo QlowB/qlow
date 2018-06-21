@@ -66,6 +66,7 @@ std::unique_ptr<ClassList> parsedClasses;
     std::vector<std::unique_ptr<qlow::ast::Expression>>* expressionList;
     qlow::ast::ArgumentDeclaration* argumentDeclaration;
     qlow::ast::DoEndBlock* doEndBlock;    
+    qlow::ast::ifElseBlock* ifElseBlock;    
     qlow::ast::Statement* statement;
     qlow::ast::Expression* expression;
     qlow::ast::Operation::Operator op;
@@ -88,7 +89,7 @@ std::unique_ptr<ClassList> parsedClasses;
 
 %token <string> IDENTIFIER
 %token <string> INT_LITERAL
-%token <token> CLASS DO END IF RETURN
+%token <token> CLASS DO END IF ELSE RETURN
 %token <token> NEW_LINE
 %token <token> SEMICOLON COLON COMMA DOT ASSIGN OPERATOR
 %token <token> ROUND_LEFT ROUND_RIGHT
@@ -102,6 +103,7 @@ std::unique_ptr<ClassList> parsedClasses;
 %type <expressionList> expressionList
 %type <argumentDeclaration> argumentDeclaration
 %type <doEndBlock> doEndBlock
+%type <ifElseBlock> ifElseBlock 
 %type <statement> statement
 %type <expression> expression operationExpression paranthesesExpression
 %type <op> operator
@@ -212,6 +214,17 @@ doEndBlock:
     DO statements END {
         $$ = new DoEndBlock(std::move(*$2), @$);
         delete $2; $2 = nullptr;
+    };
+    
+    
+ifElseBlock:
+    IF expression doEndBlock {
+        $$ = new IfElseBlock($3, new DoEndBlock(@$), @$);
+        $2 = nullptr;
+    }
+    |
+    IF DO statements ELSE statements END {
+    
     };
 
 
