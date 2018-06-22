@@ -248,6 +248,11 @@ statements:
     statements statement {
         $$ = $1;
         $$->push_back(std::unique_ptr<Statement>($2));
+    }
+    |
+    statements error {
+        //$$<statements> = $1;
+        printf("ERROR\n");
     };
 
 /*!

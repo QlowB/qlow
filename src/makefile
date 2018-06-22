@@ -1,5 +1,5 @@
 # building depends on debian packages: "g++" "llvm-dev" "bison" "flex" (and "make", duh)
-# running depends on "llvm"
+# running depends on "llvm" if not statically linked
 
 CXX := g++
 

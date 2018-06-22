@@ -17,7 +17,7 @@ class qlow::sem::TypeVisitor :
     public Visitor<
         qlow::sem::Type,
         const sem::SymbolTable<sem::Class>,
-        
+
         sem::Expression,
         sem::UnaryOperation,
         sem::BinaryOperation,
@@ -25,7 +25,7 @@ class qlow::sem::TypeVisitor :
         sem::IntConst
     >
 {
-    
+
 public:
     qlow::sem::Type visit(sem::Expression& expr, const sem::SymbolTable<sem::Class>& classes) override;
     qlow::sem::Type visit(sem::UnaryOperation& expr, const sem::SymbolTable<sem::Class>& classes) override;
