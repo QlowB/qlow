@@ -38,6 +38,7 @@ protected:
         inline int overflow(int c) override { return c; }
     };
     
+public:
     enum Color {
         BLACK = 0,
         RED,
@@ -48,6 +49,7 @@ protected:
         CYAN,
         WHITE
     };
+private:
 
     std::ostream& target;
     NullStream nullStream;
@@ -60,6 +62,7 @@ protected:
 
     static Logger instance;
 
+public:
     void foreground(Color color, bool bright);
     void background(Color color, bool bright);
     void bold(void);

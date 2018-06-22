@@ -30,6 +30,7 @@
 
 #include "Visitor.h"
 #include "Util.h"
+#include "ErrorReporting.h"
 
 namespace qlow
 {
@@ -81,18 +82,6 @@ namespace qlow
     }
 }
 
-
-/*!
- * \brief bison-compatible location struct
- */
-struct qlow::CodePosition
-{
-    const char* filename = "";
-    int first_line;
-    int last_line;
-    int first_column;
-    int last_column;
-};
 
 
 struct qlow::ast::AstObject :

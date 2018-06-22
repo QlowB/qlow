@@ -11,6 +11,7 @@
 extern std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::Class>>> parsedClasses;
 extern FILE* qlow_parser_in;
 extern int qlow_parser_parse(void);
+extern const char* qlow_parser_filename;
 
 using namespace qlow;
 
@@ -63,10 +64,19 @@ int Driver::run(void)
     std::vector<std::unique_ptr<qlow::ast::Class>> classes;
     for (auto& filename : options.infiles) {
         std::FILE* file = std::fopen(filename.c_str(), "r");
+        ::qlow_parser_filename = filename.c_str();
         
         try {
-            classes = parseFile(file);
-        } catch (const char* errMsg) {
+            auto newClasses = parseFile(file);
+            classes.insert(classes.end(),
+                           std::make_move_iterator(newClasses.begin()),
+                           std::make_move_iterator(newClasses.end()));
+        }
+        catch (const CompileError& ce) {
+            ce.print(logger);
+            return 1;
+        }
+        catch (const char* errMsg) {
             logger.logError(errMsg);
             return 1;
         }
@@ -74,6 +84,38 @@ int Driver::run(void)
         if (file)
             std::fclose(file);
     }
+    
+    
+    std::unique_ptr<qlow::sem::GlobalScope> semClasses =
+        qlow::sem::createFromAst(*parsedClasses.get());
+
+    for (auto& [a, b] : semClasses->classes) {
+        logger.debug() << a << ": " << b->toString() << std::endl;
+    }
+
+    auto main = semClasses->classes.find("Main");
+    qlow::sem::Class* mainClass = nullptr;
+    if (main == semClasses->classes.end()) {
+        throw "No Main class found!";
+    }
+    else {
+        mainClass = main->second.get();
+    }
+    auto mainmain = mainClass->methods.find("main");
+    qlow::sem::Method* mainMethod = nullptr;
+    if (mainmain == mainClass->methods.end()) {
+        //throw "No main method found inside Main class!";
+    }
+    else {
+        mainMethod = mainmain->second.get();
+    }
+    
+    logger.debug() << "starting code generation!" << std::endl;
+
+    auto mod = qlow::gen::generateModule(semClasses->classes);
+    qlow::gen::generateObjectFile("obj.o", std::move(mod));
+    
+    logger.debug() << "object exported!" << std::endl;
     
     return 0;
 }

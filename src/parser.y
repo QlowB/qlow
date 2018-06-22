@@ -27,6 +27,7 @@
 #include <iostream>
 #include <cstdio>
 #include "Ast.h"
+#include "ErrorReporting.h"
 
 using namespace qlow::ast;
 
@@ -34,25 +35,54 @@ extern int qlow_parser_lex();
 
 void yy_pop_state(void);
 
-int qlow_parser_error(const char*)
+int qlow_parser_error(const char* msg)
 {
-    throw "syntax error";
+    //throw msg;
+    //printf("error happened: %s\n", msg);
 }
-
-#define QLOW_PARSER_LTYPE_IS_DECLARED
-typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 
 
 using ClassList = std::vector<std::unique_ptr<qlow::ast::Class>>;
 std::unique_ptr<ClassList> parsedClasses;
+const char* qlow_parser_filename = "";
+
+# define YYLLOC_DEFAULT(Cur, Rhs, N)                      \
+do                                                        \
+  if (N)                                                  \
+    {                                                     \
+      (Cur).first_line   = YYRHSLOC(Rhs, 1).first_line;   \
+      (Cur).first_column = YYRHSLOC(Rhs, 1).first_column; \
+      (Cur).last_line    = YYRHSLOC(Rhs, N).last_line;    \
+      (Cur).last_column  = YYRHSLOC(Rhs, N).last_column;  \
+      (Cur).filename     = YYRHSLOC(Rhs, 1).filename;     \
+    }                                                     \
+  else                                                    \
+    {                                                     \
+      (Cur).first_line   = (Cur).last_line   =            \
+        YYRHSLOC(Rhs, 0).last_line;                       \
+      (Cur).first_column = (Cur).last_column =            \
+        YYRHSLOC(Rhs, 0).last_column;                     \
+    }                                                     \
+while (0)
 
 %}
 
 
 %define api.prefix {qlow_parser_}
+%define parse.error verbose
+// %define parse.lac full
 
 %locations
-%code requires { #include "Ast.h" }
+%code requires {
+#include "Ast.h"
+typedef qlow::CodePosition QLOW_PARSER_LTYPE;
+#define QLOW_PARSER_LTYPE_IS_DECLARED
+}
+
+%initial-action
+{
+  @$.filename = qlow_parser_filename;
+};
 
 //%define api.location.type {qlow::CodePosition}
 
@@ -232,8 +262,8 @@ ifElseBlock:
     |
     IF expression DO statements ELSE statements END {
         $$ = new IfElseBlock(std::unique_ptr<Expression>($2),
-                             std::make_unique<DoEndBlock>(std::move(*$4), @$),
-                             std::make_unique<DoEndBlock>(std::move(*$6), @$), @$);
+                             std::make_unique<DoEndBlock>(std::move(*$4), @4),
+                             std::make_unique<DoEndBlock>(std::move(*$6), @6), @$);
         $2 = nullptr;
         delete $4;
         delete $6;
@@ -247,12 +277,9 @@ statements:
     |
     statements statement {
         $$ = $1;
-        $$->push_back(std::unique_ptr<Statement>($2));
-    }
-    |
-    statements error {
-        //$$<statements> = $1;
-        printf("ERROR\n");
+        // statements can be null on errors
+        if ($1 != nullptr)
+            $$->push_back(std::unique_ptr<Statement>($2));
     };
 
 /*!
@@ -285,6 +312,12 @@ statement:
     |
     ifElseBlock statementEnd {
         $$ = $1;
+    }
+    |
+    error statementEnd {
+        $$ = nullptr;
+        //printf("error happened here (%s): %d\n", qlow_parser_filename, @1.first_line);
+        throw qlow::SyntaxError(@1);
     }
     ;
     

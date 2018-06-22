@@ -30,6 +30,8 @@ int main(int argc, char** argv)
     qlow::Driver driver(argc, argv);
     driver.run();
     
+    return 0;
+    
     {
     const char* filename = argv[optind];
     

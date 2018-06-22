@@ -37,6 +37,7 @@ int commentDepth;
 
 size_t offset;
 extern QLOW_PARSER_LTYPE qlow_parser_lloc;
+extern const char* qlow_parser_filename;
 
 #define YY_USER_ACTION                          \
   do {                                          \
@@ -45,6 +46,7 @@ extern QLOW_PARSER_LTYPE qlow_parser_lloc;
     offset += yyleng;                           \
     qlow_parser_lloc.last_line = yylineno;      \
     qlow_parser_lloc.last_column = offset;      \
+    qlow_parser_lloc.filename = qlow_parser_filename; \
   } while(0);
 
 %}
