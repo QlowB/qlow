@@ -6,6 +6,8 @@
 
 #include "Logging.h"
 
+#include <cstdio>
+
 extern std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::Class>>> parsedClasses;
 extern FILE* qlow_parser_in;
 extern int qlow_parser_parse(void);
@@ -52,7 +54,7 @@ Driver::Driver(int argc, char** argv) :
 }
 
 
-void Driver::run(void)
+int Driver::run(void)
 {
     Logger& logger = Logger::getInstance();
     
@@ -60,18 +62,20 @@ void Driver::run(void)
     
     std::vector<std::unique_ptr<qlow::ast::Class>> classes;
     for (auto& filename : options.infiles) {
-        FILE* file = ::fopen(filename.c_str(), "r");
+        std::FILE* file = std::fopen(filename.c_str(), "r");
         
         try {
             classes = parseFile(file);
         } catch (const char* errMsg) {
             logger.logError(errMsg);
+            return 1;
         }
         
-        fclose(file);
+        if (file)
+            std::fclose(file);
     }
     
-    return;
+    return 0;
 }
 
 

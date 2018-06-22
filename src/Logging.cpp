@@ -68,6 +68,17 @@ void Logger::logError(const std::string& errMsg, const qlow::CodePosition& cp)
 }
 
 
+std::ostream& Logger::operator()(LogLevel ll)
+{
+    if (logLevel >= ll) {
+        return *this;
+    }
+    else {
+        return nullStream;
+    }
+}
+
+
 int Logger::overflow(int c)
 {
     target.put(char(c));

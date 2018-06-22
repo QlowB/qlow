@@ -38,7 +38,7 @@ public:
     Driver(void) = delete;
     Driver(int argc, char** argv);
     
-    void run(void);
+    int run(void);
     
     /// \brief runs the parser over a given stream
     /// \warning Don't call concurrently. Not supported!
