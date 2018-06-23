@@ -1,5 +1,6 @@
 #include "AstVisitor.h"
 #include "Ast.h"
+#include "ErrorReporting.h"
 
 #include <typeinfo>
 
@@ -33,7 +34,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
         f->type = type.value();
     }
     else {
-        throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE,
+        throw SemanticError(SemanticError::UNKNOWN_TYPE,
             ast.type,
             ast.pos
         );
@@ -46,7 +47,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefiniti
 {
     auto returnType = scope.getType(ast.type);
     if (!returnType) {
-        throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE,
+        throw SemanticError(SemanticError::UNKNOWN_TYPE,
             ast.type,
             ast.pos
         );
@@ -83,7 +84,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::VariableDeclar
         v->type = type.value();
     }
     else {
-        throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE,
+        throw SemanticError(SemanticError::UNKNOWN_TYPE,
             ast.type,
             ast.pos
         );
@@ -109,7 +110,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
             auto type = body->scope.getType(nvs->type);
 
             if (!type)
-                throw sem::SemanticException(sem::SemanticException::UNKNOWN_TYPE, nvs->type, nvs->pos);
+                throw SemanticError(SemanticError::UNKNOWN_TYPE, nvs->type, nvs->pos);
 
             auto var = std::make_unique<sem::Variable>(type.value(), nvs->name);
             body->scope.putVariable(nvs->name, std::move(var));
@@ -186,7 +187,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
         printf("var not found: %s\n", ast.name.c_str());
         printf("current scope: %s\n", scope.toString().c_str());
 #endif
-        throw sem::SemanticException(sem::SemanticException::FEATURE_NOT_FOUND, ast.name, ast.pos);
+        throw SemanticError(SemanticError::FEATURE_NOT_FOUND, ast.name, ast.pos);
     }
 }
 

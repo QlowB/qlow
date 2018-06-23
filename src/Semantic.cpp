@@ -1,4 +1,5 @@
 #include "Semantic.h"
+#include "Ast.h"
 #include "AstVisitor.h"
 
 #include "CodegenVisitor.h"
@@ -13,8 +14,10 @@ namespace sem
 {
 
 std::unique_ptr<GlobalScope>
-    createFromAst(const std::vector<std::unique_ptr<qlow::ast::Class>>& classes)
+    createFromAst(const std::vector<std::unique_ptr<qlow::ast::AstObject>>& objects)
 {
+    
+    Logger& logger = Logger::getInstance();
 
 #ifdef DEBUGGING
     printf("starting building semantic representation\n");
@@ -22,8 +25,13 @@ std::unique_ptr<GlobalScope>
 
     // create classes
     std::unique_ptr<sem::GlobalScope> globalScope = std::make_unique<sem::GlobalScope>();
-    for (auto& astClass : classes) {
-        globalScope->classes[astClass->name] = std::make_unique<sem::Class>(astClass.get(), *globalScope);
+    for (auto& astObject : objects) {
+        if (auto* cls = dynamic_cast<ast::Class*>(astObject.get()); cls) {
+            globalScope->classes[cls->name] = std::make_unique<sem::Class>(cls, *globalScope);
+        }
+        else if (auto* function = dynamic_cast<ast::MethodDefinition*>(astObject.get()); function) {
+            globalScope->functions[function->name] = std::make_unique<sem::Method>(function, *globalScope);
+        }
     }
 
 #ifdef DEBUGGING
@@ -38,14 +46,14 @@ std::unique_ptr<GlobalScope>
             
             if (auto* field = dynamic_cast<qlow::ast::FieldDeclaration*> (feature.get()); field) {
                 if (semClass->fields.find(field->name) != semClass->fields.end()) // throw, if field already exists
-                    throw SemanticException(SemanticException::DUPLICATE_FIELD_DECLARATION, field->name, field->pos);
+                    throw SemanticError(SemanticError::DUPLICATE_FIELD_DECLARATION, field->name, field->pos);
                 
                 // otherwise add to the fields list
                 semClass->fields[field->name] = unique_dynamic_cast<Field>(field->accept(av, semClass->scope));
             }
             else if (auto* method = dynamic_cast<qlow::ast::MethodDefinition*> (feature.get()); method) {
                 if (semClass->methods.find(method->name) != semClass->methods.end()) // throw, if method already exists
-                    throw SemanticException(SemanticException::DUPLICATE_METHOD_DEFINITION, method->name, method->pos);
+                    throw SemanticError(SemanticError::DUPLICATE_METHOD_DEFINITION, method->name, method->pos);
                 
                 // otherwise add to the methods list
                 semClass->methods[method->name] = unique_dynamic_cast<Method>(method->accept(av, semClass->scope));
@@ -54,6 +62,16 @@ std::unique_ptr<GlobalScope>
                 // if a feature is neither a method nor a field, something went horribly wrong
                 throw "internal error";
             }
+        }
+    }
+    
+    for (auto& [name, method] : globalScope->functions) {
+        auto returnType = globalScope->getType(method->astNode->type);
+        if (returnType) {
+            method->returnType = returnType.value();
+        }
+        else {
+            SemanticError se(SemanticError::UNKNOWN_TYPE, method->astNode->type, method->astNode->pos);
         }
     }
     
@@ -194,19 +212,6 @@ std::string FeatureCallStatement::toString(void) const
     return "FeatureCallStatement[" + expr->callee->toString() + "]";
 }
 
-
-std::string SemanticException::getMessage(void) const
-{
-    static std::map<ErrorCode, std::string> error = {
-        {UNKNOWN_TYPE, "unknown type"},
-        {FEATURE_NOT_FOUND, "method or variable not found"}
-    };
-    
-    std::string pos = std::to_string(where.first_line) + ":" +
-        std::to_string(where.first_column);
-    
-    return pos + ": " + error[errorCode] + ": " + message;
-}
 
 
 

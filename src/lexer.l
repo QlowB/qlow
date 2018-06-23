@@ -118,6 +118,6 @@ extern const char* qlow_parser_filename;
 [0-9_]+                 SET_STRING; return INT_LITERAL;
 0x[0-9A-Fa-f]+          SET_STRING; return INT_LITERAL;
 [a-zA-Z_][a-zA-Z0-9_]*  SET_STRING; return IDENTIFIER;
-.                       printf("Unexpected symbol %s.\n", std::string(yytext, yyleng).c_str()); yyterminate();
+.                       SET_STRING; return UNEXPECTED_SYMBOL; // printf("Unexpected symbol %s.\n", std::string(yytext, yyleng).c_str()); yyterminate();
 
 %%

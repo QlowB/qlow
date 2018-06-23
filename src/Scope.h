@@ -48,6 +48,7 @@ class qlow::sem::GlobalScope : public Scope
 {
 public:
     SymbolTable<Class> classes;
+    SymbolTable<Method> functions;
 public:
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);

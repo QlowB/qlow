@@ -17,6 +17,9 @@ sem::Variable* sem::GlobalScope::getVariable(const std::string& name)
 
 sem::Method* sem::GlobalScope::getMethod(const std::string& name)
 {
+    if (const auto& f = functions.find(name); f != functions.end()) {
+        return f->second.get();
+    }
     return nullptr;
 }
 

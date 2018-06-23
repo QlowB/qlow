@@ -4,6 +4,7 @@
 
 using qlow::CompileError;
 using qlow::SyntaxError;
+using qlow::SemanticError;
 
 
 CompileError::~CompileError(void)
@@ -42,11 +43,16 @@ void CompileError::underlineError(Logger& logger) const
 }
 
 
-
-
 void SyntaxError::print(Logger& logger) const
 {
     logger.logError("Syntax error", where);
+    underlineError(logger);
+}
+
+
+void SemanticError::print(Logger& logger) const
+{
+    logger.logError(message, where);
     underlineError(logger);
 }
 

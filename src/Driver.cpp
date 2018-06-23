@@ -8,7 +8,7 @@
 
 #include <cstdio>
 
-extern std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::Class>>> parsedClasses;
+extern std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::AstObject>>> parsedClasses;
 extern FILE* qlow_parser_in;
 extern int qlow_parser_parse(void);
 extern const char* qlow_parser_filename;
@@ -61,16 +61,16 @@ int Driver::run(void)
     
     //logger.logError("driver not yet implemented", {options.emitAssembly ? "asm" : "noasm", 10, 11, 12, 13});
     
-    std::vector<std::unique_ptr<qlow::ast::Class>> classes;
+    std::vector<std::unique_ptr<qlow::ast::AstObject>> objects;
     for (auto& filename : options.infiles) {
         std::FILE* file = std::fopen(filename.c_str(), "r");
         ::qlow_parser_filename = filename.c_str();
         
         try {
-            auto newClasses = parseFile(file);
-            classes.insert(classes.end(),
-                           std::make_move_iterator(newClasses.begin()),
-                           std::make_move_iterator(newClasses.end()));
+            auto newObjects = parseFile(file);
+            objects.insert(objects.end(),
+                           std::make_move_iterator(newObjects.begin()),
+                           std::make_move_iterator(newObjects.end()));
         }
         catch (const CompileError& ce) {
             ce.print(logger);
@@ -86,8 +86,18 @@ int Driver::run(void)
     }
     
     
-    std::unique_ptr<qlow::sem::GlobalScope> semClasses =
-        qlow::sem::createFromAst(*parsedClasses.get());
+    std::unique_ptr<qlow::sem::GlobalScope> semClasses = nullptr;
+    try {
+        semClasses =
+            qlow::sem::createFromAst(objects);
+    }
+    catch(SemanticError& se) {
+        se.print(logger);
+        return 1;
+    }
+    catch(const char* err) {
+        logger.logError(err);
+    }
 
     for (auto& [a, b] : semClasses->classes) {
         logger.debug() << a << ": " << b->toString() << std::endl;
@@ -96,7 +106,8 @@ int Driver::run(void)
     auto main = semClasses->classes.find("Main");
     qlow::sem::Class* mainClass = nullptr;
     if (main == semClasses->classes.end()) {
-        throw "No Main class found!";
+        logger.logError("No Main class found");
+        return 1;
     }
     else {
         mainClass = main->second.get();
@@ -112,7 +123,14 @@ int Driver::run(void)
     
     logger.debug() << "starting code generation!" << std::endl;
 
-    auto mod = qlow::gen::generateModule(semClasses->classes);
+    std::unique_ptr<llvm::Module> mod = nullptr;
+    
+    try {
+        mod = qlow::gen::generateModule(semClasses->classes);
+    }
+    catch (const char* err) {
+        logger.logError(err);
+    }
     qlow::gen::generateObjectFile("obj.o", std::move(mod));
     
     logger.debug() << "object exported!" << std::endl;
@@ -121,7 +139,7 @@ int Driver::run(void)
 }
 
 
-std::vector<std::unique_ptr<qlow::ast::Class>> Driver::parseFile(FILE* file)
+std::vector<std::unique_ptr<qlow::ast::AstObject>> Driver::parseFile(FILE* file)
 {
     ::qlow_parser_in = file;
     if (!::qlow_parser_in)

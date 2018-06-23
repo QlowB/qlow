@@ -31,7 +31,7 @@ int main(int argc, char** argv)
     driver.run();
     
     return 0;
-    
+    /*
     {
     const char* filename = argv[optind];
     
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 
     for (auto&& c : *parsedClasses) {
         delete c.release();
-    }
+    }*/
 }
 
 

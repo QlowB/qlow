@@ -17,7 +17,7 @@ namespace qlow
     namespace sem
     {
         std::unique_ptr<GlobalScope>
-            createFromAst(const std::vector<std::unique_ptr<qlow::ast::Class>>& classes);
+            createFromAst(const std::vector<std::unique_ptr<qlow::ast::AstObject>>& objects);
 
         struct SemanticObject;
         struct Class;
@@ -142,6 +142,11 @@ struct qlow::sem::Method : public SemanticObject
 
     inline Method(Scope& parentScope, const Type& returnType) :
         returnType{ returnType }, scope{ parentScope } {}
+    
+    inline Method(ast::MethodDefinition* astNode, Scope& parentScope) :
+        astNode{ astNode }, scope{ parentScope }
+    {
+    }
     
     virtual std::string toString(void) const override;
 };
@@ -277,33 +282,6 @@ struct qlow::sem::FeatureCallStatement : public Statement
 
     virtual std::string toString(void) const override;
     virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) override;
-};
-
-
-class qlow::sem::SemanticException
-{
-    std::string message;
-    qlow::CodePosition where;
-public:
-    enum ErrorCode
-    {
-        UNKNOWN_TYPE,
-        DUPLICATE_CLASS_DEFINITION,
-        DUPLICATE_FIELD_DECLARATION,
-        DUPLICATE_METHOD_DEFINITION,
-        
-        FEATURE_NOT_FOUND,
-    };
-    
-    
-    ErrorCode errorCode;
-public:
-    inline SemanticException(ErrorCode ec, const std::string& arg, const
-        qlow::CodePosition& where) :
-        message{ arg }, where{ where }, errorCode{ ec }
-    {}
-
-    std::string getMessage(void) const;
 };
 
 

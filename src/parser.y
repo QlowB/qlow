@@ -41,9 +41,13 @@ int qlow_parser_error(const char* msg)
     //printf("error happened: %s\n", msg);
 }
 
+void reportError(const qlow::SyntaxError& se)
+{
+    qlow::Logger& logger = qlow::Logger::getInstance();
+    se.print(logger);
+}
 
-using ClassList = std::vector<std::unique_ptr<qlow::ast::Class>>;
-std::unique_ptr<ClassList> parsedClasses;
+std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::AstObject>>> parsedClasses;
 const char* qlow_parser_filename = "";
 
 # define YYLLOC_DEFAULT(Cur, Rhs, N)                      \
@@ -87,7 +91,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 //%define api.location.type {qlow::CodePosition}
 
 %union {
-    std::vector<std::unique_ptr<qlow::ast::Class>>* classes;
+    std::vector<std::unique_ptr<qlow::ast::AstObject>>* topLevel;
     qlow::ast::Class* classDefinition;
     qlow::ast::FeatureDeclaration* featureDeclaration;
     std::vector<std::unique_ptr<qlow::ast::FeatureDeclaration>>* featureList;
@@ -124,8 +128,9 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %token <token> NEW_LINE
 %token <token> SEMICOLON COLON COMMA DOT ASSIGN
 %token <token> ROUND_LEFT ROUND_RIGHT
+%token <string> UNEXPECTED_SYMBOL
 
-%type <classes> classes
+%type <topLevel> topLevel 
 %type <classDefinition> classDefinition
 %type <featureDeclaration> featureDeclaration fieldDeclaration methodDefinition
 %type <featureList> featureList
@@ -145,6 +150,11 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %type <unaryOperation> unaryOperation
 %type <binaryOperation> binaryOperation
 
+%destructor { } <token>
+%destructor { } <op>
+%destructor { } <topLevel> // don't delete everything ;)
+%destructor { if ($$) delete $$; } <*>
+
 %left ASTERISK SLASH
 %left PLUS MINUS
 %left EQUALS
@@ -152,19 +162,20 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %left AND
 %left OR XOR
 
-%start classes
+%start topLevel
 
 %%
 
 
 /* list of class definitions */
-classes:
+topLevel:
     /* empty */ {
-       parsedClasses = std::make_unique<ClassList>();
+       parsedClasses = std::make_unique<std::vector<std::unique_ptr<qlow::ast::AstObject>>>();
     }
     |
-    classes classDefinition {
-        parsedClasses->push_back(std::move(std::unique_ptr<Class>($2)));
+    topLevel classDefinition {
+        parsedClasses->push_back(std::move(std::unique_ptr<qlow::ast::Class>($2)));
+        $2 = nullptr;
     };
 
 
@@ -317,7 +328,9 @@ statement:
     error statementEnd {
         $$ = nullptr;
         //printf("error happened here (%s): %d\n", qlow_parser_filename, @1.first_line);
-        throw qlow::SyntaxError(@1);
+        //throw qlow::SyntaxError(@1);
+        reportError(qlow::SyntaxError(@1));
+        printf("unexpected token: %d\n", $<token>1);
     }
     ;
     
@@ -380,8 +393,15 @@ expression:
     INT_LITERAL {
         $$ = new IntConst(std::move(*$1), @$);
         delete $1;
-    };
-
+    };/*
+    |
+    error {
+        $$ = nullptr;
+        reportError(qlow::SyntaxError(@1));
+        //throw qlow::SyntaxError(@1);
+    }
+    ;
+*/
 
 operationExpression:
     binaryOperation {

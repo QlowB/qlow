@@ -14,8 +14,9 @@ namespace qlow
     class Driver;
     
     
-    namespace ast {
-        struct Class;
+    namespace ast
+    {
+        struct AstObject;
     }
 }
 
@@ -42,7 +43,7 @@ public:
     
     /// \brief runs the parser over a given stream
     /// \warning Don't call concurrently. Not supported!
-    std::vector<std::unique_ptr<qlow::ast::Class>> parseFile(FILE* file);
+    std::vector<std::unique_ptr<qlow::ast::AstObject>> parseFile(FILE* file);
 };
 
 
