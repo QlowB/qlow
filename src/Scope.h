@@ -9,6 +9,11 @@
 
 namespace qlow
 {
+    namespace ast
+    {
+        struct Type;
+    }
+    
     namespace sem
     {
         /*!
@@ -37,8 +42,8 @@ public:
     virtual ~Scope(void);
     virtual Variable* getVariable(const std::string& name) = 0;
     virtual Method* getMethod(const std::string& name) = 0;
-    virtual std::optional<Type> getType(const std::string& name) = 0;
-    virtual std::optional<Type> getReturnableType(void) = 0;
+    virtual Type* getType(const ast::Type& name) = 0;
+    virtual Type* getReturnableType(void) = 0;
 
     virtual std::string toString(void) = 0;
 };
@@ -52,8 +57,8 @@ public:
 public:
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::optional<Type> getType(const std::string& name);
-    virtual std::optional<Type> getReturnableType(void);
+    virtual Type* getType(const ast::Type& name);
+    virtual Type* getReturnableType(void);
 
     virtual std::string toString(void);
 };
@@ -65,7 +70,7 @@ class qlow::sem::NativeScope : public GlobalScope
 public:
     SymbolTable<Type> types;
 public:
-    virtual std::optional<Type> getType(const std::string& name);
+    virtual Type* getType(const ast::Type& name);
 
     virtual std::string toString(void);
     
@@ -85,8 +90,8 @@ public:
     }
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::optional<Type> getType(const std::string& name);
-    virtual std::optional<Type> getReturnableType(void);
+    virtual Type* getType(const ast::Type& name);
+    virtual Type* getReturnableType(void);
     virtual std::string toString(void);
 };
 
@@ -95,21 +100,23 @@ class qlow::sem::LocalScope : public Scope
 {
     Scope& parentScope;
     SymbolTable<Variable> localVariables;
-    Type returnType;
+    Type* returnType;
 public:
-    inline LocalScope(Scope& parentScope, const Type& returnType) :
-        parentScope{ parentScope }, returnType{ returnType }
-    {}
+    inline LocalScope(Scope& parentScope, Type* returnType) :
+        parentScope{ parentScope },
+        returnType{ returnType }
+    {
+    }
 
     inline LocalScope(Scope& parentScope) :
         parentScope{ parentScope }
     {
-        std::optional<Type> returnable = parentScope.getReturnableType();
+        Type* returnable = parentScope.getReturnableType();
         if (returnable) {
-            returnType = returnable.value();
+            returnType = returnable;
         }
         else {
-            returnType = Type(Type::Kind::NULL_TYPE);
+            returnType = nullptr;
         }
     }
 
@@ -118,8 +125,8 @@ public:
 
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::optional<Type> getType(const std::string& name);
-    virtual std::optional<Type> getReturnableType(void);
+    virtual Type* getType(const ast::Type& name);
+    virtual Type* getReturnableType(void);
     virtual std::string toString(void);
 };
 

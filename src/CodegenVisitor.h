@@ -32,7 +32,7 @@ namespace qlow
 
 class qlow::ExpressionVisitor :
     public Visitor<
-        std::pair<llvm::Value*, sem::Type>,
+        std::pair<llvm::Value*, sem::Type*>,
         llvm::IRBuilder<>,
 
         sem::LocalVariableExpression,
@@ -43,11 +43,11 @@ class qlow::ExpressionVisitor :
     >
 {
 public:
-    std::pair<llvm::Value*, sem::Type> visit(sem::LocalVariableExpression& node, llvm::IRBuilder<>&) override;
-    std::pair<llvm::Value*, sem::Type> visit(sem::BinaryOperation& node, llvm::IRBuilder<>&) override;
-    std::pair<llvm::Value*, sem::Type> visit(sem::UnaryOperation& node, llvm::IRBuilder<>&) override;
-    std::pair<llvm::Value*, sem::Type> visit(sem::FeatureCallExpression& node, llvm::IRBuilder<>&) override;
-    std::pair<llvm::Value*, sem::Type> visit(sem::IntConst& node, llvm::IRBuilder<>&) override;
+    std::pair<llvm::Value*, sem::Type*> visit(sem::LocalVariableExpression& node, llvm::IRBuilder<>&) override;
+    std::pair<llvm::Value*, sem::Type*> visit(sem::BinaryOperation& node, llvm::IRBuilder<>&) override;
+    std::pair<llvm::Value*, sem::Type*> visit(sem::UnaryOperation& node, llvm::IRBuilder<>&) override;
+    std::pair<llvm::Value*, sem::Type*> visit(sem::FeatureCallExpression& node, llvm::IRBuilder<>&) override;
+    std::pair<llvm::Value*, sem::Type*> visit(sem::IntConst& node, llvm::IRBuilder<>&) override;
 };
 
 

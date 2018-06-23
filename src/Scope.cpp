@@ -1,4 +1,5 @@
 #include "Scope.h"
+#include "Ast.h"
 #include "Semantic.h"
 #include "Builtin.h"
 
@@ -24,23 +25,35 @@ sem::Method* sem::GlobalScope::getMethod(const std::string& name)
 }
 
 
-std::optional<sem::Type> sem::GlobalScope::getType(const std::string& name)
+sem::Type* sem::GlobalScope::getType(const ast::Type& name)
 {
+    if (const auto* arr = dynamic_cast<const ast::ArrayType*>(&name); arr) {
+        return new sem::ArrayType(getType(arr->arrayType));
+    }
+    
+    const auto* classType = dynamic_cast<const ast::ClassType*>(&name);
+   
+    if (!classType)
+        throw "internal error";
+    
+    /*
     auto native = NativeScope::getInstance().getType(name);
     if (native) {
         return native;
     }
+    */
     
-    auto t = classes.find(name);
+    auto t = classes.find(classType->classType->name);
     if (t != classes.end())
-        return std::make_optional(Type(t->second.get()));
-    return std::nullopt;
+        return new sem::ClassType(t->second);
+    
+    return nullptr;
 }
 
 
-std::optional<sem::Type> sem::GlobalScope::getReturnableType(void)
+sem::Type* sem::GlobalScope::getReturnableType(void)
 {
-    return std::nullopt;
+    return nullptr;
 }
 
 
@@ -56,7 +69,7 @@ std::string sem::GlobalScope::toString(void)
 }
 
 
-std::optional<sem::Type> sem::NativeScope::getType(const std::string& name)
+sem::Type* sem::NativeScope::getType(const std::string& name)
 {
     auto t = types.find(name);
     if (t != types.end())
@@ -119,13 +132,13 @@ std::string sem::ClassScope::toString(void)
 }
 
 
-std::optional<sem::Type> sem::ClassScope::getType(const std::string& name)
+sem::Type* sem::ClassScope::getType(const std::string& name)
 {
     return parentScope.getType(name);
 }
 
 
-std::optional<sem::Type> sem::ClassScope::getReturnableType(void)
+sem::Type* sem::ClassScope::getReturnableType(void)
 {
     return std::nullopt;
 }
@@ -159,13 +172,13 @@ sem::Method* sem::LocalScope::getMethod(const std::string& name)
 }
 
 
-std::optional<sem::Type> sem::LocalScope::getType(const std::string& name)
+sem::Type* sem::LocalScope::getType(const std::string& name)
 {
     return parentScope.getType(name);
 }
 
 
-std::optional<sem::Type> sem::LocalScope::getReturnableType(void)
+sem::Type* sem::LocalScope::getReturnableType(void)
 {
     return returnType;
 }

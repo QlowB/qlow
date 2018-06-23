@@ -12,6 +12,7 @@ sem::NativeScope qlow::sem::generateNativeScope(void)
     
     sem::NativeScope scope;
     
+    /*
     std::unique_ptr<sem::Type> int32 =
         std::make_unique<sem::Type>(sem::Type::Kind::INTEGER, &sem::int32);
     std::unique_ptr<sem::Type> boolean =
@@ -20,6 +21,7 @@ sem::NativeScope qlow::sem::generateNativeScope(void)
     scope.types.insert({"Integer", std::move(int32)});
     scope.types.insert({"Boolean", std::move(boolean)});
     return scope;
+    */
 }
 
 

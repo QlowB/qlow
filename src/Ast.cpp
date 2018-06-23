@@ -19,6 +19,8 @@ std::unique_ptr<qlow::sem::SemanticObject> ClassName::accept(Visitor& v, sem::Sc
 }
 
 ACCEPT_DEFINITION(Class, StructureVisitor)
+ACCEPT_DEFINITION(ClassType, StructureVisitor)
+ACCEPT_DEFINITION(ArrayType, StructureVisitor)
 ACCEPT_DEFINITION(FeatureDeclaration, StructureVisitor)
 ACCEPT_DEFINITION(FieldDeclaration, StructureVisitor)
 ACCEPT_DEFINITION(MethodDefinition, StructureVisitor)

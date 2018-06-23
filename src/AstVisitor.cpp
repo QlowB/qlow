@@ -29,13 +29,13 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
 {
     auto f = std::make_unique<sem::Field>();
     f->name = ast.name;
-    auto type = scope.getType(ast.type);
+    auto* type = scope.getType(*ast.type);
     if (type) {
-        f->type = type.value();
+        f->type = type;
     }
     else {
         throw SemanticError(SemanticError::UNKNOWN_TYPE,
-            ast.type,
+            ast.type->asString(),
             ast.pos
         );
     }
@@ -45,7 +45,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefinition& ast, sem::Scope& scope)
 {
-    auto returnType = scope.getType(ast.type);
+    auto returnType = scope.getType(*ast.type);
     if (!returnType) {
         throw SemanticError(SemanticError::UNKNOWN_TYPE,
             ast.type,
@@ -107,7 +107,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
     for (auto& statement : ast.statements) {
         
         if (ast::NewVariableStatement* nvs = dynamic_cast<ast::NewVariableStatement*>(statement.get()); nvs) {
-            auto type = body->scope.getType(nvs->type);
+            auto type = body->scope.getType(*nvs->type);
 
             if (!type)
                 throw SemanticError(SemanticError::UNKNOWN_TYPE, nvs->type, nvs->pos);

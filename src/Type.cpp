@@ -9,76 +9,40 @@
 
 using namespace qlow;
 
-sem::Type::Type(sem::Class* classType) :
-    kind{ Kind::CLASS }
+
+sem::Type::~Type(void)
 {
-    data.classType = classType;
-}
-
-
-sem::Type::Type(Kind kind, Class* classType) :
-    kind{ kind }
-{
-    data.classType = classType;
-}
-
-bool sem::Type::isClassType(void) const
-{
-    return kind == Kind::CLASS;
-}
-
-
-bool sem::Type::isNative(void) const
-{
-    return kind != Kind::CLASS;
-}
-
-
-sem::Class* sem::Type::getClassType(void)
-{
-    if (kind != Kind::CLASS)
-        throw "internal error";
-    return data.classType;
-}
-
-
-llvm::Type* sem::Type::getLlvmType(llvm::LLVMContext& context) const
-{
-    switch (kind) {
-        case Kind::NULL_TYPE:
-            return llvm::Type::getVoidTy(context);
-        case Kind::INTEGER:
-            return llvm::Type::getInt32Ty(context);
-        case Kind::BOOLEAN:
-            return llvm::Type::getInt1Ty(context);
-        case Kind::CLASS:
-            return data.classType->llvmType;
-    }
 }
 
 
 bool sem::Type::operator == (const Type& other) const
 {
-    if (other.kind != this->kind)
-        return false;
-    
-    switch (kind) {
-        case Kind::CLASS:
-            return data.classType == other.data.classType;
-        default:
-            return true;
-    }
+    return this == &other;
 }
 
 
 bool sem::Type::operator != (const Type& other) const
 {
-    return !(*this == other);
+    return !(*this != other);
 }
 
 
-const sem::Type sem::Type::NULL_TYPE = sem::Type{ sem::Type::Kind::NULL_TYPE };
-const sem::Type sem::Type::INTEGER = sem::Type{ sem::Type::Kind::INTEGER, &sem::int32 };
-const sem::Type sem::Type::BOOLEAN = sem::Type{ sem::Type::Kind::BOOLEAN, &sem::boolean };
+sem::Type* sem::Type::INTEGER = new sem::NativeType(sem::NativeType::Type::INTEGER);
+sem::Type* sem::Type::BOOLEAN = new sem::NativeType(sem::NativeType::Type::BOOLEAN);
+
+
+llvm::Type* sem::ClassType::getLlvmType (llvm::LLVMContext& context) const
+{
+    return classType->llvmType;
+}
+
+
+llvm::Type* sem::NativeType::getLlvmType (llvm::LLVMContext& context) const
+{
+    switch(type) {
+        case INTEGER:
+            context
+    }
+}
 
 

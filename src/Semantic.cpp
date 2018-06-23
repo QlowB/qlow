@@ -66,12 +66,12 @@ std::unique_ptr<GlobalScope>
     }
     
     for (auto& [name, method] : globalScope->functions) {
-        auto returnType = globalScope->getType(method->astNode->type);
+        auto returnType = globalScope->getType(*method->astNode->type);
         if (returnType) {
             method->returnType = returnType.value();
         }
         else {
-            SemanticError se(SemanticError::UNKNOWN_TYPE, method->astNode->type, method->astNode->pos);
+            SemanticError se(SemanticError::UNKNOWN_TYPE, method->astNode->type->asString(), method->astNode->pos);
         }
         
         // otherwise add to the methods list
@@ -164,11 +164,11 @@ ReturnType ClassName::accept(Visitor& v, Arg arg) \
     return v.visit(*this, arg); \
 }
 
-ACCEPT_DEFINITION(LocalVariableExpression, ExpressionVisitor, std::pair<llvm::Value* COMMA Type>, llvm::IRBuilder<>&)
-ACCEPT_DEFINITION(BinaryOperation, ExpressionVisitor, std::pair<llvm::Value* COMMA Type>, llvm::IRBuilder<>&)
-ACCEPT_DEFINITION(UnaryOperation, ExpressionVisitor, std::pair<llvm::Value* COMMA Type>, llvm::IRBuilder<>&)
-ACCEPT_DEFINITION(FeatureCallExpression, ExpressionVisitor, std::pair<llvm::Value* COMMA Type>, llvm::IRBuilder<>&)
-ACCEPT_DEFINITION(IntConst, ExpressionVisitor, std::pair<llvm::Value* COMMA Type>, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(LocalVariableExpression, ExpressionVisitor, std::pair<llvm::Value* COMMA Type*>, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(BinaryOperation, ExpressionVisitor, std::pair<llvm::Value* COMMA Type*>, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(UnaryOperation, ExpressionVisitor, std::pair<llvm::Value* COMMA Type*>, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(FeatureCallExpression, ExpressionVisitor, std::pair<llvm::Value* COMMA Type*>, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(IntConst, ExpressionVisitor, std::pair<llvm::Value* COMMA Type*>, llvm::IRBuilder<>&)
 
 ACCEPT_DEFINITION(AssignmentStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 ACCEPT_DEFINITION(DoEndBlock, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 

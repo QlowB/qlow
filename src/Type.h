@@ -1,6 +1,8 @@
 #ifndef QLOW_SEM_TYPE_H
 #define QLOW_SEM_TYPE_H
 
+#include <memory>
+
 namespace llvm {
     class Type;
     class LLVMContext;
@@ -12,13 +14,16 @@ namespace qlow
     {
         // forward declarations
         struct Class;
-        struct NativeType;
     }
 
 
     namespace sem
     {
         class Type;
+        
+        class ClassType;
+        class ArrayType;
+        class NativeType;
     }
 }
 
@@ -26,46 +31,68 @@ namespace qlow
 class qlow::sem::Type
 {
 public:
-    enum class Kind
-    {
-        NULL_TYPE,
-        INTEGER,
-        BOOLEAN,
-        CLASS,
-    };
+    virtual ~Type(void);
 
-private:
-    union Data
-    {
-        Class* classType;
-    };
-
-    Kind kind;
-    Data data;
-
-public:
-
-    inline Type(void) :
-        kind{ Kind::NULL_TYPE }, data{ nullptr } {}
-
-    Type(Class* classType);
-    Type(Kind kind, qlow::sem::Class* classType);
-
-    inline Type(Kind kind) :
-        kind{ kind }, data{ nullptr } {}
-
-    bool isClassType(void) const;
-    bool isNative(void) const;
+    virtual bool isClassType(void) const = 0;
+    virtual bool isNativeType(void) const = 0;
+    virtual bool isArrayType(void) const = 0;
 
     Class* getClassType(void);
-    llvm::Type* getLlvmType(llvm::LLVMContext& context) const;
+    virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const = 0;
     
-    bool operator == (const Type& other) const;
-    bool operator != (const Type& other) const;
+    virtual bool operator == (const Type& other) const;
+    virtual bool operator != (const Type& other) const;
+    
+    static Type* INTEGER;
+    static Type* BOOLEAN;
+};
 
-    static const Type NULL_TYPE;
-    static const Type INTEGER;
-    static const Type BOOLEAN;
+
+class qlow::sem::ClassType : public Type
+{
+    sem::Class* classType;
+public:
+    inline bool isClassType(void) const override { return true; }
+    inline bool isNativeType(void) const override { return false; }
+    inline bool isArrayType(void) const override { return false; }
+    
+    virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
+    inline sem::Class* getClassType(void) { return classType; }
+};
+
+
+class qlow::sem::ArrayType : public Type
+{
+    sem::Type* arrayType;
+public:
+    inline bool isClassType(void) const override { return false; }
+    inline bool isNativeType(void) const override { return false; }
+    inline bool isArrayType(void) const override { return true; }
+    
+    inline sem::Type* getArrayType(void) { return arrayType; }
+};
+
+
+class qlow::sem::NativeType : public Type
+{
+public:
+    enum Type {
+        INTEGER,
+        BOOLEAN
+    };
+    
+    Type type;
+    
+    inline NativeType(Type type) :
+        type{ type }
+    {
+    }
+    
+    inline bool isClassType(void) const override { return false; }
+    inline bool isNativeType(void) const override { return true; }
+    inline bool isArrayType(void) const override { return false; }
+    
+    virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const;
 };
 
 

@@ -93,6 +93,11 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %union {
     std::vector<std::unique_ptr<qlow::ast::AstObject>>* topLevel;
     qlow::ast::Class* classDefinition;
+    
+    qlow::ast::Type* type;
+    qlow::ast::ClassType* classType;
+    qlow::ast::ArrayType* arrayType;
+    
     qlow::ast::FeatureDeclaration* featureDeclaration;
     std::vector<std::unique_ptr<qlow::ast::FeatureDeclaration>>* featureList;
     std::vector<std::unique_ptr<qlow::ast::ArgumentDeclaration>>* argumentList;
@@ -128,11 +133,12 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %token <token> CLASS DO END IF ELSE WHILE RETURN
 %token <token> NEW_LINE
 %token <token> SEMICOLON COLON COMMA DOT ASSIGN
-%token <token> ROUND_LEFT ROUND_RIGHT
+%token <token> ROUND_LEFT ROUND_RIGHT SQUARE_LEFT SQUARE_RIGHT
 %token <string> UNEXPECTED_SYMBOL
 
 %type <topLevel> topLevel 
 %type <classDefinition> classDefinition
+%type <type> type 
 %type <featureDeclaration> featureDeclaration
 %type <fieldDeclaration> fieldDeclaration
 %type <methodDefinition> methodDefinition
@@ -194,6 +200,20 @@ classDefinition:
         delete $2; delete $3; $2 = 0; $3 = 0;
     };
 
+type:
+    IDENTIFIER {
+        $$ = new qlow::ast::ClassType(std::move(*$1), @$);
+        delete $1; $1 = nullptr;
+    }
+    |
+    SQUARE_LEFT type SQUARE_RIGHT {
+        $$ = new qlow::ast::ArrayType(std::unique_ptr<qlow::ast::Type>($2), @$);
+    }
+    |
+    SQUARE_LEFT error SQUARE_RIGHT {
+        reportError(qlow::SyntaxError(@2));
+    };
+    
 
 featureList:
     /* empty */ {
@@ -217,31 +237,34 @@ featureDeclaration:
 
 
 fieldDeclaration:
-    IDENTIFIER COLON IDENTIFIER {
-        $$ = new FieldDeclaration(*$3, *$1, @$);
-        delete $3; delete $1; $1 = $3 = 0;
+    IDENTIFIER COLON type {
+        $$ = new FieldDeclaration(std::unique_ptr<qlow::ast::Type>($3), std::move(*$1), @$);
+        delete $1; $1 = nullptr;
     };
 
 
 methodDefinition:
-    IDENTIFIER COLON IDENTIFIER doEndBlock {
-        $$ = new MethodDefinition(*$3, *$1, std::move(std::unique_ptr<DoEndBlock>($4)), @$);
-        delete $3; delete $1; $1 = $3 = 0;
+    IDENTIFIER COLON type doEndBlock {
+        $$ = new MethodDefinition(std::unique_ptr<qlow::ast::Type>($3), *$1, std::unique_ptr<DoEndBlock>($4), @$);
+        delete $1; $1 = nullptr;
     }
     |
     IDENTIFIER doEndBlock {
-        $$ = new MethodDefinition("", *$1, std::move(std::unique_ptr<DoEndBlock>($2)), @$);
-        delete $1; $1 = 0;
+        $$ = new MethodDefinition(nullptr, *$1, std::move(std::unique_ptr<DoEndBlock>($2)), @$);
+        delete $1; $1 = nullptr;
     }
     |
     IDENTIFIER
-        ROUND_LEFT argumentList ROUND_RIGHT COLON IDENTIFIER doEndBlock {
-        $$ = new MethodDefinition(*$6, *$1, std::move(*$3), std::move(std::unique_ptr<DoEndBlock>($7)), @$);
-        delete $6; delete $1; delete $3; $1 = $6 = nullptr; $3 = nullptr;
+        ROUND_LEFT argumentList ROUND_RIGHT COLON type doEndBlock {
+        $$ = new MethodDefinition(std::unique_ptr<qlow::ast::Type>($6),
+                                 *$1, std::move(*$3),
+                                 std::unique_ptr<DoEndBlock>($7),
+                                 @$);
+        delete $1; delete $3; $1 = nullptr; $3 = nullptr;
     }
     |
     IDENTIFIER ROUND_LEFT argumentList ROUND_RIGHT doEndBlock {
-        $$ = new MethodDefinition("", *$1, std::move(*$3), std::move(std::unique_ptr<DoEndBlock>($5)), @$);
+        $$ = new MethodDefinition(nullptr, *$1, std::move(*$3), std::move(std::unique_ptr<DoEndBlock>($5)), @$);
         delete $1; delete $3; $1 = nullptr; $3 = nullptr;
     };
 

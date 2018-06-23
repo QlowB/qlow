@@ -44,6 +44,10 @@ namespace qlow
 
         struct Class;
 
+        struct Type;
+        struct ClassType;
+        struct ArrayType;
+        
         struct FeatureDeclaration;
 
         struct FieldDeclaration;
@@ -111,14 +115,66 @@ struct qlow::ast::Class : public AstObject
 };
 
 
+struct qlow::ast::Type : public AstObject
+{
+    inline Type(const CodePosition& cp) :
+        AstObject{ cp }
+    {
+    }
+    
+    virtual std::string asString(void) const = 0;
+};
+
+
+struct qlow::ast::ClassType : public ast::Type
+{
+    std::string typeName;
+    
+    inline ClassType(const std::string& typeName, const CodePosition& cp) :
+        Type{ cp },
+        typeName{ typeName }
+    {
+    }
+    
+    inline ClassType(std::string&& typeName, const CodePosition& cp) :
+        Type{ cp },
+        typeName{ std::move(typeName) }
+    {
+    }
+    
+    inline std::string asString(void) const override { return typeName; }
+    
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&) override;
+};
+
+
+struct qlow::ast::ArrayType : public ast::Type 
+{
+    std::unique_ptr<ast::Type> superType;
+    
+    inline ArrayType(std::unique_ptr<ast::Type> superType, const CodePosition& cp) :
+        Type{ cp },
+        superType{ std::move(superType) }
+    {
+    }
+    
+    inline std::string asString(void) const override {
+        return std::string("[") + superType->asString() + "]";
+    }
+    
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&) override;
+};
+
+
 struct qlow::ast::FeatureDeclaration : public AstObject
 {
     std::string name;
-    std::string type;
+    std::unique_ptr<ast::Type> type;
 
-    inline FeatureDeclaration(const std::string& type, const std::string& name, const CodePosition& cp) :
+    inline FeatureDeclaration(std::unique_ptr<ast::Type> type, const std::string& name, const CodePosition& cp) :
         AstObject{ cp },
-        name(name), type(type)
+        name{ name },
+        type{ std::move(type) }
     {
     }
 
@@ -128,8 +184,8 @@ struct qlow::ast::FeatureDeclaration : public AstObject
 
 struct qlow::ast::FieldDeclaration : public FeatureDeclaration
 {
-    inline FieldDeclaration(const std::string& type, const std::string& name, const CodePosition& cp) :
-        FeatureDeclaration(type, name, cp)
+    inline FieldDeclaration(std::unique_ptr<ast::Type> type, const std::string& name, const CodePosition& cp) :
+        FeatureDeclaration{ std::move(type), name, cp }
     {
     }
 
@@ -142,19 +198,19 @@ struct qlow::ast::MethodDefinition : public FeatureDeclaration
     OwningList<ArgumentDeclaration> arguments;
     std::unique_ptr<DoEndBlock> body;
 
-    inline MethodDefinition(const std::string& type, const std::string& name,
+    inline MethodDefinition(std::unique_ptr<ast::Type> type, const std::string& name,
             std::unique_ptr<DoEndBlock> body, const CodePosition& cp) :
-        FeatureDeclaration(type, name, cp),
-        body(std::move(body))
+        FeatureDeclaration{ std::move(type), name, cp },
+        body{ std::move(body) }
     {
     }
 
 
-    inline MethodDefinition(const std::string& type, const std::string& name,
+    inline MethodDefinition(std::unique_ptr<ast::Type> type, const std::string& name,
             OwningList<ArgumentDeclaration>&& arguments, std::unique_ptr<DoEndBlock> body, const CodePosition& cp) :
-        FeatureDeclaration(type, name, cp),
+        FeatureDeclaration{ std::move(type), name, cp },
         arguments(std::move(arguments)),
-        body(std::move(body))
+        body{ std::move(body) }
     {
     }
 

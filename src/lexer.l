@@ -111,6 +111,8 @@ extern const char* qlow_parser_filename;
 
 "("                     return SET_TOKEN(ROUND_LEFT);
 ")"                     return SET_TOKEN(ROUND_RIGHT);
+"["                     return SET_TOKEN(SQUARE_LEFT);
+"]"                     return SET_TOKEN(SQUARE_RIGHT);
 
 "false"                 return SET_TOKEN(FALSE);
 "true"                  return SET_TOKEN(TRUE);
