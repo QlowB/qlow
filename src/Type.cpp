@@ -41,7 +41,7 @@ llvm::Type* sem::NativeType::getLlvmType (llvm::LLVMContext& context) const
 {
     switch(type) {
         case INTEGER:
-            context
+            
     }
 }
 
