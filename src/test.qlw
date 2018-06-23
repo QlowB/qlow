@@ -1,5 +1,4 @@
 
-
 class Main
     hoi: Fudi 
     fop: FF do
@@ -26,6 +25,18 @@ class Main
         fop
         return 12
     end
+end
+
+fibonacci(i: Integer): Integer do
+    if i == 0 do
+        return 0
+    else
+    end
+    if i == 1 do
+        return 1
+    else
+    end
+    return fibonacci(i - 1) + fibonacci(i - 2)
 end
 
 

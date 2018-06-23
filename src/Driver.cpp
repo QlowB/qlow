@@ -112,6 +112,7 @@ int Driver::run(void)
     else {
         mainClass = main->second.get();
     }
+    
     auto mainmain = mainClass->methods.find("main");
     qlow::sem::Method* mainMethod = nullptr;
     if (mainmain == mainClass->methods.end()) {
@@ -126,7 +127,7 @@ int Driver::run(void)
     std::unique_ptr<llvm::Module> mod = nullptr;
     
     try {
-        mod = qlow::gen::generateModule(semClasses->classes);
+        mod = qlow::gen::generateModule(*semClasses);
     }
     catch (const char* err) {
         logger.logError(err);

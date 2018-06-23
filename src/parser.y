@@ -105,6 +105,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
     qlow::ast::Expression* expression;
     qlow::ast::Operation::Operator op;
 
+    qlow::ast::FieldDeclaration* fieldDeclaration;
     qlow::ast::MethodDefinition* methodDefinition;
 
     qlow::ast::FeatureCall* featureCall;
@@ -132,7 +133,9 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 
 %type <topLevel> topLevel 
 %type <classDefinition> classDefinition
-%type <featureDeclaration> featureDeclaration fieldDeclaration methodDefinition
+%type <featureDeclaration> featureDeclaration
+%type <fieldDeclaration> fieldDeclaration
+%type <methodDefinition> methodDefinition
 %type <featureList> featureList
 %type <argumentList> argumentList
 %type <statements> statements
@@ -176,7 +179,13 @@ topLevel:
     topLevel classDefinition {
         parsedClasses->push_back(std::move(std::unique_ptr<qlow::ast::Class>($2)));
         $2 = nullptr;
+    }
+    |
+    topLevel methodDefinition {
+        parsedClasses->push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($2)));
+        $2 = nullptr;
     };
+    
 
 
 classDefinition:
@@ -267,7 +276,7 @@ ifElseBlock:
     IF expression doEndBlock {
         $$ = new IfElseBlock(std::unique_ptr<Expression>($2),
                              std::unique_ptr<DoEndBlock>($3),
-                             std::unique_ptr<DoEndBlock>(nullptr), @$);
+                             std::make_unique<DoEndBlock>(qlow::OwningList<qlow::ast::Statement>{}, @3), @$);
         $2 = nullptr; $3 = nullptr;
     }
     |

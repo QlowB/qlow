@@ -61,6 +61,7 @@ std::optional<sem::Type> sem::NativeScope::getType(const std::string& name)
     auto t = types.find(name);
     if (t != types.end())
         return *t->second;
+    
     return std::nullopt;
 }
 

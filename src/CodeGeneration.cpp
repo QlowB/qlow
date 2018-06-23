@@ -23,7 +23,7 @@ namespace qlow
 namespace gen
 {
 
-std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>& classes)
+std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
 {
     using llvm::Module;
     using llvm::Function;
@@ -34,6 +34,8 @@ std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>&
     using llvm::Value;
     using llvm::IRBuilder;
     
+    Logger& logger = Logger::getInstance();
+    
 #ifdef DEBUGGING
         printf("creating llvm module\n"); 
 #endif 
@@ -42,7 +44,7 @@ std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>&
 
     // create llvm structs
     // TODO implement detection of circles
-    for (auto& [name, cl] : classes){
+    for (auto& [name, cl] : objects.classes){
         llvm::StructType* st;
         std::vector<llvm::Type*> fields;
 #ifdef DEBUGGING
@@ -57,37 +59,20 @@ std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>&
         cl->llvmType = st;
     }
     
+    std::vector<llvm::Function*> functions;
+    
     // create all llvm functions
-    for (auto& [name, cl] : classes) {
+    for (auto& [name, cl] : objects.classes) {
         for (auto& [name, method] : cl->methods) {
-            std::vector<Type*> argumentTypes;
-            Type* returnType = method->returnType.getLlvmType(context);
-            for (auto& arg : method->arguments) {
-                Type* argumentType = arg->type.getLlvmType(context);
-                argumentTypes.push_back(argumentType);
-            }
-            
-            FunctionType* funcType = FunctionType::get(
-                returnType, argumentTypes, false);
-#ifdef DEBUGGING
-            printf("looking up llvm type of %s\n", name.c_str());
-#endif 
-            if (returnType == nullptr)
-                throw "invalid return type";
-            Function* func = Function::Create(funcType, Function::ExternalLinkage, method->name, module.get());
-            method->llvmNode = func;
-            size_t index = 0;
-            for (auto& arg : func->args()) {
-                method->arguments[index]->allocaInst = &arg;
-#ifdef DEBUGGING
-                printf("allocaInst of arg '%s': %p\n", method->arguments[index]->name.c_str(), method->arguments[index]->allocaInst);
-#endif 
-                index++;
-            }
+            functions.push_back(generateFunction(module.get(), method.get()));
         }
     }
+    
+    for (auto& [name, method] : objects.functions) {
+        functions.push_back(generateFunction(module.get(), method.get()));
+    }
 
-    for (auto& [name, cl] : classes){
+    for (auto& [name, cl] : objects.classes){
         for (auto& [name, method] : cl->methods) {
             FunctionGenerator fg(*method, module.get());
             Function* f = fg.generate();
@@ -97,7 +82,52 @@ std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>&
 #endif
         }
     }
+    for (auto& [name, method] : objects.functions) {
+        FunctionGenerator fg(*method, module.get());
+        Function* f = fg.generate();
+        llvm::verifyFunction(*f, &llvm::errs());
+#ifdef DEBUGGING
+        printf("verified function: %s\n", method->name.c_str());
+#endif
+    }
     return module;
+}
+
+
+llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
+{
+    using llvm::Function;
+    using llvm::Argument;
+    using llvm::Type;
+    using llvm::FunctionType;
+    
+    std::vector<Type*> argumentTypes;
+    Type* returnType = method->returnType.getLlvmType(context);
+    for (auto& arg : method->arguments) {
+        Type* argumentType = arg->type.getLlvmType(context);
+        argumentTypes.push_back(argumentType);
+    }
+    
+    FunctionType* funcType = FunctionType::get(
+        returnType, argumentTypes, false);
+#ifdef DEBUGGING
+    printf("looking up llvm type of %s\n", method->name.c_str());
+#endif 
+    if (returnType == nullptr)
+        throw "invalid return type";
+    Function* func = Function::Create(funcType, Function::ExternalLinkage, method->name, module);
+    method->llvmNode = func;
+    size_t index = 0;
+    for (auto& arg : func->args()) {
+        method->arguments[index]->allocaInst = &arg;
+#ifdef DEBUGGING
+        printf("allocaInst of arg '%s': %p\n", method->arguments[index]->name.c_str(), method->arguments[index]->allocaInst);
+#endif 
+        index++;
+    }
+    
+    //printf("UEEEEEEEE %s\n", method->name.c_str());
+    return func;
 }
 
 
@@ -137,8 +167,8 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
 
     TargetOptions targetOptions;
     auto relocModel = llvm::Optional<llvm::Reloc::Model>();
-    TargetMachine* targetMachine = target->createTargetMachine(targetTriple, cpu,
-            features, targetOptions, relocModel);
+    std::unique_ptr<TargetMachine> targetMachine(target->createTargetMachine(targetTriple, cpu,
+            features, targetOptions, relocModel));
 
     std::error_code errorCode;
     raw_fd_ostream dest(filename, errorCode, llvm::sys::fs::F_None);

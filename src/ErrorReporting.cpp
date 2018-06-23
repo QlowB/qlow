@@ -1,5 +1,6 @@
 #include "ErrorReporting.h"
 
+#include <map>
 #include <fstream>
 
 using qlow::CompileError;
@@ -15,8 +16,8 @@ CompileError::~CompileError(void)
 void CompileError::underlineError(Logger& logger) const
 {
     // TODO implement for multiline errors
-    if (where.first_line != where.last_line)
-        throw "TODO";
+    //if (where.first_line != where.last_line)
+    //    throw "TODO";
     std::ifstream file(where.filename);
     
     if (!file)
@@ -52,7 +53,15 @@ void SyntaxError::print(Logger& logger) const
 
 void SemanticError::print(Logger& logger) const
 {
-    logger.logError(message, where);
+    static std::map<ErrorCode, std::string> error = {
+        {UNKNOWN_TYPE, "unknown type"},
+        {FEATURE_NOT_FOUND, "method or variable not found"},
+        {DUPLICATE_CLASS_DEFINITION, "duplicate class definition"},
+        {DUPLICATE_FIELD_DECLARATION, "duplicate field declaration"},
+        {DUPLICATE_METHOD_DEFINITION, "duplicate method definition"},
+    };
+    std::string& errMsg = error[errorCode];
+    logger.logError(errMsg + (errMsg != "" ?  ": " : "") + message, where);
     underlineError(logger);
 }
 

@@ -141,10 +141,15 @@ struct qlow::sem::Method : public SemanticObject
     llvm::Function* llvmNode;
 
     inline Method(Scope& parentScope, const Type& returnType) :
-        returnType{ returnType }, scope{ parentScope } {}
+        returnType{ returnType },
+        scope{ parentScope }
+    {
+    }
     
     inline Method(ast::MethodDefinition* astNode, Scope& parentScope) :
-        astNode{ astNode }, scope{ parentScope }
+        astNode{ astNode },
+        name{ astNode->name },
+        scope{ parentScope }
     {
     }
     

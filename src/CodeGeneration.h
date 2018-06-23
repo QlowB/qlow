@@ -12,7 +12,8 @@ namespace qlow
 {
 namespace gen
 {
-    std::unique_ptr<llvm::Module> generateModule(const sem::SymbolTable<sem::Class>& classes);
+    std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects);
+    llvm::Function* generateFunction (llvm::Module* module, sem::Method* method);
     void generateObjectFile(const std::string& name, std::unique_ptr<llvm::Module> module);
 
     class FunctionGenerator;

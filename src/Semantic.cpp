@@ -20,7 +20,7 @@ std::unique_ptr<GlobalScope>
     Logger& logger = Logger::getInstance();
 
 #ifdef DEBUGGING
-    printf("starting building semantic representation\n");
+    printf("starting building semantic representation (%d objects)\n", objects.size());
 #endif
 
     // create classes
@@ -73,6 +73,9 @@ std::unique_ptr<GlobalScope>
         else {
             SemanticError se(SemanticError::UNKNOWN_TYPE, method->astNode->type, method->astNode->pos);
         }
+        
+        // otherwise add to the methods list
+        globalScope->functions[method->name] = unique_dynamic_cast<Method>(method->astNode->accept(av, *globalScope));
     }
     
 #ifdef DEBUGGING
@@ -84,6 +87,10 @@ std::unique_ptr<GlobalScope>
             method->body = unique_dynamic_cast<sem::DoEndBlock>(av.visit(*method->astNode->body, method->scope));
         }
     }
+    for (auto& [name, method] : globalScope->functions) {
+        method->body = unique_dynamic_cast<sem::DoEndBlock>(av.visit(*method->astNode->body, method->scope));
+    }
+    
 #ifdef DEBUGGING
     printf("created all method bodies\n");
 #endif

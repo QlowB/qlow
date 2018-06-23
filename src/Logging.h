@@ -58,7 +58,12 @@ private:
 
     // type of current logging
     LogLevel logType = LogLevel::OFF;
+    
+#ifdef DEBUGGING
+    LogLevel logLevel = LogLevel::DEBUG;
+#else
     LogLevel logLevel = LogLevel::INFO;
+#endif
 
     static Logger instance;
 
