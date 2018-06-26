@@ -1,9 +1,10 @@
 
 class Main
     hoi: Fudi 
+    //gaga -> Main;
+
     fop: FF do
         var: Integer
-
         var := 5
         var := 10 + 4 * 6 + 1
 

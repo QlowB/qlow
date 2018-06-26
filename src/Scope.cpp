@@ -1,6 +1,7 @@
 #include "Scope.h"
 #include "Ast.h"
 #include "Semantic.h"
+#include "Type.h"
 #include "Builtin.h"
 
 using namespace qlow;
@@ -28,7 +29,7 @@ sem::Method* sem::GlobalScope::getMethod(const std::string& name)
 sem::Type* sem::GlobalScope::getType(const ast::Type& name)
 {
     if (const auto* arr = dynamic_cast<const ast::ArrayType*>(&name); arr) {
-        return new sem::ArrayType(getType(arr->arrayType));
+        return new sem::ArrayType(getType(*arr->arrayType));
     }
     
     const auto* classType = dynamic_cast<const ast::ClassType*>(&name);
@@ -36,16 +37,16 @@ sem::Type* sem::GlobalScope::getType(const ast::Type& name)
     if (!classType)
         throw "internal error";
     
-    /*
+    
     auto native = NativeScope::getInstance().getType(name);
     if (native) {
         return native;
     }
-    */
     
-    auto t = classes.find(classType->classType->name);
+    
+    auto t = classes.find(classType->typeName);
     if (t != classes.end())
-        return new sem::ClassType(t->second);
+        return new sem::ClassType(t->second.get());
     
     return nullptr;
 }
@@ -69,13 +70,23 @@ std::string sem::GlobalScope::toString(void)
 }
 
 
-sem::Type* sem::NativeScope::getType(const std::string& name)
+sem::Type* sem::NativeScope::getType(const ast::Type& name)
 {
-    auto t = types.find(name);
-    if (t != types.end())
-        return *t->second;
+    if (const auto* arr = dynamic_cast<const ast::ArrayType*>(&name); arr) {
+        return new sem::ArrayType(getType(*arr->arrayType));
+    }
     
-    return std::nullopt;
+    const auto* classType = dynamic_cast<const ast::ClassType*>(&name);
+   
+    if (!classType)
+        throw "internal error";
+    
+    
+    auto t = types.find(classType->typeName);
+    if (t != types.end())
+        return t->second.get();
+    
+    return nullptr;
 }
 
 
@@ -132,7 +143,7 @@ std::string sem::ClassScope::toString(void)
 }
 
 
-sem::Type* sem::ClassScope::getType(const std::string& name)
+sem::Type* sem::ClassScope::getType(const ast::Type& name)
 {
     return parentScope.getType(name);
 }
@@ -140,7 +151,7 @@ sem::Type* sem::ClassScope::getType(const std::string& name)
 
 sem::Type* sem::ClassScope::getReturnableType(void)
 {
-    return std::nullopt;
+    return nullptr;
 }
 
 
@@ -172,7 +183,7 @@ sem::Method* sem::LocalScope::getMethod(const std::string& name)
 }
 
 
-sem::Type* sem::LocalScope::getType(const std::string& name)
+sem::Type* sem::LocalScope::getType(const ast::Type& name)
 {
     return parentScope.getType(name);
 }

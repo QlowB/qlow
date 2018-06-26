@@ -1,4 +1,5 @@
 #include "Semantic.h"
+#include "Type.h"
 #include "Ast.h"
 #include "AstVisitor.h"
 
@@ -68,10 +69,12 @@ std::unique_ptr<GlobalScope>
     for (auto& [name, method] : globalScope->functions) {
         auto returnType = globalScope->getType(*method->astNode->type);
         if (returnType) {
-            method->returnType = returnType.value();
+            method->returnType = returnType;
         }
         else {
-            SemanticError se(SemanticError::UNKNOWN_TYPE, method->astNode->type->asString(), method->astNode->pos);
+            SemanticError se(SemanticError::UNKNOWN_TYPE,
+                             method->astNode->type->asString(),
+                             method->astNode->type->pos);
         }
         
         // otherwise add to the methods list
@@ -195,6 +198,12 @@ std::string LocalVariableExpression::toString(void) const
 }
 
 
+std::string UnaryOperation::toString(void) const
+{
+    return "UnaryOperation[" + arg->toString() + "]";
+}
+
+
 std::string BinaryOperation::toString(void) const
 {
     return "BinaryOperation[" + left->toString() + ", " +
@@ -202,9 +211,10 @@ std::string BinaryOperation::toString(void) const
 }
 
 
-std::string UnaryOperation::toString(void) const
+std::string NewArrayExpression::toString(void) const
 {
-    return "UnaryOperation[" + arg->toString() + "]";
+    return "NewArrayExpression[" + arrayType->toString() + "; " +
+        length->toString() + "]";
 }
 
 

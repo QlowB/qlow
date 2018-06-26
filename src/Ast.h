@@ -66,12 +66,14 @@ namespace qlow
         struct FeatureCall;
         struct AssignmentStatement;
         struct ReturnStatement;
-        struct NewVariableStatement;
+        struct LocalVariableStatement;
         struct IntConst;
 
         struct Operation;
         struct UnaryOperation;
         struct BinaryOperation;
+        
+        struct NewArrayExpression;
     }
 
     namespace sem
@@ -123,6 +125,7 @@ struct qlow::ast::Type : public AstObject
     }
     
     virtual std::string asString(void) const = 0;
+    virtual inline std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&) override {}
 };
 
 
@@ -143,26 +146,22 @@ struct qlow::ast::ClassType : public ast::Type
     }
     
     inline std::string asString(void) const override { return typeName; }
-    
-    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&) override;
 };
 
 
 struct qlow::ast::ArrayType : public ast::Type 
 {
-    std::unique_ptr<ast::Type> superType;
+    std::unique_ptr<ast::Type> arrayType;
     
-    inline ArrayType(std::unique_ptr<ast::Type> superType, const CodePosition& cp) :
+    inline ArrayType(std::unique_ptr<ast::Type> arrayType, const CodePosition& cp) :
         Type{ cp },
-        superType{ std::move(superType) }
+        arrayType{ std::move(arrayType) }
     {
     }
     
     inline std::string asString(void) const override {
-        return std::string("[") + superType->asString() + "]";
+        return std::string("[") + arrayType->asString() + "]";
     }
-    
-    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&) override;
 };
 
 
@@ -220,11 +219,12 @@ struct qlow::ast::MethodDefinition : public FeatureDeclaration
 
 struct qlow::ast::VariableDeclaration  : public AstObject
 {
-    std::string type;
+    std::unique_ptr<ast::Type> type;
     std::string name;
-    inline VariableDeclaration(const std::string& type, const std::string& name, const CodePosition& cp) :
+    inline VariableDeclaration(std::unique_ptr<ast::Type> type, std::string&& name, const CodePosition& cp) :
         AstObject{ cp },
-        type(type), name(name)
+        type{ std::move(type) },
+        name{ std::move(name) }
     {
     }
 
@@ -235,8 +235,8 @@ struct qlow::ast::VariableDeclaration  : public AstObject
 struct qlow::ast::ArgumentDeclaration :
     public VariableDeclaration
 {
-    inline ArgumentDeclaration(const std::string& type, const std::string& name, const CodePosition& cp) :
-        VariableDeclaration(type, name, cp)
+    inline ArgumentDeclaration(std::unique_ptr<ast::Type> type, std::string&& name, const CodePosition& cp) :
+        VariableDeclaration{ std::move(type), std::move(name), cp }
     {
     }
 
@@ -358,14 +358,15 @@ struct qlow::ast::AssignmentStatement : public Statement
 };
 
 
-struct qlow::ast::NewVariableStatement : public Statement
+struct qlow::ast::LocalVariableStatement : public Statement
 {
     std::string name;
-    std::string type;
-    inline NewVariableStatement(std::string&& name, std::string&& type, const CodePosition& cp) :
+    std::unique_ptr<ast::Type> type;
+    inline LocalVariableStatement(std::string&& name, std::unique_ptr<Type> type, const CodePosition& cp) :
         AstObject{ cp },
         Statement{ cp },
-       name{ name }, type{ type }
+       name{ name },
+       type{ std::move(type) }
     {
     } 
 
@@ -446,6 +447,24 @@ struct qlow::ast::BinaryOperation : public Operation
     {
     }
 
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
+};
+
+
+struct qlow::ast::NewArrayExpression : public Expression
+{
+    std::unique_ptr<ast::Type> type;
+    std::unique_ptr<Expression> length;
+    inline NewArrayExpression(std::unique_ptr<ast::Type> type,
+                              std::unique_ptr<Expression> length,
+                              const CodePosition& cp) :
+        AstObject{ cp },
+        Expression{ cp },
+        type{ std::move(type) },
+        length{ std::move(length) }
+    {
+    }
+    
     virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 

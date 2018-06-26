@@ -36,7 +36,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
     else {
         throw SemanticError(SemanticError::UNKNOWN_TYPE,
             ast.type->asString(),
-            ast.pos
+            ast.type->pos
         );
     }
     return f;
@@ -48,11 +48,11 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefiniti
     auto returnType = scope.getType(*ast.type);
     if (!returnType) {
         throw SemanticError(SemanticError::UNKNOWN_TYPE,
-            ast.type,
-            ast.pos
+            ast.type->asString(),
+            ast.type->pos
         );
     }
-    auto m = std::make_unique<sem::Method>(scope, returnType.value());
+    auto m = std::make_unique<sem::Method>(scope, returnType);
     m->name = ast.name;
     m->astNode = &ast;
     
@@ -79,14 +79,14 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::VariableDeclar
 {
     auto v = std::make_unique<sem::Variable>();
     v->name = ast.name;
-    auto type = scope.getType(ast.type);
+    auto* type = scope.getType(*ast.type);
     if (type) {
-        v->type = type.value();
+        v->type = type;
     }
     else {
         throw SemanticError(SemanticError::UNKNOWN_TYPE,
-            ast.type,
-            ast.pos
+            ast.type->asString(),
+            ast.type->pos
         );
     }
     return v;
@@ -106,13 +106,14 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
     auto body = std::make_unique<sem::DoEndBlock>(scope);
     for (auto& statement : ast.statements) {
         
-        if (ast::NewVariableStatement* nvs = dynamic_cast<ast::NewVariableStatement*>(statement.get()); nvs) {
-            auto type = body->scope.getType(*nvs->type);
+        if (ast::LocalVariableStatement* nvs = dynamic_cast<ast::LocalVariableStatement*>(statement.get()); nvs) {
+            auto* type = body->scope.getType(*nvs->type);
 
             if (!type)
-                throw SemanticError(SemanticError::UNKNOWN_TYPE, nvs->type, nvs->pos);
-
-            auto var = std::make_unique<sem::Variable>(type.value(), nvs->name);
+                throw SemanticError(SemanticError::UNKNOWN_TYPE,
+                                    nvs->type->asString(),
+                                    nvs->type->pos);
+            auto var = std::make_unique<sem::Variable>(type, nvs->name);
             body->scope.putVariable(nvs->name, std::move(var));
             continue;
         }
@@ -212,7 +213,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::ReturnStatemen
 }
 
 
-std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::NewVariableStatement& ast, sem::Scope& scope)
+std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::LocalVariableStatement& ast, sem::Scope& scope)
 {
     throw "shouldn't be called";
 }
@@ -243,4 +244,10 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
     return ret;
 }
 
+
+std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::NewArrayExpression& ast, sem::Scope& scope)
+{
+    auto ret = std::make_unique<sem::BinaryOperation>();
+    return ret;
+}
 

@@ -3,14 +3,24 @@
 
 using namespace qlow;
 
-sem::Class sem::int32 = sem::Class{ "Integer", sem::NativeScope::getInstance() };
-sem::Class sem::boolean = sem::Class{ "Boolean", sem::NativeScope::getInstance() };
 
 sem::NativeScope qlow::sem::generateNativeScope(void)
 {
     using sem::Class;
+    using sem::NativeType;
+    using sem::NativeScope;
     
-    sem::NativeScope scope;
+    NativeScope scope;
+    
+    scope.types.insert(
+        {"Integer", std::make_unique<NativeType>(NativeType::INTEGER)}
+    );
+    
+    scope.types.insert(
+        {"Boolean", std::make_unique<NativeType>(NativeType::BOOLEAN)}
+    );
+    
+    return scope;
     
     /*
     std::unique_ptr<sem::Type> int32 =

@@ -5,8 +5,6 @@
 #include <map>
 #include <memory>
 
-#include "Type.h"
-
 namespace qlow
 {
     namespace ast
@@ -32,6 +30,9 @@ namespace qlow
         class NativeScope;
         class ClassScope;
         class LocalScope;
+        
+        class Type;
+        class NativeType;
     }
 }
 
@@ -68,7 +69,7 @@ class qlow::sem::NativeScope : public GlobalScope
 {
     static NativeScope instance;
 public:
-    SymbolTable<Type> types;
+    SymbolTable<NativeType> types;
 public:
     virtual Type* getType(const ast::Type& name);
 

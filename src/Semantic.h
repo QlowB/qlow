@@ -41,6 +41,8 @@ namespace qlow
         struct Operation;
         struct UnaryOperation;
         struct BinaryOperation;
+        
+        struct NewArrayExpression;
 
         struct FeatureCallExpression;
         
@@ -240,6 +242,16 @@ struct qlow::sem::BinaryOperation : public Operation
     
     virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     
+    virtual std::string toString(void) const override;
+};
+
+
+struct qlow::sem::NewArrayExpression : public Expression
+{
+    std::unique_ptr<Type> arrayType;
+    std::unique_ptr<Expression> length;
+    
+    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     virtual std::string toString(void) const override;
 };
 

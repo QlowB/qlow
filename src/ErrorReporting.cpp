@@ -8,45 +8,113 @@ using qlow::SyntaxError;
 using qlow::SemanticError;
 
 
+namespace qlow
+{
+    void reportError(const CompileError& ce)
+    {
+        Logger& logger = Logger::getInstance();
+        
+        ce.print(logger);
+    }
+}
+
+
+
 CompileError::~CompileError(void)
 {
 }
 
 
+// TODO rewrite more compact and more readable
 void CompileError::underlineError(Logger& logger) const
 {
-    // TODO implement for multiline errors
-    //if (where.first_line != where.last_line)
-    //    throw "TODO";
     std::ifstream file(where.filename);
     
     if (!file)
         return;
     
-    size_t lineNr = 1;
-    while (lineNr < where.first_line) {
-        if (file.get() == '\n') {
-            lineNr++;
+    if (where.isMultiline()) {
+        size_t lineNr = 1;
+        while (lineNr < where.first_line) {
+            if (file.get() == '\n') {
+                lineNr++;
+            }
         }
+        std::string line;
+        std::getline(file, line);
+        
+        int lineNrLength = std::to_string(lineNr).size();
+        
+        logger.err() << "from here:" << std::endl;
+        logger.foreground(Logger::Color::YELLOW, true);
+        logger.err() << lineNr;
+        logger.removeFormatting();
+        logger.err() << ": " << line << std::endl;
+        for (size_t i = 0; i < where.first_column + lineNrLength + 2; i++) {
+            logger.err() << ' ';
+        }
+        logger.foreground(Logger::Color::RED, true);
+        for (size_t i = where.first_column; i < line.size(); i++) {
+            logger.err() << '^';
+        }
+        logger.removeFormatting();
+        
+        lineNr++;
+        while (lineNr < where.last_line) {
+            if (file.get() == '\n') {
+                lineNr++;
+            }
+        }
+        
+        std::getline(file, line);
+        lineNrLength = std::to_string(lineNr).size();
+        logger.err() << std::endl << "to here:" << std::endl;
+        
+        logger.foreground(Logger::Color::YELLOW, true);
+        logger.err() << lineNr;
+        logger.removeFormatting();
+        logger.err() << ": " << line << std::endl;
+        for (size_t i = 0; i < lineNrLength + 2; i++) {
+            logger.err() << ' ';
+        }
+        logger.foreground(Logger::Color::RED, true);
+        for (size_t i = 0; i < where.last_column; i++) {
+            logger.err() << '^';
+        }
+        logger.removeFormatting();
+        logger.err() << std::endl;
+        
     }
-    std::string line;
-    std::getline(file, line);
-    logger.err() << line << std::endl;
-    for (size_t i = 0; i < where.first_column; i++) {
-        logger.err() << ' ';
+    else {
+        size_t lineNr = 1;
+        while (lineNr < where.first_line) {
+            if (file.get() == '\n') {
+                lineNr++;
+            }
+        }
+        std::string line;
+        std::getline(file, line);
+        logger.err() << line << std::endl;
+        for (size_t i = 0; i < where.first_column; i++) {
+            logger.err() << ' ';
+        }
+        logger.foreground(Logger::Color::RED, true);
+        for (size_t i = where.first_column; i < where.last_column; i++) {
+            logger.err() << '^';
+        }
+        logger.removeFormatting();
+        logger.err() << std::endl;
     }
-    logger.foreground(Logger::Color::RED, true);
-    for (size_t i = where.first_column; i < where.last_column; i++) {
-        logger.err() << '^';
-    }
-    logger.removeFormatting();
-    logger.err() << std::endl;
 }
 
 
 void SyntaxError::print(Logger& logger) const
 {
-    logger.logError("Syntax error", where);
+    using namespace std::literals;
+    if (message == "")
+        logger.logError("Syntax error", where);
+    else
+        logger.logError("Syntax error: "s + message, where);
     underlineError(logger);
 }
 

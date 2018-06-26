@@ -51,7 +51,7 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
         printf("creating llvm struct for %s\n", name.c_str());
 #endif 
         for (auto& [name, field] : cl->fields) {
-            fields.push_back(field->type.getLlvmType(context));
+            fields.push_back(field->type->getLlvmType(context));
             if (fields[fields.size() - 1] == nullptr)
                 throw "internal error: possible circular dependency";
         }
@@ -102,9 +102,14 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
     using llvm::FunctionType;
     
     std::vector<Type*> argumentTypes;
-    Type* returnType = method->returnType.getLlvmType(context);
+    Type* returnType;
+    if (method->returnType)
+        returnType = method->returnType->getLlvmType(context);
+    else
+        returnType = llvm::Type::getVoidTy(context);
+    
     for (auto& arg : method->arguments) {
-        Type* argumentType = arg->type.getLlvmType(context);
+        Type* argumentType = arg->type->getLlvmType(context);
         argumentTypes.push_back(argumentType);
     }
     
@@ -215,7 +220,7 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     for (auto& [name, var] : method.body->scope.getLocals()) {
         if (var.get() == nullptr)
             throw "wtf null variable";
-        llvm::AllocaInst* v = builder.CreateAlloca(var->type.getLlvmType(context));
+        llvm::AllocaInst* v = builder.CreateAlloca(var->type->getLlvmType(context));
         var->allocaInst = v;
     }
     

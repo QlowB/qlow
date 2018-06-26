@@ -39,12 +39,7 @@ int qlow_parser_error(const char* msg)
 {
     //throw msg;
     //printf("error happened: %s\n", msg);
-}
-
-void reportError(const qlow::SyntaxError& se)
-{
-    qlow::Logger& logger = qlow::Logger::getInstance();
-    se.print(logger);
+    // throw msg;
 }
 
 std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::AstObject>>> parsedClasses;
@@ -116,10 +111,12 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
     qlow::ast::FeatureCall* featureCall;
     qlow::ast::AssignmentStatement* assignmentStatement;
     qlow::ast::ReturnStatement* returnStatement;
-    qlow::ast::NewVariableStatement* newVariableStatement;
+    qlow::ast::LocalVariableStatement* localVariableStatement;
 
     qlow::ast::UnaryOperation* unaryOperation;
     qlow::ast::BinaryOperation* binaryOperation;
+    
+    qlow::ast::NewArrayExpression* newArrayExpression;
 
     const char* cString;
     std::string* string;
@@ -130,7 +127,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %token <string> IDENTIFIER
 %token <string> INT_LITERAL
 %token <token> TRUE FALSE
-%token <token> CLASS DO END IF ELSE WHILE RETURN
+%token <token> CLASS DO END IF ELSE WHILE RETURN NEW
 %token <token> NEW_LINE
 %token <token> SEMICOLON COLON COMMA DOT ASSIGN
 %token <token> ROUND_LEFT ROUND_RIGHT SQUARE_LEFT SQUARE_RIGHT
@@ -155,9 +152,10 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %type <featureCall> featureCall
 %type <assignmentStatement> assignmentStatement 
 %type <returnStatement> returnStatement 
-%type <newVariableStatement> newVariableStatement
+%type <localVariableStatement> localVariableStatement
 %type <unaryOperation> unaryOperation
 %type <binaryOperation> binaryOperation
+%type <newArrayExpression> newArrayExpression
 
 %destructor { } <token>
 %destructor { } <op>
@@ -175,7 +173,6 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 
 %%
 
-
 /* list of class definitions */
 topLevel:
     /* empty */ {
@@ -190,15 +187,35 @@ topLevel:
     topLevel methodDefinition {
         parsedClasses->push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($2)));
         $2 = nullptr;
+    }
+    |
+    topLevel error methodDefinition {
+        reportError(qlow::SyntaxError(@2));
+        yyerrok;
+        parsedClasses->push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($3)));
+        $3 = nullptr;
+    }
+    |
+    topLevel error classDefinition {
+        reportError(qlow::SyntaxError(@2));
+        yyerrok;
+        parsedClasses->push_back(std::move(std::unique_ptr<qlow::ast::Class>($3)));
+        $3 = nullptr;
     };
-    
 
 
 classDefinition:
     CLASS IDENTIFIER featureList END {
         $$ = new Class(*$2, *$3, @$);
         delete $2; delete $3; $2 = 0; $3 = 0;
+    }
+    |
+    CLASS error END {
+        reportError(qlow::SyntaxError(@2));
+        yyerrok;
+        $$ = nullptr;
     };
+
 
 type:
     IDENTIFIER {
@@ -211,7 +228,7 @@ type:
     }
     |
     SQUARE_LEFT error SQUARE_RIGHT {
-        reportError(qlow::SyntaxError(@2));
+        reportError(qlow::SyntaxError("invalid type", @2));
     };
     
 
@@ -223,6 +240,15 @@ featureList:
     featureList featureDeclaration {
         $$ = $1;
         $$->push_back(std::move(std::unique_ptr<FeatureDeclaration>($2)));
+        $2 = nullptr;
+    }
+    |
+    featureList error featureDeclaration {
+        $$ = $1;
+        yyerrok;
+        reportError(qlow::SyntaxError(@2));
+        $$->push_back(std::move(std::unique_ptr<FeatureDeclaration>($3)));
+        $3 = nullptr;
     };
 
 
@@ -282,9 +308,9 @@ argumentList:
 
 
 argumentDeclaration:
-    IDENTIFIER COLON IDENTIFIER {
-        $$ = new ArgumentDeclaration(*$3, *$1, @$);
-        delete $3; delete $1; $1 = $3 = 0;
+    IDENTIFIER COLON type {
+        $$ = new ArgumentDeclaration(std::unique_ptr<qlow::ast::Type>($3), std::move(*$1), @$);
+        delete $1; $1 = nullptr; $3 = nullptr;
     };
 
 
@@ -349,7 +375,7 @@ statement:
         $$ = $1;
     }
     |
-    newVariableStatement statementEnd {
+    localVariableStatement statementEnd {
         $$ = $1;
     }
     |
@@ -422,6 +448,10 @@ expression:
         $$ = $1;
     }
     |
+    newArrayExpression {
+        $$ = $1;
+    }
+    |
     INT_LITERAL {
         $$ = new IntConst(std::move(*$1), @$);
         delete $1;
@@ -487,6 +517,11 @@ paranthesesExpression:
         $$ = $2;
     };
 
+newArrayExpression:
+    NEW SQUARE_LEFT type SEMICOLON expression SQUARE_RIGHT {
+        
+    };
+
 
 assignmentStatement:
     expression ASSIGN expression {
@@ -498,10 +533,10 @@ returnStatement:
         $$ = new ReturnStatement(std::unique_ptr<Expression>($2), @$);
     };
 
-newVariableStatement:
-    IDENTIFIER COLON IDENTIFIER {
-        $$ = new NewVariableStatement(std::move(*$1), std::move(*$3), @$);
-        delete $3; delete $1; $3 = 0; $1 = 0;
+localVariableStatement:
+    IDENTIFIER COLON type {
+        $$ = new LocalVariableStatement(std::move(*$1), std::unique_ptr<qlow::ast::Type>($3), @$);
+        delete $1; $3 = nullptr; $1 = nullptr;
     };
 
 

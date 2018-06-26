@@ -21,6 +21,7 @@ Options Options::parseOptions(int argc, char** argv)
     {
         {"-S",              &Options::emitAssembly},
         {"--emit-assembly", &Options::emitAssembly},
+        {"-O3",             &Options::emitAssembly},
         {"-L",              &Options::emitLlvm},
         {"--emit-llvm",     &Options::emitLlvm},
     };

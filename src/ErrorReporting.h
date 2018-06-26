@@ -12,6 +12,8 @@ namespace qlow
     
     class SyntaxError;
     class SemanticError;
+    
+    void reportError(const CompileError& ce);
 }
 
 
@@ -25,6 +27,8 @@ struct qlow::CodePosition
     int last_line;
     int first_column;
     int last_column;
+    
+    inline bool isMultiline(void) const { return first_line != last_line; }
 };
 
 
@@ -47,9 +51,16 @@ public:
 
 class qlow::SyntaxError : public CompileError
 {
+    std::string message;
 public:
     inline SyntaxError(const CodePosition& where) :
         CompileError{ where }
+    {
+    }
+    
+    inline SyntaxError(const std::string& message, const CodePosition& where) :
+        CompileError{ where },
+        message{ message }
     {
     }
     

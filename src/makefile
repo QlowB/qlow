@@ -17,7 +17,7 @@ endif
 YACC := bison
 YACCFLAGS := -d
 LEX := flex
-LEXFLAGS :=
+LEXFLAGS := "-8"
 
 #OBJECTS := $(patsubst %.cpp, %.o, $(wildcard *.cpp */*.cpp))
 OBJECTS := $(patsubst %.cpp, %.o, $(wildcard *.cpp)) \
@@ -48,7 +48,7 @@ parser.o: parser.cpp
 	$(YACC) -o $@ $< $(YACCFLAGS)
 
 %.cpp: %.l parser.cpp
-	$(LEX) -o $@ $< $(LEXFLAGS)
+	$(LEX) $(LEXFLAGS) -o $@ $<
 
 
 

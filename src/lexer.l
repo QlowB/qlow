@@ -32,7 +32,7 @@ extern "C" int yywrap()
 {
     return 1; /* do not continue on EOF */
 }
-
+/*  */
 int commentDepth;
 
 size_t offset;
@@ -61,6 +61,11 @@ extern const char* qlow_parser_filename;
 %x STRING
 %s METHOD
 
+UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xec][\x80-\xbf][\x80-\xbf]|\xed[\x80-\x9f][\x80-\xbf]|[\xee\xef][\x80-\xbf][\x80-\xbf]|\xf0[\x90-\xbf][\x80-\xbf][\x80-\xbf]|[\xf1-\xf3][\x80-\xbf][\x80-\xbf][\x80-\xbf]|\xf4[\x80-\x8f][\x80-\xbf][\x80-\xbf]
+
+/*UTF8CHAR [a-zA-Z0-9_]
+*/
+
 %%
 
 <COMMENT>"/*"           commentDepth++;
@@ -72,7 +77,8 @@ extern const char* qlow_parser_filename;
 <LINE_COMMENT>.         ; // inside comment, ignore everything
 
 <STRING>"\""            yy_pop_state();
-<STRING>[^\"^]*         printf("%s\n", std::string(yytext, yyleng).c_str());
+<STRING>[^\"^\n]*          printf("%s\n", std::string(yytext, yyleng).c_str());
+<STRING>\n              SET_STRING; return UNEXPECTED_SYMBOL; 
 
 "/*"                    yy_push_state(COMMENT); commentDepth = 1;
 "//"                    yy_push_state(LINE_COMMENT);
@@ -91,6 +97,7 @@ extern const char* qlow_parser_filename;
 "while"                 return SET_TOKEN(WHILE);
 "else"                  return SET_TOKEN(ELSE);
 "return"                return SET_TOKEN(RETURN);
+"new"                   return SET_TOKEN(NEW);
 
 ":"                     return SET_TOKEN(COLON);
 ";"                     return SET_TOKEN(SEMICOLON);
@@ -120,6 +127,29 @@ extern const char* qlow_parser_filename;
 [0-9_]+                 SET_STRING; return INT_LITERAL;
 0x[0-9A-Fa-f]+          SET_STRING; return INT_LITERAL;
 [a-zA-Z_][a-zA-Z0-9_]*  SET_STRING; return IDENTIFIER;
+
 .                       SET_STRING; return UNEXPECTED_SYMBOL; // printf("Unexpected symbol %s.\n", std::string(yytext, yyleng).c_str()); yyterminate();
 
 %%
+
+// [a-zA-Z_][a-zA-Z0-9_]*  SET_STRING; return IDENTIFIER;
+
+
+/*
+QLOW_PARSER_LTYPE qlow_parser_lloc;
+const char* qlow_parser_filename;
+QLOW_PARSER_STYPE qlow_parser_lval;
+
+int main() {
+    while (true) {
+        yylex();
+        auto& qpl = qlow_parser_lval;
+        if (qpl.token > 0 && qpl.token < 1000) {
+            printf("token %d\n", qpl.token);
+        }
+        else {
+            printf("string %s\n", qpl.string->c_str());
+        }
+    }
+}
+*/

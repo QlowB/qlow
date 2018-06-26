@@ -2,6 +2,7 @@
 #define QLOW_SEM_TYPE_H
 
 #include <memory>
+#include "Semantic.h"
 
 namespace llvm {
     class Type;
@@ -28,7 +29,7 @@ namespace qlow
 }
 
 
-class qlow::sem::Type
+class qlow::sem::Type : public SemanticObject
 {
 public:
     virtual ~Type(void);
@@ -37,11 +38,9 @@ public:
     virtual bool isNativeType(void) const = 0;
     virtual bool isArrayType(void) const = 0;
 
-    Class* getClassType(void);
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const = 0;
     
-    virtual bool operator == (const Type& other) const;
-    virtual bool operator != (const Type& other) const;
+    virtual bool equals(const Type* other) const;
     
     static Type* INTEGER;
     static Type* BOOLEAN;
@@ -52,12 +51,18 @@ class qlow::sem::ClassType : public Type
 {
     sem::Class* classType;
 public:
+    inline ClassType(sem::Class* classType) :
+        classType{ classType }
+    {
+    }
+    
     inline bool isClassType(void) const override { return true; }
     inline bool isNativeType(void) const override { return false; }
     inline bool isArrayType(void) const override { return false; }
     
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
     inline sem::Class* getClassType(void) { return classType; }
+    virtual bool equals(const Type* other) const;
 };
 
 
@@ -65,11 +70,19 @@ class qlow::sem::ArrayType : public Type
 {
     sem::Type* arrayType;
 public:
+    
+    inline ArrayType(sem::Type* arrayType) :
+        arrayType{ arrayType }
+    {
+    }
+    
     inline bool isClassType(void) const override { return false; }
     inline bool isNativeType(void) const override { return false; }
     inline bool isArrayType(void) const override { return true; }
     
+    virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
     inline sem::Type* getArrayType(void) { return arrayType; }
+    virtual bool equals(const Type* other) const;
 };
 
 
@@ -92,7 +105,8 @@ public:
     inline bool isNativeType(void) const override { return true; }
     inline bool isArrayType(void) const override { return false; }
     
-    virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const;
+    llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
+    virtual bool equals(const sem::Type* other) const;
 };
 
 

@@ -29,7 +29,7 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::BinaryOperatio
     auto [left, leftType] = binop.left->accept(*this, builder);
     auto [right, rightType] = binop.right->accept(*this, builder);
     
-    if (leftType != Type::INTEGER || rightType != Type::INTEGER)
+    if (!leftType->equals(Type::INTEGER) || !rightType->equals(Type::INTEGER))
         throw "invalid types in BinaryOperation";
     
     if (left == nullptr) {
@@ -89,7 +89,7 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::FeatureCallExp
         auto& arg = call.arguments[i];
         auto [value, type] = arg->accept(*this, builder);
         
-        if (type != call.callee->arguments[i]->type) {
+        if (!type->equals(call.callee->arguments[i]->type)) {
             throw "argument type mismatch";
         }
         

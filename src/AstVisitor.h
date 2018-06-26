@@ -37,12 +37,14 @@ namespace qlow
 
         struct FeatureCall;
         struct AssignmentStatement;
-        struct NewVariableStatement;
+        struct LocalVariableStatement;
         struct IntConst;
 
         struct Operation;
         struct UnaryOperation;
         struct BinaryOperation;
+        
+        struct NewArrayExpression;
     }
 }
 
@@ -59,8 +61,6 @@ class qlow::StructureVisitor :
         sem::Scope&,
 
         ast::Class,
-        ast::ClassType,
-        ast::ArrayType,
         ast::FeatureDeclaration,
         ast::FieldDeclaration,
         ast::MethodDefinition,
@@ -72,18 +72,17 @@ class qlow::StructureVisitor :
         ast::FeatureCall,
         ast::AssignmentStatement,
         ast::ReturnStatement,
-        ast::NewVariableStatement,
+        ast::LocalVariableStatement,
         ast::IntConst,
         ast::UnaryOperation,
-        ast::BinaryOperation
+        ast::BinaryOperation,
+        ast::NewArrayExpression
     >
 {
 public:
     using ReturnType = std::unique_ptr<sem::SemanticObject>;
 
     ReturnType visit(ast::Class& ast, sem::Scope& scope) override;
-    ReturnType visit(ast::ClassType& ast, sem::Scope& scope) override;
-    ReturnType visit(ast::ArrayType& ast, sem::Scope& scope) override;
     ReturnType visit(ast::FeatureDeclaration& ast, sem::Scope& scope) override;
     ReturnType visit(ast::FieldDeclaration& ast, sem::Scope& scope) override;
     ReturnType visit(ast::MethodDefinition& ast, sem::Scope& scope) override;
@@ -95,10 +94,11 @@ public:
     ReturnType visit(ast::FeatureCall& ast, sem::Scope& scope) override;
     ReturnType visit(ast::AssignmentStatement& ast, sem::Scope& scope) override;
     ReturnType visit(ast::ReturnStatement& ast, sem::Scope& scope) override;
-    ReturnType visit(ast::NewVariableStatement& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::LocalVariableStatement& ast, sem::Scope& scope) override;
     ReturnType visit(ast::IntConst& ast, sem::Scope& scope) override;
     ReturnType visit(ast::UnaryOperation& ast, sem::Scope& scope) override;
     ReturnType visit(ast::BinaryOperation& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::NewArrayExpression& ast, sem::Scope& scope) override;
 };
 
 
