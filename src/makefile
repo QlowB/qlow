@@ -54,6 +54,6 @@ parser.o: parser.cpp
 
 .PHONY: clean
 clean:
-	rm -f $(EXECUTABLE) *.o parser.cpp parser.hpp lexer.cpp
+	rm -f $(EXECUTABLE) $(OBJECTS) parser.cpp parser.hpp lexer.cpp
 
 

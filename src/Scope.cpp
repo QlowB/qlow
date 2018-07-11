@@ -32,16 +32,16 @@ sem::Type* sem::GlobalScope::getType(const ast::Type& name)
         return new sem::ArrayType(getType(*arr->arrayType));
     }
     
-    const auto* classType = dynamic_cast<const ast::ClassType*>(&name);
-   
-    if (!classType)
-        throw "internal error";
-    
-    
     auto native = NativeScope::getInstance().getType(name);
     if (native) {
         return native;
     }
+    
+    const auto* classType = dynamic_cast<const ast::ClassType*>(&name);
+   
+    if (!classType)
+        throw "internal error, non class-type top-level type";
+    
     
     
     auto t = classes.find(classType->typeName);
@@ -79,7 +79,7 @@ sem::Type* sem::NativeScope::getType(const ast::Type& name)
     const auto* classType = dynamic_cast<const ast::ClassType*>(&name);
    
     if (!classType)
-        throw "internal error";
+        return sem::Type::VOID;
     
     
     auto t = types.find(classType->typeName);

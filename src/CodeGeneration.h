@@ -14,7 +14,7 @@ namespace gen
 {
     std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects);
     llvm::Function* generateFunction (llvm::Module* module, sem::Method* method);
-    void generateObjectFile(const std::string& name, std::unique_ptr<llvm::Module> module);
+    void generateObjectFile(const std::string& name, std::unique_ptr<llvm::Module> module, int optLevel);
 
     class FunctionGenerator;
 }

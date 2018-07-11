@@ -60,6 +60,7 @@ namespace qlow
         
         struct DoEndBlock;
         struct IfElseBlock;
+        struct WhileBlock;
 
         struct Expression;
 
@@ -292,6 +293,25 @@ struct qlow::ast::IfElseBlock : public Statement
 };
 
 
+struct qlow::ast::WhileBlock : public Statement
+{
+    std::unique_ptr<Expression> condition;
+    std::unique_ptr<DoEndBlock> body;
+    
+    inline WhileBlock(std::unique_ptr<Expression> condition,
+                      std::unique_ptr<DoEndBlock> body,
+                      const CodePosition& cp) :
+        AstObject{ cp },
+        Statement{ cp },
+        condition{ std::move(condition) },
+        body{ std::move(body) }
+    {
+    }
+
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
+};
+
+
 struct qlow::ast::Expression : public virtual AstObject
 {
     inline Expression(const CodePosition& cp) :
@@ -396,6 +416,7 @@ struct qlow::ast::Operation : public Expression
         ASTERISK,
         SLASH,
         EQUALS,
+        NOT_EQUALS,
         AND,
         OR,
         XOR,

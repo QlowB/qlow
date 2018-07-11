@@ -42,6 +42,7 @@ public:
     
     virtual bool equals(const Type* other) const;
     
+    static Type* VOID;
     static Type* INTEGER;
     static Type* BOOLEAN;
 };
@@ -90,6 +91,7 @@ class qlow::sem::NativeType : public Type
 {
 public:
     enum Type {
+        VOID,
         INTEGER,
         BOOLEAN
     };

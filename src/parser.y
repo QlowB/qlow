@@ -101,6 +101,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
     qlow::ast::ArgumentDeclaration* argumentDeclaration;
     qlow::ast::DoEndBlock* doEndBlock;    
     qlow::ast::IfElseBlock* ifElseBlock;    
+    qlow::ast::WhileBlock* whileBlock;    
     qlow::ast::Statement* statement;
     qlow::ast::Expression* expression;
     qlow::ast::Operation::Operator op;
@@ -129,7 +130,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %token <token> TRUE FALSE
 %token <token> CLASS DO END IF ELSE WHILE RETURN NEW
 %token <token> NEW_LINE
-%token <token> SEMICOLON COLON COMMA DOT ASSIGN
+%token <token> SEMICOLON COLON COMMA DOT ASSIGN EQUALS NOT_EQUALS
 %token <token> ROUND_LEFT ROUND_RIGHT SQUARE_LEFT SQUARE_RIGHT
 %token <string> UNEXPECTED_SYMBOL
 
@@ -146,6 +147,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %type <argumentDeclaration> argumentDeclaration
 %type <doEndBlock> doEndBlock
 %type <ifElseBlock> ifElseBlock 
+%type <whileBlock> whileBlock
 %type <statement> statement
 %type <expression> expression operationExpression paranthesesExpression
 %type <op> operator
@@ -337,6 +339,13 @@ ifElseBlock:
         delete $4;
         delete $6;
     };
+    
+whileBlock:
+    WHILE expression doEndBlock {
+        $$ = new WhileBlock(std::unique_ptr<Expression>($2),
+                            std::unique_ptr<DoEndBlock>($3), @$);
+        $2 = nullptr; $3 = nullptr;
+    };
 
 
 statements:
@@ -380,6 +389,10 @@ statement:
     }
     |
     ifElseBlock statementEnd {
+        $$ = $1;
+    }
+    |
+    whileBlock statementEnd {
         $$ = $1;
     }
     |
@@ -504,6 +517,8 @@ operator:
     SLASH { $$ = qlow::ast::Operation::Operator::SLASH; }
     |
     EQUALS { $$ = qlow::ast::Operation::Operator::EQUALS; }
+    |
+    NOT_EQUALS { $$ = qlow::ast::Operation::Operator::NOT_EQUALS; }
     |
     AND { $$ = qlow::ast::Operation::Operator::AND; }
     |

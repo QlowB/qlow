@@ -141,7 +141,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::IfElseBlock& a
     if (!dynamic_cast<sem::DoEndBlock*>(ifB.get())
         || !dynamic_cast<sem::DoEndBlock*>(eB.get())
         || !dynamic_cast<sem::Expression*>(condition.get()))
-        throw "internal error";
+        throw "internal error, invalid if block";
     
     auto condExpr = unique_dynamic_cast<sem::Expression>(std::move(condition));
     auto ifBBlock = unique_dynamic_cast<sem::DoEndBlock>(std::move(ifB));
@@ -150,6 +150,24 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::IfElseBlock& a
     auto ieb = std::make_unique<sem::IfElseBlock>(std::move(condExpr), std::move(ifBBlock), std::move(eBBlock));
     
     return ieb;
+}
+
+
+std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::WhileBlock& ast, sem::Scope& scope)
+{
+    auto condition = ast.condition->accept(*this, scope);
+    auto body = ast.body->accept(*this, scope);
+    
+    if (!dynamic_cast<sem::DoEndBlock*>(body.get()) ||
+        !dynamic_cast<sem::Expression*>(condition.get()))
+        throw "internal error, invalid while block";
+    
+    auto condExpr = unique_dynamic_cast<sem::Expression>(std::move(condition));
+    auto bodyblock = unique_dynamic_cast<sem::DoEndBlock>(std::move(body));
+    
+    auto wb = std::make_unique<sem::WhileBlock>(std::move(condExpr), std::move(bodyblock));
+    
+    return wb;
 }
 
 

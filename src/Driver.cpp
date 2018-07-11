@@ -21,7 +21,6 @@ Options Options::parseOptions(int argc, char** argv)
     {
         {"-S",              &Options::emitAssembly},
         {"--emit-assembly", &Options::emitAssembly},
-        {"-O3",             &Options::emitAssembly},
         {"-L",              &Options::emitLlvm},
         {"--emit-llvm",     &Options::emitLlvm},
     };
@@ -40,6 +39,14 @@ Options Options::parseOptions(int argc, char** argv)
             }
             else {
                 throw "Please specify a filename after '-o'";
+            }
+        }
+        else if (arg.rfind("-O", 0) == 0) {
+            if (arg.size() > 2) {
+                options.optLevel = std::stoi(arg.substr(2));
+            }
+            else {
+                options.optLevel = 2;
             }
         }
         else {
@@ -63,6 +70,8 @@ int Driver::run(void)
     //logger.logError("driver not yet implemented", {options.emitAssembly ? "asm" : "noasm", 10, 11, 12, 13});
     
     std::vector<std::unique_ptr<qlow::ast::AstObject>> objects;
+    bool errorOccurred = false;
+    
     for (auto& filename : options.infiles) {
         std::FILE* file = std::fopen(filename.c_str(), "r");
         ::qlow_parser_filename = filename.c_str();
@@ -75,17 +84,25 @@ int Driver::run(void)
         }
         catch (const CompileError& ce) {
             ce.print(logger);
-            return 1;
+            errorOccurred = true;
         }
         catch (const char* errMsg) {
             logger.logError(errMsg);
-            return 1;
+            errorOccurred = true;
+        }
+        catch (...) {
+            logger.logError("an unknown error occurred.");
+            errorOccurred = true;
         }
         
         if (file)
             std::fclose(file);
     }
     
+    if (errorOccurred) {
+        logger << "Aborting due to syntax errors." << std::endl;
+        return 1;
+    }
     
     std::unique_ptr<qlow::sem::GlobalScope> semClasses = nullptr;
     try {
@@ -94,17 +111,30 @@ int Driver::run(void)
     }
     catch(SemanticError& se) {
         se.print(logger);
-        return 1;
+        errorOccurred = true;
     }
     catch(const char* err) {
         logger.logError(err);
+        errorOccurred = true;
     }
+    catch (...) {
+        logger.logError("an unknown error occurred.");
+        errorOccurred = true;
+    }
+    
+    if (errorOccurred) {
+        logger << "Aborting due to semantic errors." << std::endl;
+        return 1;
+    }
+    
 
     for (auto& [a, b] : semClasses->classes) {
         logger.debug() << a << ": " << b->toString() << std::endl;
     }
+    
+    
 
-    auto main = semClasses->classes.find("Main");
+    /*auto main = semClasses->classes.find("Main");
     qlow::sem::Class* mainClass = nullptr;
     if (main == semClasses->classes.end()) {
         logger.logError("No Main class found");
@@ -112,15 +142,13 @@ int Driver::run(void)
     }
     else {
         mainClass = main->second.get();
-    }
+    }*/
     
-    auto mainmain = mainClass->methods.find("main");
-    qlow::sem::Method* mainMethod = nullptr;
-    if (mainmain == mainClass->methods.end()) {
-        //throw "No main method found inside Main class!";
-    }
-    else {
-        mainMethod = mainmain->second.get();
+    auto* mainMethod = semClasses->getMethod("main");
+    if (mainMethod == nullptr && false) {
+        // TODO handle main ckeck well
+        logger.logError("no main method found");
+        return 1;
     }
     
     logger.debug() << "starting code generation!" << std::endl;
@@ -132,8 +160,24 @@ int Driver::run(void)
     }
     catch (const char* err) {
         logger.logError(err);
+        return 1;
     }
-    qlow::gen::generateObjectFile("obj.o", std::move(mod));
+    catch (...) {
+        logger.logError("unknown error during code generation");
+        return 1;
+    }
+    
+    try {
+        qlow::gen::generateObjectFile(options.outfile, std::move(mod), options.optLevel);
+    }
+    catch (const char* msg) {
+        logger.logError(msg);
+        return 1;
+    }
+    catch (...) {
+        logger.logError("unknown error during object file creation");
+        return 1;
+    }
     
     logger.debug() << "object exported!" << std::endl;
     

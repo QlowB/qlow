@@ -106,6 +106,7 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 "."                     return SET_TOKEN(DOT);
 
 "=="                    return SET_TOKEN(EQUALS);
+"!="                    return SET_TOKEN(NOT_EQUALS);
 "and"                   return SET_TOKEN(AND);
 "or"                    return SET_TOKEN(OR);
 "xor"                   return SET_TOKEN(XOR);

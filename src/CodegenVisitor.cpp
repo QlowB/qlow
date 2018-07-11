@@ -49,6 +49,8 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::BinaryOperatio
             return { builder.CreateSDiv(left, right, "add"), Type::INTEGER };
         case ast::Operation::Operator::EQUALS:
             return { builder.CreateICmpEQ(left, right, "equals"), Type::BOOLEAN };
+        case ast::Operation::Operator::NOT_EQUALS:
+            return { builder.CreateICmpNE(left, right, "not_equals"), Type::BOOLEAN };
         case ast::Operation::Operator::AND:
             return { builder.CreateAnd(left, right, "and"), Type::BOOLEAN };
         case ast::Operation::Operator::OR:
@@ -144,13 +146,49 @@ llvm::Value* StatementVisitor::visit(sem::IfElseBlock& ifElseBlock,
     fg.pushBlock(thenB);
     ifElseBlock.ifBlock->accept(*this, fg);
     builder.SetInsertPoint(thenB);
-    builder.CreateBr(merge);
+    if (!thenB->getTerminator())
+        builder.CreateBr(merge);
     fg.popBlock();
     fg.pushBlock(elseB);
     ifElseBlock.elseBlock->accept(*this, fg);
     builder.SetInsertPoint(elseB);
-    builder.CreateBr(merge);
+    if (!elseB->getTerminator())
+        builder.CreateBr(merge);
     fg.popBlock();
+    fg.popBlock();
+    fg.pushBlock(merge);
+}
+
+
+llvm::Value* StatementVisitor::visit(sem::WhileBlock& whileBlock,
+        qlow::gen::FunctionGenerator& fg)
+{
+    using llvm::Value;
+    using llvm::BasicBlock;
+    
+    llvm::IRBuilder<> builder(fg.getContext());
+    builder.SetInsertPoint(fg.getCurrentBlock());
+    
+    llvm::Function* function = fg.getCurrentBlock()->getParent();
+    
+    BasicBlock* startloop = BasicBlock::Create(fg.getContext(), "startloop", function);
+    BasicBlock* body = BasicBlock::Create(fg.getContext(), "loopbody", function);
+    BasicBlock* merge = BasicBlock::Create(fg.getContext(), "merge", function);
+    
+    
+    //builder.CreateCondBr(boolCond, body, merge);
+    builder.CreateBr(startloop);
+    fg.pushBlock(startloop);
+    builder.SetInsertPoint(startloop);
+    auto [condition, condType] = whileBlock.condition->accept(fg.expressionVisitor, builder);
+    Value* boolCond = builder.CreateIntCast(condition, llvm::Type::getInt1Ty(fg.getContext()), false);
+    builder.CreateCondBr(condition, body, merge);
+    fg.popBlock();
+    
+    fg.pushBlock(body);
+    whileBlock.body->accept(*this, fg);
+    builder.SetInsertPoint(body);
+    builder.CreateBr(startloop);
     fg.popBlock();
     fg.pushBlock(merge);
 }

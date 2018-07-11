@@ -1,4 +1,5 @@
 #include "TypeVisitor.h"
+#include "Type.h"
 
 using namespace qlow;
 

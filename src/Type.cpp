@@ -21,6 +21,7 @@ bool sem::Type::equals(const Type* other) const
 }
 
 
+sem::Type* sem::Type::VOID = new sem::NativeType(sem::NativeType::Type::VOID);
 sem::Type* sem::Type::INTEGER = new sem::NativeType(sem::NativeType::Type::INTEGER);
 sem::Type* sem::Type::BOOLEAN = new sem::NativeType(sem::NativeType::Type::BOOLEAN);
 
@@ -63,8 +64,8 @@ bool sem::ArrayType::equals(const Type* other) const
 llvm::Type* sem::NativeType::getLlvmType (llvm::LLVMContext& context) const
 {
     switch (type) {
-        /*case Kind::NULL_TYPE:
-            return llvm::Type::getVoidTy(context);*/
+        case VOID:
+            return llvm::Type::getVoidTy(context);
         case INTEGER:
             return llvm::Type::getInt32Ty(context);
         case BOOLEAN:

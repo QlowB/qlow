@@ -1,5 +1,6 @@
 #include "Builtin.h"
 #include "Scope.h"
+#include "Type.h"
 
 using namespace qlow;
 

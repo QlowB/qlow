@@ -1,81 +1,27 @@
 
-class Main
-    hoi: Fudi 
-    //gaga -> Main;
-
-    fop: FF do
-        var: Integer
-        var := 5
-        var := 10 + 4 * 6 + 1
-
-        /*
-        // initialize variable
-        var := 5;
-        var := 102 + var * var;
-        var := 102 + var * var;
-
-        // more additions
-        var := 102 + var * var;
-        var := 102 + var * var;
-        var := 102 + var * var;
-        var := 102 + var * var;
-        */
+fast_fibonacci(i: Integer): Integer do
+    a: Integer
+    b: Integer
+    temp: Integer
+    count: Integer
+    count := i
+    a := 0
+    b := 1
+    while count != 0 do
+        temp := a
+        a := a + b
+        b := temp
+        count := count - 1
     end
-
-    mainn: Integer do
-        fop
-        return 12
-    end
+    return a
 end
 
-fibonacci(i: Integer): Integer do
-    if i == 0 do
-        return 0
-    else
-    end
-    if i == 1 do
-        return 1
-    else
-    end
-    return fibonacci(i - 1) + fibonacci(i - 2)
+/*
+main do
+    value: Integer
+    value := fast_fibonacci(5)
 end
-
-
-class FF
-    field1: Integer
-    field2: Integer
-
-    calc: Integer do
-        return 100000
-    end
-
-    verdoppel(x: Integer): Integer do
-        return x + x
-    end
-
-    istfumf(x: Integer): Integer do
-        if x == 5 do
-            return 1
-        else
-            return 0
-        end
-        return 100;
-    end
-
-    sum_func: Integer do
-        variable: Integer
-        variable := verdoppel(51)
-        variable := istfumf(variable)
-        variable := 3 == 3
-        return variable + 2
-    end
-end
-
-
-class Fudi
-end
-
-
+*/
 
 
 

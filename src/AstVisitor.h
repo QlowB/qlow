@@ -68,6 +68,7 @@ class qlow::StructureVisitor :
         ast::Statement,
         ast::DoEndBlock,
         ast::IfElseBlock,
+        ast::WhileBlock,
         ast::Expression,
         ast::FeatureCall,
         ast::AssignmentStatement,
@@ -90,6 +91,7 @@ public:
     ReturnType visit(ast::Statement& ast, sem::Scope& scope) override;
     ReturnType visit(ast::DoEndBlock& ast, sem::Scope& scope) override;
     ReturnType visit(ast::IfElseBlock& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::WhileBlock& ast, sem::Scope& scope) override;
     ReturnType visit(ast::Expression& ast, sem::Scope& scope) override;
     ReturnType visit(ast::FeatureCall& ast, sem::Scope& scope) override;
     ReturnType visit(ast::AssignmentStatement& ast, sem::Scope& scope) override;

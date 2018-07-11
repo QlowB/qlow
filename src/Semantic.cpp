@@ -61,7 +61,7 @@ std::unique_ptr<GlobalScope>
             }
             else {
                 // if a feature is neither a method nor a field, something went horribly wrong
-                throw "internal error";
+                throw "internal error, feature neither field nor method";
             }
         }
     }
@@ -176,6 +176,7 @@ ACCEPT_DEFINITION(IntConst, ExpressionVisitor, std::pair<llvm::Value* COMMA Type
 ACCEPT_DEFINITION(AssignmentStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 ACCEPT_DEFINITION(DoEndBlock, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 ACCEPT_DEFINITION(IfElseBlock, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
+ACCEPT_DEFINITION(WhileBlock, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 ACCEPT_DEFINITION(ReturnStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 ACCEPT_DEFINITION(FeatureCallStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 

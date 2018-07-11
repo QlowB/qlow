@@ -32,6 +32,7 @@ namespace qlow
 
         struct DoEndBlock;
         struct IfElseBlock;
+        struct WhileBlock;
         struct FeatureCallStatement;
         struct AssignmentStatement;
         struct ReturnStatement;
@@ -185,6 +186,21 @@ struct qlow::sem::IfElseBlock : public Statement
         condition{ std::move(condition) },
         ifBlock{ std::move(ifBlock) },
         elseBlock{ std::move(elseBlock) }
+    {
+    }
+    
+    virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) override;
+};
+
+
+struct qlow::sem::WhileBlock : public Statement
+{
+    std::unique_ptr<Expression> condition;
+    std::unique_ptr<DoEndBlock> body;
+    inline WhileBlock(std::unique_ptr<Expression> condition,
+                       std::unique_ptr<DoEndBlock> body) :
+        condition{ std::move(condition) },
+        body{ std::move(body) }
     {
     }
     

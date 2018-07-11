@@ -16,7 +16,7 @@ extern int qlow_parser_parse(void);
 
 int main(int argc, char** argv)
 {
-    int c;
+    /*int c;
     while ((c = getopt(argc, argv, "c:")) != -1) {
         switch (c) {
             case 'c':
@@ -25,11 +25,11 @@ int main(int argc, char** argv)
             default:
                 printf("ay: %c\n", c);
         }
-    }
+    }*/
     
     qlow::Driver driver(argc, argv);
-    driver.run();
-    
+    return driver.run();
+
     return 0;
     /*
     {

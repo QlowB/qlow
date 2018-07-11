@@ -28,6 +28,8 @@ struct qlow::Options
     std::string outfile = "a.out";
     std::vector<std::string> infiles;
     
+    int optLevel = 0;
+    
     static Options parseOptions(int argc, char** argv);
 };
 
@@ -42,7 +44,7 @@ public:
     int run(void);
     
     /// \brief runs the parser over a given stream
-    /// \warning Don't call concurrently. Not supported!
+    /// \warning Don't call concurrently. Not (yet) supported!
     std::vector<std::unique_ptr<qlow::ast::AstObject>> parseFile(FILE* file);
 };
 

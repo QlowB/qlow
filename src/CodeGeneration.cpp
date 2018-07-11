@@ -2,6 +2,7 @@
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/LegacyPassManager.h>
+#include <llvm/Transforms/IPO/PassManagerBuilder.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Constants.h>
@@ -12,6 +13,7 @@
 #include <llvm/Support/TargetRegistry.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/FileSystem.h>
+#include <llvm/Support/raw_os_ostream.h>
 
 
 using namespace qlow;
@@ -60,6 +62,7 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
     }
     
     std::vector<llvm::Function*> functions;
+    auto verifyStream = llvm::raw_os_ostream(logger.debug());
     
     // create all llvm functions
     for (auto& [name, cl] : objects.classes) {
@@ -76,7 +79,10 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
         for (auto& [name, method] : cl->methods) {
             FunctionGenerator fg(*method, module.get());
             Function* f = fg.generate();
-            llvm::verifyFunction(*f, &llvm::errs());
+            logger.debug() << "verifying function: " << method->name << std::endl;
+            bool corrupt = llvm::verifyFunction(*f, &verifyStream);
+            if (corrupt)
+                throw "corrupt llvm function";
 #ifdef DEBUGGING
             printf("verified function: %s\n", method->name.c_str());
 #endif
@@ -85,7 +91,10 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
     for (auto& [name, method] : objects.functions) {
         FunctionGenerator fg(*method, module.get());
         Function* f = fg.generate();
-        llvm::verifyFunction(*f, &llvm::errs());
+        logger.debug() << "verifying function: " << method->name << std::endl;
+        bool corrupt = llvm::verifyFunction(*f, &verifyStream);
+        if (corrupt)
+            throw "corrupt llvm function";
 #ifdef DEBUGGING
         printf("verified function: %s\n", method->name.c_str());
 #endif
@@ -136,21 +145,26 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
 }
 
 
-void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Module> module)
+void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Module> module, int optLevel)
 {
     using llvm::legacy::PassManager;
+    using llvm::PassManagerBuilder;
     using llvm::raw_fd_ostream;
     using llvm::Target;
     using llvm::TargetMachine;
     using llvm::TargetRegistry;
     using llvm::TargetOptions;
 
-
-    printf("verifying mod\n");
-    module->print(llvm::errs(), nullptr);
-    llvm::verifyModule(*module);
-    printf("mod verified\n");
-
+    Logger& logger = Logger::getInstance();
+    logger.debug() << "verifying mod" << std::endl;
+    auto ostr = llvm::raw_os_ostream(logger.debug());
+    module->print(ostr, nullptr);
+    bool broken = llvm::verifyModule(*module);
+    
+    if (broken)
+        throw "invalid llvm module";
+    
+    logger.debug() << "mod verified" << std::endl;
 
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
@@ -159,6 +173,19 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
     llvm::InitializeAllAsmPrinters();
 
     PassManager pm;
+    
+    int sizeLevel = 0;
+    PassManagerBuilder builder;
+    builder.OptLevel = optLevel;
+    builder.SizeLevel = sizeLevel;
+    if (optLevel >= 2) {
+        builder.DisableUnitAtATime = false;
+        builder.DisableUnrollLoops = false;
+        builder.LoopVectorize = true;
+        builder.SLPVectorize = true;
+    }
+    
+    builder.populateModulePassManager(pm);
 
     const char cpu[] = "generic";
     const char features[] = "";
@@ -167,8 +194,9 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
     std::string targetTriple = llvm::sys::getDefaultTargetTriple();
     const Target* target = TargetRegistry::lookupTarget(targetTriple, error);
 
-    if (!target)
-        fprintf(stderr, "could not create target: %s", error.c_str());
+    if (!target) {
+        logger.debug() << "could not create target: " << error << std::endl;
+    }
 
     TargetOptions targetOptions;
     auto relocModel = llvm::Optional<llvm::Reloc::Model>();
@@ -239,7 +267,10 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     //Value* val = llvm::ConstantFP::get(context, llvm::APFloat(5.0));
     
     builder.SetInsertPoint(getCurrentBlock());
-    builder.CreateRetVoid();
+    if (method.returnType->equals(sem::Type::VOID)) {
+        if (!getCurrentBlock()->getTerminator())
+            builder.CreateRetVoid();
+    }
 
     return func;
 }
