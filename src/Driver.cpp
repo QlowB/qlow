@@ -50,9 +50,13 @@ Options Options::parseOptions(int argc, char** argv)
             }
         }
         else {
+            if (options.outfile == "")
+                options.outfile = arg + ".o";
             options.infiles.push_back(std::move(arg));
         }
     }
+    if (options.outfile == "")
+        options.outfile = "a.out";
     return options;
 }
 

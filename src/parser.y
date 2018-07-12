@@ -191,6 +191,9 @@ topLevel:
         $2 = nullptr;
     }
     |
+    topLevel externMethodDefinition {
+    }
+    |
     topLevel error methodDefinition {
         reportError(qlow::SyntaxError(@2));
         yyerrok;
