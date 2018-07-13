@@ -98,6 +98,7 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 "else"                  return SET_TOKEN(ELSE);
 "return"                return SET_TOKEN(RETURN);
 "new"                   return SET_TOKEN(NEW);
+"extern"                return SET_TOKEN(EXTERN);
 
 ":"                     return SET_TOKEN(COLON);
 ";"                     return SET_TOKEN(SEMICOLON);

@@ -196,6 +196,9 @@ struct qlow::ast::FieldDeclaration : public FeatureDeclaration
 struct qlow::ast::MethodDefinition : public FeatureDeclaration
 {
     OwningList<ArgumentDeclaration> arguments;
+    
+    /// pointer to method body. If this is a null pointer, the method has only
+    /// been declared and not defined (with extern)
     std::unique_ptr<DoEndBlock> body;
 
     inline MethodDefinition(std::unique_ptr<ast::Type> type, const std::string& name,
@@ -213,13 +216,21 @@ struct qlow::ast::MethodDefinition : public FeatureDeclaration
         body{ std::move(body) }
     {
     }
-    
+
     
     inline MethodDefinition(std::unique_ptr<ast::Type> type, const std::string& name,
-            OwningList<ArgumentDeclaration>&& arguments, std::unique_ptr<DoEndBlock> body, const CodePosition& cp) :
+            const CodePosition& cp) :
+        FeatureDeclaration{ std::move(type), name, cp },
+        body{ nullptr }
+    {
+    }
+    
+
+    inline MethodDefinition(std::unique_ptr<ast::Type> type, const std::string& name,
+            OwningList<ArgumentDeclaration>&& arguments, const CodePosition& cp) :
         FeatureDeclaration{ std::move(type), name, cp },
         arguments(std::move(arguments)),
-        body{ std::move(body) }
+        body{ nullptr }
     {
     }
 

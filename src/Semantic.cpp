@@ -87,11 +87,13 @@ std::unique_ptr<GlobalScope>
     
     for (auto& [name, semClass] : globalScope->classes) {
         for (auto& [name, method] : semClass->methods) {
-            method->body = unique_dynamic_cast<sem::DoEndBlock>(av.visit(*method->astNode->body, method->scope));
+            if (method->astNode->body) // if not declaration
+                method->body = unique_dynamic_cast<sem::DoEndBlock>(av.visit(*method->astNode->body, method->scope));
         }
     }
     for (auto& [name, method] : globalScope->functions) {
-        method->body = unique_dynamic_cast<sem::DoEndBlock>(av.visit(*method->astNode->body, method->scope));
+        if (method->astNode->body) // if not declaration
+            method->body = unique_dynamic_cast<sem::DoEndBlock>(av.visit(*method->astNode->body, method->scope));
     }
     
 #ifdef DEBUGGING

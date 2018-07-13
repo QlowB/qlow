@@ -142,14 +142,16 @@ struct qlow::sem::Method : public SemanticObject
 
     inline Method(Scope& parentScope, Type* returnType) :
         returnType{ returnType },
-        scope{ parentScope }
+        scope{ parentScope },
+        body{ nullptr }
     {
     }
     
     inline Method(ast::MethodDefinition* astNode, Scope& parentScope) :
         astNode{ astNode },
         name{ astNode->name },
-        scope{ parentScope }
+        scope{ parentScope },
+        body{ nullptr }
     {
     }
     

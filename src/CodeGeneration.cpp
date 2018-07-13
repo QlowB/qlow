@@ -77,6 +77,9 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
 
     for (auto& [name, cl] : objects.classes){
         for (auto& [name, method] : cl->methods) {
+            if (!method->body)
+                continue;
+            
             FunctionGenerator fg(*method, module.get());
             Function* f = fg.generate();
             logger.debug() << "verifying function: " << method->name << std::endl;
@@ -89,6 +92,9 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
         }
     }
     for (auto& [name, method] : objects.functions) {
+        if (!method->body)
+            continue;
+        
         FunctionGenerator fg(*method, module.get());
         Function* f = fg.generate();
         logger.debug() << "verifying function: " << method->name << std::endl;

@@ -80,7 +80,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 
 %initial-action
 {
-  @$.filename = qlow_parser_filename;
+    @$.filename = qlow_parser_filename;
 };
 
 //%define api.location.type {qlow::CodePosition}
@@ -128,7 +128,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %token <string> IDENTIFIER
 %token <string> INT_LITERAL
 %token <token> TRUE FALSE
-%token <token> CLASS DO END IF ELSE WHILE RETURN NEW
+%token <token> CLASS DO END IF ELSE WHILE RETURN NEW EXTERN
 %token <token> NEW_LINE
 %token <token> SEMICOLON COLON COMMA DOT ASSIGN EQUALS NOT_EQUALS
 %token <token> ROUND_LEFT ROUND_RIGHT SQUARE_LEFT SQUARE_RIGHT
@@ -140,6 +140,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %type <featureDeclaration> featureDeclaration
 %type <fieldDeclaration> fieldDeclaration
 %type <methodDefinition> methodDefinition
+%type <methodDefinition> externMethodDeclaration
 %type <featureList> featureList
 %type <argumentList> argumentList
 %type <statements> statements
@@ -191,7 +192,9 @@ topLevel:
         $2 = nullptr;
     }
     |
-    topLevel externMethodDefinition {
+    topLevel externMethodDeclaration {
+        parsedClasses->push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($2)));
+        $2 = nullptr;
     }
     |
     topLevel error methodDefinition {
@@ -276,19 +279,24 @@ fieldDeclaration:
 
 externMethodDeclaration:
     EXTERN IDENTIFIER COLON type {
-    
+        $$ = new MethodDefinition(std::unique_ptr<qlow::ast::Type>($4), *$2, @$);
+        delete $2; $2 = nullptr;
     }
     |
     EXTERN IDENTIFIER {
-    
+        $$ = new MethodDefinition(nullptr, *$2, @$);
+        delete $2; $2 = nullptr;
     }
     |
     EXTERN IDENTIFIER ROUND_LEFT argumentList ROUND_RIGHT {
-    
+        $$ = new MethodDefinition(nullptr, *$2, std::move(*$4), @$);
+        delete $2; delete $4; $2 = nullptr; $4 = nullptr;
     }
     |
     EXTERN IDENTIFIER ROUND_LEFT argumentList ROUND_RIGHT COLON type {
-    
+        $$ = new MethodDefinition(std::unique_ptr<qlow::ast::Type>($7),
+                                 *$2, std::move(*$4), @$);
+        delete $2; delete $4; $2 = nullptr; $4 = nullptr;
     };
     
 
@@ -342,8 +350,8 @@ doEndBlock:
         $$ = new DoEndBlock(std::move(*$2), @$);
         delete $2; $2 = nullptr;
     };
-    
-    
+
+
 ifElseBlock:
     IF expression doEndBlock {
         $$ = new IfElseBlock(std::unique_ptr<Expression>($2),

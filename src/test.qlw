@@ -16,12 +16,13 @@ fast_fibonacci(i: Integer): Integer do
     return a
 end
 
-/*
+extern do_shit
+
 main do
     value: Integer
-    value := fast_fibonacci(5)
+    do_shit
 end
-*/
+
 
 
 
