@@ -18,6 +18,13 @@ end
 
 extern do_shit
 
+bignumbers do
+    a: Int128
+    b: Int128
+
+    b := b + a
+end
+
 main do
     value: Integer
     do_shit

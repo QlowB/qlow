@@ -126,7 +126,7 @@ struct qlow::ast::Type : public AstObject
     }
     
     virtual std::string asString(void) const = 0;
-    virtual inline std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&) override { return nullptr; }
+    virtual inline std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&) override {}
 };
 
 

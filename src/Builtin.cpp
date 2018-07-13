@@ -13,26 +13,33 @@ sem::NativeScope qlow::sem::generateNativeScope(void)
     
     NativeScope scope;
     
-    scope.types.insert(
-        {"Integer", std::make_unique<NativeType>(NativeType::INTEGER)}
-    );
-    
-    scope.types.insert(
-        {"Boolean", std::make_unique<NativeType>(NativeType::BOOLEAN)}
-    );
-    
-    return scope;
-    
-    /*
-    std::unique_ptr<sem::Type> int32 =
-        std::make_unique<sem::Type>(sem::Type::Kind::INTEGER, &sem::int32);
-    std::unique_ptr<sem::Type> boolean =
-        std::make_unique<sem::Type>(sem::Type::Kind::BOOLEAN, &sem::int32);
+    std::map<std::string, NativeType::Type> natives = {
+        { "Integer",    NativeType::INTEGER },
+        { "Boolean",    NativeType::BOOLEAN },
+        { "Char",       NativeType::CHAR },
+        { "String",     NativeType::STRING },
         
-    scope.types.insert({"Integer", std::move(int32)});
-    scope.types.insert({"Boolean", std::move(boolean)});
+        { "Int8",       NativeType::INT8 },
+        { "Int16",      NativeType::INT16 },
+        { "Int32",      NativeType::INT32 },
+        { "Int64",      NativeType::INT64 },
+        { "Int128",     NativeType::INT128 },
+        
+        { "UInt8",      NativeType::UINT8 },
+        { "UInt16",     NativeType::UINT16 },
+        { "UInt32",     NativeType::UINT32 },
+        { "UInt64",     NativeType::UINT64 },
+        { "UInt128",    NativeType::UINT128 },
+        
+        { "Float32",    NativeType::FLOAT32 },
+        { "Float64",    NativeType::FLOAT64 },
+    };
+    
+    for (auto [name, type] : natives) {
+        scope.types.insert({ name, std::make_unique<NativeType>(type) });
+    }
+    
     return scope;
-    */
 }
 
 

@@ -70,8 +70,37 @@ llvm::Type* sem::NativeType::getLlvmType (llvm::LLVMContext& context) const
             return llvm::Type::getInt32Ty(context);
         case BOOLEAN:
             return llvm::Type::getInt1Ty(context);
-        /*case Kind::CLASS:
-            return data.classType->llvmType;*/
+        case CHAR:
+            return llvm::Type::getInt32Ty(context);
+            
+        case INT8:
+            return llvm::Type::getInt8Ty(context);
+        case INT16:
+            return llvm::Type::getInt16Ty(context);
+        case INT32:
+            return llvm::Type::getInt32Ty(context);
+        case INT64:
+            return llvm::Type::getInt64Ty(context);
+        case INT128:
+            return llvm::Type::getInt128Ty(context);
+            
+        case UINT8:
+            return llvm::Type::getInt8Ty(context);
+        case UINT16:
+            return llvm::Type::getInt16Ty(context);
+        case UINT32:
+            return llvm::Type::getInt32Ty(context);
+        case UINT64:
+            return llvm::Type::getInt64Ty(context);
+        case UINT128:
+            return llvm::Type::getInt128Ty(context);
+            
+        case FLOAT32:
+            return llvm::Type::getFloatTy(context);
+        case FLOAT64:
+            return llvm::Type::getDoubleTy(context);
+        case FLOAT128:
+            return llvm::Type::getFP128Ty(context);
     }
 }
 

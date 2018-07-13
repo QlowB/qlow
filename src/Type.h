@@ -93,7 +93,12 @@ public:
     enum Type {
         VOID,
         INTEGER,
-        BOOLEAN
+        BOOLEAN,
+        CHAR,
+        STRING,
+        INT8, INT16, INT32, INT64, INT128,
+        UINT8, UINT16, UINT32, UINT64, UINT128,
+        FLOAT32, FLOAT64, FLOAT128,
     };
     
     Type type;

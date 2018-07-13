@@ -116,7 +116,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 
     qlow::ast::UnaryOperation* unaryOperation;
     qlow::ast::BinaryOperation* binaryOperation;
-    
+
     qlow::ast::NewArrayExpression* newArrayExpression;
 
     const char* cString;
