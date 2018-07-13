@@ -213,12 +213,21 @@ struct qlow::ast::MethodDefinition : public FeatureDeclaration
         body{ std::move(body) }
     {
     }
+    
+    
+    inline MethodDefinition(std::unique_ptr<ast::Type> type, const std::string& name,
+            OwningList<ArgumentDeclaration>&& arguments, std::unique_ptr<DoEndBlock> body, const CodePosition& cp) :
+        FeatureDeclaration{ std::move(type), name, cp },
+        arguments(std::move(arguments)),
+        body{ std::move(body) }
+    {
+    }
 
     virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
 
-struct qlow::ast::VariableDeclaration  : public AstObject
+struct qlow::ast::VariableDeclaration : public AstObject
 {
     std::unique_ptr<ast::Type> type;
     std::string name;

@@ -274,6 +274,24 @@ fieldDeclaration:
     };
 
 
+externMethodDeclaration:
+    EXTERN IDENTIFIER COLON type {
+    
+    }
+    |
+    EXTERN IDENTIFIER {
+    
+    }
+    |
+    EXTERN IDENTIFIER ROUND_LEFT argumentList ROUND_RIGHT {
+    
+    }
+    |
+    EXTERN IDENTIFIER ROUND_LEFT argumentList ROUND_RIGHT COLON type {
+    
+    };
+    
+
 methodDefinition:
     IDENTIFIER COLON type doEndBlock {
         $$ = new MethodDefinition(std::unique_ptr<qlow::ast::Type>($3), *$1, std::unique_ptr<DoEndBlock>($4), @$);
