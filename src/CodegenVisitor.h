@@ -25,12 +25,12 @@ namespace qlow
 
 namespace qlow
 {
-    class ExpressionVisitor;
+    class ExpressionCodegenVisitor;
     class StatementVisitor;
 }
 
 
-class qlow::ExpressionVisitor :
+class qlow::ExpressionCodegenVisitor :
     public Visitor<
         std::pair<llvm::Value*, sem::Type*>,
         llvm::IRBuilder<>,

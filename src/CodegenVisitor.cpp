@@ -9,7 +9,7 @@
 
 using namespace qlow;
 
-std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
+std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
 {
     assert(lve.var->allocaInst != nullptr);
     if (llvm::dyn_cast<llvm::AllocaInst>(lve.var->allocaInst)) {
@@ -22,7 +22,7 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::LocalVariableE
 }
 
 
-std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::BinaryOperation& binop, llvm::IRBuilder<>& builder)
+std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
     using sem::Type;
@@ -74,7 +74,7 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::BinaryOperatio
 }
 
 
-std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::UnaryOperation& unop, llvm::IRBuilder<>& builder)
+std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::UnaryOperation& unop, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
     auto [value, type] = unop.arg->accept(*this, builder);
@@ -92,7 +92,7 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::UnaryOperation
     }
 }
 
-std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::FeatureCallExpression& call, llvm::IRBuilder<>& builder)
+std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::FeatureCallExpression& call, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
     std::vector<Value*> arguments;
@@ -117,7 +117,7 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::FeatureCallExp
     //return { nullptr, sem::Type::NULL_TYPE };
 }
 
-std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::IntConst& node, llvm::IRBuilder<>& builder)
+std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::IntConst& node, llvm::IRBuilder<>& builder)
 {
     return {
         llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, std::to_string(node.value), 10)),

@@ -254,6 +254,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::UnaryOperation
     ret->op = ast.op;
     ret->side = ast.side;
     ret->arg = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
+    ret->type = ret->arg->type; // TODO not a feasible assumption
     return ret;
 }
 

@@ -8,6 +8,8 @@
 #include "Visitor.h"
 #include "Scope.h"
 
+#include "Type.h"
+
 #include <llvm/IR/Value.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/BasicBlock.h>
@@ -19,7 +21,6 @@ namespace qlow
         std::unique_ptr<GlobalScope>
             createFromAst(const std::vector<std::unique_ptr<qlow::ast::AstObject>>& objects);
 
-        struct SemanticObject;
         struct Class;
 
         struct Variable;
@@ -52,7 +53,7 @@ namespace qlow
         class SemanticException;
     }
 
-    class ExpressionVisitor;
+    class ExpressionCodegenVisitor;
     class StatementVisitor;
 
     namespace gen
@@ -60,17 +61,6 @@ namespace qlow
         class FunctionGenerator;
     }
 }
-
-
-struct qlow::sem::SemanticObject
-{
-    virtual ~SemanticObject(void);
-    
-    /**
-     * \brief converts the object to a readable string for debugging purposes. 
-     */
-    virtual std::string toString(void) const;
-};
 
 
 struct qlow::sem::Class : public SemanticObject
@@ -233,8 +223,14 @@ struct qlow::sem::Expression :
     public SemanticObject,
     public Visitable<std::pair<llvm::Value*, sem::Type*>,
                      llvm::IRBuilder<>,
-                     qlow::ExpressionVisitor>
+                     qlow::ExpressionCodegenVisitor>
 {
+    std::unique_ptr<sem::Type> type;
+    
+    inline Expression(std::unique_ptr<Type> type) :
+        type{ std::move(type) }
+    {
+    }
 };
 
 
@@ -248,7 +244,7 @@ struct qlow::sem::LocalVariableExpression : public Expression
 {
     Variable* var;
 
-    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     virtual std::string toString(void) const override;
 };
 
@@ -258,7 +254,7 @@ struct qlow::sem::BinaryOperation : public Operation
     std::unique_ptr<Expression> left;
     std::unique_ptr<Expression> right;
     
-    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     
     virtual std::string toString(void) const override;
 };
@@ -269,7 +265,7 @@ struct qlow::sem::NewArrayExpression : public Expression
     std::unique_ptr<Type> arrayType;
     std::unique_ptr<Expression> length;
     
-    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     virtual std::string toString(void) const override;
 };
 
@@ -278,7 +274,7 @@ struct qlow::sem::UnaryOperation : public Operation
 {
     qlow::ast::UnaryOperation::Side side;
     std::unique_ptr<Expression> arg;
-    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     virtual std::string toString(void) const override;
 };
 
@@ -287,7 +283,7 @@ struct qlow::sem::FeatureCallExpression : public Expression
 {
     Method* callee;
     OwningList<Expression> arguments;
-    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     
     virtual std::string toString(void) const override;
 };
@@ -298,11 +294,12 @@ struct qlow::sem::IntConst : public Expression
     unsigned long long value;
 
     inline IntConst(unsigned long long value) :
+        Expression{ std::make_unique<NativeType>(NativeType::INTEGER) },
         value{ value }
     {
     }
     
-    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual std::pair<llvm::Value*, sem::Type*> accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
 };
 
 

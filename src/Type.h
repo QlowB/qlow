@@ -2,9 +2,9 @@
 #define QLOW_SEM_TYPE_H
 
 #include <memory>
-#include "Semantic.h"
 
 namespace llvm {
+    class Value;
     class Type;
     class LLVMContext;
 }
@@ -13,6 +13,8 @@ namespace qlow
 {
     namespace sem
     {
+        struct SemanticObject;
+        
         // forward declarations
         struct Class;
     }
@@ -29,6 +31,18 @@ namespace qlow
 }
 
 
+struct qlow::sem::SemanticObject
+{
+    virtual ~SemanticObject(void);
+    
+    /**
+     * \brief converts the object to a readable string for debugging purposes. 
+     */
+    virtual std::string toString(void) const;
+};
+
+
+
 class qlow::sem::Type : public SemanticObject
 {
 public:
@@ -38,6 +52,8 @@ public:
     virtual bool isNativeType(void) const = 0;
     virtual bool isArrayType(void) const = 0;
 
+    virtual Scope& getScope(void);
+    
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const = 0;
     
     virtual bool equals(const Type* other) const;

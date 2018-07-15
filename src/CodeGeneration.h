@@ -30,7 +30,7 @@ class qlow::gen::FunctionGenerator
 public:
 
     StatementVisitor statementVisitor;
-    ExpressionVisitor expressionVisitor;
+    ExpressionCodegenVisitor expressionVisitor;
 
     inline FunctionGenerator(const sem::Method& m, llvm::Module* module) :
         method{ m }, module{ module }
