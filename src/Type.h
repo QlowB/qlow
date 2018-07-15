@@ -112,8 +112,13 @@ public:
     inline bool isNativeType(void) const override { return true; }
     inline bool isArrayType(void) const override { return false; }
     
+    bool isIntegerType(void) const;
+    
     llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
     virtual bool equals(const sem::Type* other) const;
+    
+    /// cast an llvm::Value from another native type to this one
+    llvm::Value* generateImplicitCast(llvm::Value* value);
 };
 
 

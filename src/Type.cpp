@@ -61,6 +61,27 @@ bool sem::ArrayType::equals(const Type* other) const
 }
 
 
+bool sem::NativeType::isIntegerType(void) const
+{
+    switch(type) {
+        case INTEGER:
+        case INT8:
+        case INT16:
+        case INT32:
+        case INT64:
+        case INT128:
+        case UINT8:
+        case UINT16:
+        case UINT32:
+        case UINT64:
+        case UINT128:
+            return true;
+        default:
+            return false;
+    }
+}
+
+
 llvm::Type* sem::NativeType::getLlvmType (llvm::LLVMContext& context) const
 {
     switch (type) {
@@ -113,5 +134,11 @@ bool sem::NativeType::equals(const sem::Type* other) const
     else {
         return false;
     }
+}
+
+
+llvm::Value* sem::NativeType::generateImplicitCast(llvm::Value* value)
+{
+    // TODO implement
 }
 

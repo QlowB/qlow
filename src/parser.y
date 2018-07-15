@@ -165,6 +165,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %destructor { } <topLevel> // don't delete everything ;)
 %destructor { if ($$) delete $$; } <*>
 
+%left DOT
 %left ASTERISK SLASH
 %left PLUS MINUS
 %left EQUALS
@@ -565,7 +566,6 @@ newArrayExpression:
     NEW SQUARE_LEFT type SEMICOLON expression SQUARE_RIGHT {
         
     };
-
 
 assignmentStatement:
     expression ASSIGN expression {

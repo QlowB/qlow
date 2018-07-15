@@ -179,6 +179,11 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::Expression& as
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& ast, sem::Scope& scope)
 {
+    std::unique_ptr<sem::SemanticObject> target = nullptr;
+    if (ast.target) {
+        target = ast.target->accept(*this, scope);
+    }
+    
     auto* method = scope.getMethod(ast.name);
     auto* var = scope.getVariable(ast.name);
     

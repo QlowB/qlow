@@ -29,34 +29,47 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::BinaryOperatio
     auto [left, leftType] = binop.left->accept(*this, builder);
     auto [right, rightType] = binop.right->accept(*this, builder);
     
-    if (!leftType->equals(Type::INTEGER) || !rightType->equals(Type::INTEGER))
+    
+    if (!leftType->isNativeType() || !rightType->isNativeType())
         throw "invalid types in BinaryOperation";
+    
     
     if (left == nullptr) {
         printf("WOW: %s\n", binop.left->toString().c_str());
     }
     
     
+    Value* implicitelyCastedRight = right;
+    if (!leftType->equals(rightType))
+        implicitelyCastedRight = dynamic_cast<sem::NativeType*>(leftType)->generateImplicitCast(right);
+    
+    if (dynamic_cast<sem::NativeType*>(leftType)->isIntegerType()) {
+        // TODO allow integer operations
+    }
+    
+    
     // TODO insert type checks
     switch (binop.op) {
         case ast::Operation::Operator::PLUS:
-            return { builder.CreateAdd(left, right, "add"), Type::INTEGER };
+            return { builder.CreateAdd(left, right, "add"), leftType };
         case ast::Operation::Operator::MINUS:
-            return { builder.CreateSub(left, right, "sub"), Type::INTEGER };
+            return { builder.CreateSub(left, right, "sub"), leftType };
         case ast::Operation::Operator::ASTERISK:
-            return { builder.CreateMul(left, right, "mul"), Type::INTEGER };
+            return { builder.CreateMul(left, right, "mul"), leftType };
         case ast::Operation::Operator::SLASH:
-            return { builder.CreateSDiv(left, right, "add"), Type::INTEGER };
-        case ast::Operation::Operator::EQUALS:
-            return { builder.CreateICmpEQ(left, right, "equals"), Type::BOOLEAN };
-        case ast::Operation::Operator::NOT_EQUALS:
-            return { builder.CreateICmpNE(left, right, "not_equals"), Type::BOOLEAN };
+            return { builder.CreateSDiv(left, right, "sdiv"), leftType };
+            
         case ast::Operation::Operator::AND:
             return { builder.CreateAnd(left, right, "and"), Type::BOOLEAN };
         case ast::Operation::Operator::OR:
             return { builder.CreateOr(left, right, "or"), Type::BOOLEAN };
         case ast::Operation::Operator::XOR:
             return { builder.CreateXor(left, right, "xor"), Type::BOOLEAN };
+            
+        case ast::Operation::Operator::EQUALS:
+            return { builder.CreateICmpEQ(left, right, "equals"), Type::BOOLEAN };
+        case ast::Operation::Operator::NOT_EQUALS:
+            return { builder.CreateICmpNE(left, right, "not_equals"), Type::BOOLEAN };
     }
 }
 
@@ -197,16 +210,28 @@ llvm::Value* StatementVisitor::visit(sem::WhileBlock& whileBlock,
 llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
         qlow::gen::FunctionGenerator& fg)
 {
+    Logger& logger = Logger::getInstance();
     llvm::IRBuilder<> builder(fg.getContext());
     builder.SetInsertPoint(fg.getCurrentBlock());
     auto [val, type] = assignment.value->accept(fg.expressionVisitor, builder);
     if (auto* targetVar =
         dynamic_cast<sem::LocalVariableExpression*>(assignment.target.get()); targetVar) {
+        logger.debug() << "assigning to LocalVariableExpression" << std::endl;
         builder.CreateStore(val, targetVar->var->allocaInst);
     }
-    else
+    else if (auto* targetVar =
+        dynamic_cast<sem::FeatureCallExpression*>(assignment.target.get()); targetVar) {
+        
+        logger.debug() << "assigning to FeatureCallExpression" << std::endl;
+    }
+    else {
+        
+        logger.debug() << "assigning to instance of " << assignment.target->toString() << std::endl;
         throw "only local variables are assignable at the moment";
-    return llvm::ConstantFP::get(fg.getContext(), llvm::APFloat(5123.0));
+    }
+    
+    return nullptr;
+    //return llvm::ConstantFP::get(fg.getContext(), llvm::APFloat(5123.0));
 }
 
 

@@ -1,4 +1,3 @@
-
 fast_fibonacci(i: Integer): Integer do
     a: Integer
     b: Integer
@@ -18,11 +17,13 @@ end
 
 extern do_shit
 
+
 bignumbers do
     a: Int128
     b: Int128
+    c: Int64
 
-    b := b + a
+    b := a + c
 end
 
 main do
