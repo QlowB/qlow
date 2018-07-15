@@ -1,0 +1,17 @@
+
+
+class Vec
+    x: Integer
+    y: Integer
+end
+
+
+main do
+    var: Vec
+    value: Integer
+
+    var.x := 4
+end
+
+
+
