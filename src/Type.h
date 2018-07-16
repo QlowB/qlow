@@ -13,15 +13,17 @@ namespace qlow
 {
     namespace sem
     {
-        struct SemanticObject;
-        
         // forward declarations
         struct Class;
+        
+        class Scope;
     }
 
 
     namespace sem
     {
+        struct SemanticObject;
+        
         class Type;
         
         class ClassType;
@@ -52,7 +54,7 @@ public:
     virtual bool isNativeType(void) const = 0;
     virtual bool isArrayType(void) const = 0;
 
-    virtual Scope& getScope(void);
+    virtual Scope& getScope(void) = 0;
     
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const = 0;
     
@@ -77,6 +79,8 @@ public:
     inline bool isNativeType(void) const override { return false; }
     inline bool isArrayType(void) const override { return false; }
     
+    Scope& getScope(void);
+    
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
     inline sem::Class* getClassType(void) { return classType; }
     virtual bool equals(const Type* other) const;
@@ -96,6 +100,8 @@ public:
     inline bool isClassType(void) const override { return false; }
     inline bool isNativeType(void) const override { return false; }
     inline bool isArrayType(void) const override { return true; }
+    
+    Scope& getScope(void);
     
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
     inline sem::Type* getArrayType(void) { return arrayType; }
@@ -127,6 +133,8 @@ public:
     inline bool isClassType(void) const override { return false; }
     inline bool isNativeType(void) const override { return true; }
     inline bool isArrayType(void) const override { return false; }
+    
+    Scope& getScope(void);
     
     bool isIntegerType(void) const;
     
