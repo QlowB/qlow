@@ -14,10 +14,10 @@ std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::LocalVa
     assert(lve.var->allocaInst != nullptr);
     if (llvm::dyn_cast<llvm::AllocaInst>(lve.var->allocaInst)) {
         llvm::Value* val = builder.CreateLoad(lve.var->allocaInst);
-        return { val, lve.var->type };
+        return { val, lve.var->type.get() };
     }
     else {
-        return { lve.var->allocaInst, lve.var->type };
+        return { lve.var->allocaInst, lve.var->type.get() };
     }
 }
 
@@ -40,7 +40,7 @@ std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::BinaryO
     
     
     Value* implicitelyCastedRight = right;
-    if (!leftType->equals(rightType))
+    if (!leftType->equals(*rightType))
         implicitelyCastedRight = dynamic_cast<sem::NativeType*>(leftType)->generateImplicitCast(right);
     
     if (dynamic_cast<sem::NativeType*>(leftType)->isIntegerType()) {
@@ -92,6 +92,13 @@ std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::UnaryOp
     }
 }
 
+
+std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::NewArrayExpression& naexpr, llvm::IRBuilder<>& builder)
+{
+    using llvm::Value;
+    // TODO implement
+}
+
 std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::FeatureCallExpression& call, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
@@ -104,7 +111,7 @@ std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::Feature
         auto& arg = call.arguments[i];
         auto [value, type] = arg->accept(*this, builder);
         
-        if (!type->equals(call.callee->arguments[i]->type)) {
+        if (!type->equals(*call.callee->arguments[i]->type.get())) {
             throw "argument type mismatch";
         }
         
@@ -113,7 +120,7 @@ std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::Feature
     auto returnType = call.callee->returnType;
     llvm::CallInst* callInst = builder.CreateCall(call.callee->llvmNode, arguments);
     
-    return { callInst, returnType };
+    return { callInst, returnType.get() };
     //return { nullptr, sem::Type::NULL_TYPE };
 }
 

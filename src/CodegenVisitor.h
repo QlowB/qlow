@@ -38,6 +38,7 @@ class qlow::ExpressionCodegenVisitor :
         sem::LocalVariableExpression,
         sem::BinaryOperation,
         sem::UnaryOperation,
+        sem::NewArrayExpression,
         sem::FeatureCallExpression,
         sem::IntConst
     >
@@ -46,6 +47,7 @@ public:
     std::pair<llvm::Value*, sem::Type*> visit(sem::LocalVariableExpression& node, llvm::IRBuilder<>&) override;
     std::pair<llvm::Value*, sem::Type*> visit(sem::BinaryOperation& node, llvm::IRBuilder<>&) override;
     std::pair<llvm::Value*, sem::Type*> visit(sem::UnaryOperation& node, llvm::IRBuilder<>&) override;
+    std::pair<llvm::Value*, sem::Type*> visit(sem::NewArrayExpression& node, llvm::IRBuilder<>&) override;
     std::pair<llvm::Value*, sem::Type*> visit(sem::FeatureCallExpression& node, llvm::IRBuilder<>&) override;
     std::pair<llvm::Value*, sem::Type*> visit(sem::IntConst& node, llvm::IRBuilder<>&) override;
 };

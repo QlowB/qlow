@@ -26,10 +26,10 @@ sem::Method* sem::GlobalScope::getMethod(const std::string& name)
 }
 
 
-sem::Type* sem::GlobalScope::getType(const ast::Type& name)
+std::shared_ptr<sem::Type> sem::GlobalScope::getType(const ast::Type& name)
 {
     if (const auto* arr = dynamic_cast<const ast::ArrayType*>(&name); arr) {
-        return new sem::ArrayType(getType(*arr->arrayType));
+        return std::make_unique<sem::ArrayType>(getType(*arr->arrayType));
     }
     
     auto native = NativeScope::getInstance().getType(name);
@@ -46,13 +46,13 @@ sem::Type* sem::GlobalScope::getType(const ast::Type& name)
     
     auto t = classes.find(classType->typeName);
     if (t != classes.end())
-        return new sem::ClassType(t->second.get());
+        return std::make_shared<sem::ClassType>(t->second.get());
     
     return nullptr;
 }
 
 
-sem::Type* sem::GlobalScope::getReturnableType(void)
+std::shared_ptr<sem::Type> sem::GlobalScope::getReturnableType(void)
 {
     return nullptr;
 }
@@ -70,21 +70,21 @@ std::string sem::GlobalScope::toString(void)
 }
 
 
-sem::Type* sem::NativeScope::getType(const ast::Type& name)
+std::shared_ptr<sem::Type> sem::NativeScope::getType(const ast::Type& name)
 {
     if (const auto* arr = dynamic_cast<const ast::ArrayType*>(&name); arr) {
-        return new sem::ArrayType(getType(*arr->arrayType));
+        return std::make_shared<sem::ArrayType>(getType(*arr->arrayType));
     }
     
     const auto* classType = dynamic_cast<const ast::ClassType*>(&name);
    
     if (!classType)
-        return sem::Type::VOID;
+        return std::make_shared<sem::NativeType>(NativeType::VOID);
     
     
     auto t = types.find(classType->typeName);
     if (t != types.end())
-        return t->second.get();
+        return *t->second;
     
     return nullptr;
 }
@@ -143,13 +143,13 @@ std::string sem::ClassScope::toString(void)
 }
 
 
-sem::Type* sem::ClassScope::getType(const ast::Type& name)
+std::shared_ptr<sem::Type> sem::ClassScope::getType(const ast::Type& name)
 {
     return parentScope.getType(name);
 }
 
 
-sem::Type* sem::ClassScope::getReturnableType(void)
+std::shared_ptr<sem::Type> sem::ClassScope::getReturnableType(void)
 {
     return nullptr;
 }
@@ -183,13 +183,13 @@ sem::Method* sem::LocalScope::getMethod(const std::string& name)
 }
 
 
-sem::Type* sem::LocalScope::getType(const ast::Type& name)
+std::shared_ptr<sem::Type> sem::LocalScope::getType(const ast::Type& name)
 {
     return parentScope.getType(name);
 }
 
 
-sem::Type* sem::LocalScope::getReturnableType(void)
+std::shared_ptr<sem::Type> sem::LocalScope::getReturnableType(void)
 {
     return returnType;
 }

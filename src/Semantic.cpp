@@ -171,6 +171,7 @@ ReturnType ClassName::accept(Visitor& v, Arg arg) \
 
 ACCEPT_DEFINITION(LocalVariableExpression, ExpressionCodegenVisitor, std::pair<llvm::Value* COMMA Type*>, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(BinaryOperation, ExpressionCodegenVisitor, std::pair<llvm::Value* COMMA Type*>, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(NewArrayExpression, ExpressionCodegenVisitor, std::pair<llvm::Value* COMMA Type*>, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(UnaryOperation, ExpressionCodegenVisitor, std::pair<llvm::Value* COMMA Type*>, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(FeatureCallExpression, ExpressionCodegenVisitor, std::pair<llvm::Value* COMMA Type*>, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(IntConst, ExpressionCodegenVisitor, std::pair<llvm::Value* COMMA Type*>, llvm::IRBuilder<>&)

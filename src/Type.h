@@ -58,7 +58,7 @@ public:
     
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const = 0;
     
-    virtual bool equals(const Type* other) const;
+    virtual bool equals(const Type& other) const;
     
     static Type* VOID;
     static Type* INTEGER;
@@ -83,17 +83,17 @@ public:
     
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
     inline sem::Class* getClassType(void) { return classType; }
-    virtual bool equals(const Type* other) const;
+    virtual bool equals(const Type& other) const;
 };
 
 
 class qlow::sem::ArrayType : public Type
 {
-    sem::Type* arrayType;
+    std::shared_ptr<sem::Type> arrayType;
 public:
     
-    inline ArrayType(sem::Type* arrayType) :
-        arrayType{ arrayType }
+    inline ArrayType(std::shared_ptr<sem::Type> arrayType) :
+        arrayType{ std::move(arrayType) }
     {
     }
     
@@ -104,8 +104,8 @@ public:
     Scope& getScope(void);
     
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
-    inline sem::Type* getArrayType(void) { return arrayType; }
-    virtual bool equals(const Type* other) const;
+    inline std::shared_ptr<sem::Type> getArrayType(void) { return arrayType; }
+    virtual bool equals(const Type& other) const;
 };
 
 
@@ -139,7 +139,7 @@ public:
     bool isIntegerType(void) const;
     
     llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
-    virtual bool equals(const sem::Type* other) const;
+    virtual bool equals(const sem::Type& other) const;
     
     /// cast an llvm::Value from another native type to this one
     llvm::Value* generateImplicitCast(llvm::Value* value);
