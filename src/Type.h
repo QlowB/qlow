@@ -2,6 +2,7 @@
 #define QLOW_SEM_TYPE_H
 
 #include <memory>
+#include "Scope.h"
 
 namespace llvm {
     class Value;
@@ -45,7 +46,8 @@ struct qlow::sem::SemanticObject
 
 
 
-class qlow::sem::Type : public SemanticObject
+class qlow::sem::Type : public SemanticObject,
+                        protected std::enable_shared_from_this<Type>
 {
 public:
     virtual ~Type(void);
@@ -69,9 +71,11 @@ public:
 class qlow::sem::ClassType : public Type
 {
     sem::Class* classType;
+    sem::TypeScope scope;
 public:
     inline ClassType(sem::Class* classType) :
-        classType{ classType }
+        classType{ classType },
+        scope{ shared_from_this() }
     {
     }
     
@@ -90,10 +94,12 @@ public:
 class qlow::sem::ArrayType : public Type
 {
     std::shared_ptr<sem::Type> arrayType;
+    TypeScope scope;
 public:
     
     inline ArrayType(std::shared_ptr<sem::Type> arrayType) :
-        arrayType{ std::move(arrayType) }
+        arrayType{ std::move(arrayType) },
+        scope{ shared_from_this() }
     {
     }
     
@@ -111,6 +117,7 @@ public:
 
 class qlow::sem::NativeType : public Type
 {
+    NativeTypeScope scope;
 public:
     enum Type {
         VOID,
@@ -126,7 +133,8 @@ public:
     Type type;
     
     inline NativeType(Type type) :
-        type{ type }
+        type{ type },
+        scope{ shared_from_this() }
     {
     }
     

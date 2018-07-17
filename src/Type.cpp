@@ -28,7 +28,7 @@ sem::Type* sem::Type::BOOLEAN = new sem::NativeType(sem::NativeType::Type::BOOLE
 
 sem::Scope& sem::ClassType::getScope(void)
 {
-    return classType->scope;
+    return scope;
 }
 
 
@@ -51,6 +51,7 @@ bool sem::ClassType::equals(const Type& other) const
 
 sem::Scope& sem::ArrayType::getScope(void)
 {
+    return scope;
 }
 
 
@@ -74,6 +75,7 @@ bool sem::ArrayType::equals(const Type& other) const
 
 sem::Scope& sem::NativeType::getScope(void)
 {
+    return scope;
 }
 
 

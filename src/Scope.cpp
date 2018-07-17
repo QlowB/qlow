@@ -105,22 +105,22 @@ std::string sem::NativeScope::toString(void)
 
 sem::Variable* sem::ClassScope::getVariable(const std::string& name)
 {
-    if (class_ref == nullptr)
+    if (classRef == nullptr)
         return parentScope.getVariable(name);
-    auto m = class_ref->fields.find(name);
-    if (m != class_ref->fields.end())
+    auto m = classRef->fields.find(name);
+    if (m != classRef->fields.end())
         return (*m).second.get();
     
     return parentScope.getVariable(name);
 }
 
 
-sem::Method * sem::ClassScope::getMethod(const std::string& name)
+sem::Method* sem::ClassScope::getMethod(const std::string& name)
 {
-    if (class_ref == nullptr)
+    if (classRef == nullptr)
         return parentScope.getMethod(name);
-    auto m = class_ref->methods.find(name);
-    if (m != class_ref->methods.end())
+    auto m = classRef->methods.find(name);
+    if (m != classRef->methods.end())
         return (*m).second.get();
     
     return parentScope.getMethod(name);
@@ -130,11 +130,11 @@ sem::Method * sem::ClassScope::getMethod(const std::string& name)
 std::string sem::ClassScope::toString(void)
 {
     std::string ret;
-    for (auto& [name, m] : class_ref->methods) {
+    for (auto& [name, m] : classRef->methods) {
         ret += "\t";
         ret += m->toString() + "\n";
     }
-    for (auto& [name, f] : class_ref->fields) {
+    for (auto& [name, f] : classRef->fields) {
         ret += "\t";
         ret += f->toString() + "\n";
     }
@@ -205,5 +205,49 @@ std::string sem::LocalScope::toString(void)
 
     return ret + "\nParent:\n" + parentScope.toString();
 }
+
+
+sem::Variable* sem::TypeScope::getVariable(const std::string& name)
+{
+    if (ClassType* ct = dynamic_cast<ClassType*>(type.get()); ct) {
+        auto& fields = ct->getClassType()->fields;
+        if (fields.find(name) != fields.end())
+            return fields[name].get();
+    }
+    return nullptr;
+    return nullptr;
+}
+
+
+sem::Method* sem::TypeScope::getMethod(const std::string& name)
+{
+    if (ClassType* ct = dynamic_cast<ClassType*>(type.get()); ct) {
+        auto& methods = ct->getClassType()->methods;
+        if (methods.find(name) != methods.end())
+            return methods[name].get();
+    }
+    return nullptr;
+}
+
+
+std::shared_ptr<sem::Type> sem::TypeScope::getType(const ast::Type& name)
+{
+    return nullptr;
+}
+
+
+std::shared_ptr<sem::Type> sem::TypeScope::getReturnableType(void)
+{
+    return nullptr;
+}
+
+
+std::string sem::TypeScope::toString(void)
+{
+    std::string ret;
+    return ret;
+}
+
+
 
 
