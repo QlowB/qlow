@@ -36,7 +36,8 @@ sem::NativeScope qlow::sem::generateNativeScope(void)
     };
     
     for (auto [name, type] : natives) {
-        scope.types.insert({ name, std::make_unique<NativeType>(type) });
+        scope.types.insert({ name, std::make_unique
+            <std::shared_ptr<NativeType>>(std::make_shared<NativeType>(type)) });
     }
     
     return scope;

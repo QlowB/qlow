@@ -23,7 +23,7 @@ bignumbers do
     b: Int128
     c: Int64
 
-    b := a + c
+    //b := a + c
 end
 
 main do

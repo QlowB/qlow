@@ -2,9 +2,9 @@
 #define QLOW_SEM_TYPE_H
 
 #include <memory>
-#include "Semantic.h"
 
 namespace llvm {
+    class Value;
     class Type;
     class LLVMContext;
 }
@@ -15,11 +15,15 @@ namespace qlow
     {
         // forward declarations
         struct Class;
+        
+        class Scope;
     }
 
 
     namespace sem
     {
+        struct SemanticObject;
+        
         class Type;
         
         class ClassType;
@@ -27,6 +31,18 @@ namespace qlow
         class NativeType;
     }
 }
+
+
+struct qlow::sem::SemanticObject
+{
+    virtual ~SemanticObject(void);
+    
+    /**
+     * \brief converts the object to a readable string for debugging purposes. 
+     */
+    virtual std::string toString(void) const;
+};
+
 
 
 class qlow::sem::Type : public SemanticObject
@@ -38,9 +54,11 @@ public:
     virtual bool isNativeType(void) const = 0;
     virtual bool isArrayType(void) const = 0;
 
+    virtual Scope& getScope(void) = 0;
+    
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const = 0;
     
-    virtual bool equals(const Type* other) const;
+    virtual bool equals(const Type& other) const;
     
     static Type* VOID;
     static Type* INTEGER;
@@ -61,19 +79,21 @@ public:
     inline bool isNativeType(void) const override { return false; }
     inline bool isArrayType(void) const override { return false; }
     
+    Scope& getScope(void);
+    
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
     inline sem::Class* getClassType(void) { return classType; }
-    virtual bool equals(const Type* other) const;
+    virtual bool equals(const Type& other) const;
 };
 
 
 class qlow::sem::ArrayType : public Type
 {
-    sem::Type* arrayType;
+    std::shared_ptr<sem::Type> arrayType;
 public:
     
-    inline ArrayType(sem::Type* arrayType) :
-        arrayType{ arrayType }
+    inline ArrayType(std::shared_ptr<sem::Type> arrayType) :
+        arrayType{ std::move(arrayType) }
     {
     }
     
@@ -81,9 +101,11 @@ public:
     inline bool isNativeType(void) const override { return false; }
     inline bool isArrayType(void) const override { return true; }
     
+    Scope& getScope(void);
+    
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
-    inline sem::Type* getArrayType(void) { return arrayType; }
-    virtual bool equals(const Type* other) const;
+    inline std::shared_ptr<sem::Type> getArrayType(void) { return arrayType; }
+    virtual bool equals(const Type& other) const;
 };
 
 
@@ -112,10 +134,12 @@ public:
     inline bool isNativeType(void) const override { return true; }
     inline bool isArrayType(void) const override { return false; }
     
+    Scope& getScope(void);
+    
     bool isIntegerType(void) const;
     
     llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
-    virtual bool equals(const sem::Type* other) const;
+    virtual bool equals(const sem::Type& other) const;
     
     /// cast an llvm::Value from another native type to this one
     llvm::Value* generateImplicitCast(llvm::Value* value);

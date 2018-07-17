@@ -16,35 +16,6 @@ namespace qlow
     {
         template<typename T>
         using List = std::vector<std::unique_ptr<T>>;
-
-        // base class
-        struct AstObject;
-
-        struct Class;
-
-        struct FeatureDeclaration;
-
-        struct FieldDeclaration;
-        struct MethodDefinition;
-
-        struct VariableDeclaration;
-        struct ArgumentDeclaration;
-
-        struct DoEndBlock;
-
-        struct Statement;
-        struct Expression;
-
-        struct FeatureCall;
-        struct AssignmentStatement;
-        struct LocalVariableStatement;
-        struct IntConst;
-
-        struct Operation;
-        struct UnaryOperation;
-        struct BinaryOperation;
-        
-        struct NewArrayExpression;
     }
 }
 

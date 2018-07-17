@@ -9,20 +9,20 @@
 
 using namespace qlow;
 
-std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
+std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
 {
     assert(lve.var->allocaInst != nullptr);
     if (llvm::dyn_cast<llvm::AllocaInst>(lve.var->allocaInst)) {
         llvm::Value* val = builder.CreateLoad(lve.var->allocaInst);
-        return { val, lve.var->type };
+        return { val, lve.var->type.get() };
     }
     else {
-        return { lve.var->allocaInst, lve.var->type };
+        return { lve.var->allocaInst, lve.var->type.get() };
     }
 }
 
 
-std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::BinaryOperation& binop, llvm::IRBuilder<>& builder)
+std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
     using sem::Type;
@@ -40,7 +40,7 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::BinaryOperatio
     
     
     Value* implicitelyCastedRight = right;
-    if (!leftType->equals(rightType))
+    if (!leftType->equals(*rightType))
         implicitelyCastedRight = dynamic_cast<sem::NativeType*>(leftType)->generateImplicitCast(right);
     
     if (dynamic_cast<sem::NativeType*>(leftType)->isIntegerType()) {
@@ -74,7 +74,7 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::BinaryOperatio
 }
 
 
-std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::UnaryOperation& unop, llvm::IRBuilder<>& builder)
+std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::UnaryOperation& unop, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
     auto [value, type] = unop.arg->accept(*this, builder);
@@ -92,7 +92,14 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::UnaryOperation
     }
 }
 
-std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::FeatureCallExpression& call, llvm::IRBuilder<>& builder)
+
+std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::NewArrayExpression& naexpr, llvm::IRBuilder<>& builder)
+{
+    using llvm::Value;
+    // TODO implement
+}
+
+std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::FeatureCallExpression& call, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
     std::vector<Value*> arguments;
@@ -104,7 +111,7 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::FeatureCallExp
         auto& arg = call.arguments[i];
         auto [value, type] = arg->accept(*this, builder);
         
-        if (!type->equals(call.callee->arguments[i]->type)) {
+        if (!type->equals(*call.callee->arguments[i]->type.get())) {
             throw "argument type mismatch";
         }
         
@@ -113,11 +120,11 @@ std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::FeatureCallExp
     auto returnType = call.callee->returnType;
     llvm::CallInst* callInst = builder.CreateCall(call.callee->llvmNode, arguments);
     
-    return { callInst, returnType };
+    return { callInst, returnType.get() };
     //return { nullptr, sem::Type::NULL_TYPE };
 }
 
-std::pair<llvm::Value*, sem::Type*> ExpressionVisitor::visit(sem::IntConst& node, llvm::IRBuilder<>& builder)
+std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::IntConst& node, llvm::IRBuilder<>& builder)
 {
     return {
         llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, std::to_string(node.value), 10)),

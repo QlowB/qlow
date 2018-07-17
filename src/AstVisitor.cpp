@@ -29,7 +29,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
 {
     auto f = std::make_unique<sem::Field>();
     f->name = ast.name;
-    auto* type = scope.getType(*ast.type);
+    auto type = scope.getType(*ast.type);
     if (type) {
         f->type = type;
     }
@@ -79,9 +79,9 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::VariableDeclar
 {
     auto v = std::make_unique<sem::Variable>();
     v->name = ast.name;
-    auto* type = scope.getType(*ast.type);
+    auto type = scope.getType(*ast.type);
     if (type) {
-        v->type = type;
+        v->type = std::move(type);
     }
     else {
         throw SemanticError(SemanticError::UNKNOWN_TYPE,
@@ -107,13 +107,13 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
     for (auto& statement : ast.statements) {
         
         if (ast::LocalVariableStatement* nvs = dynamic_cast<ast::LocalVariableStatement*>(statement.get()); nvs) {
-            auto* type = body->scope.getType(*nvs->type);
+            auto type = body->scope.getType(*nvs->type);
 
             if (!type)
                 throw SemanticError(SemanticError::UNKNOWN_TYPE,
                                     nvs->type->asString(),
                                     nvs->type->pos);
-            auto var = std::make_unique<sem::Variable>(type, nvs->name);
+            auto var = std::make_unique<sem::Variable>(std::move(type), nvs->name);
             body->scope.putVariable(nvs->name, std::move(var));
             continue;
         }
@@ -188,12 +188,10 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
     auto* var = scope.getVariable(ast.name);
     
     if (var) {
-        auto lve = std::make_unique<sem::LocalVariableExpression>();
-        lve->var = var;
-        return lve;
+        return std::make_unique<sem::LocalVariableExpression>(var);
     }
     else if (method) {
-        auto fce = std::make_unique<sem::FeatureCallExpression>();
+        auto fce = std::make_unique<sem::FeatureCallExpression>(method->returnType);
         for (auto& arg : ast.arguments) {
             auto argument = arg->accept(*this, scope);
             if (dynamic_cast<sem::Expression*>(argument.get())) {
@@ -250,27 +248,33 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::IntConst& ast,
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::UnaryOperation& ast, sem::Scope& scope)
 {
-    auto ret = std::make_unique<sem::UnaryOperation>();
+    auto argument = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
+    auto ret = std::make_unique<sem::UnaryOperation>(argument->type);
+            // TODO not a feasible assumption
     ret->op = ast.op;
     ret->side = ast.side;
-    ret->arg = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
+    ret->arg = std::move(argument);
     return ret;
 }
 
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperation& ast, sem::Scope& scope)
 {
-    auto ret = std::make_unique<sem::BinaryOperation>();
+    auto leftEval = unique_dynamic_cast<sem::Expression>(ast.left->accept(*this, scope));
+    auto rightEval = unique_dynamic_cast<sem::Expression>(ast.right->accept(*this, scope));
+    
+    auto ret = std::make_unique<sem::BinaryOperation>(leftEval->type);
+    
     ret->op = ast.op;
-    ret->left = unique_dynamic_cast<sem::Expression>(ast.left->accept(*this, scope));
-    ret->right = unique_dynamic_cast<sem::Expression>(ast.right->accept(*this, scope));
+    ret->left = std::move(leftEval);
+    ret->right = std::move(rightEval);
     return ret;
 }
 
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::NewArrayExpression& ast, sem::Scope& scope)
 {
-    auto ret = std::make_unique<sem::BinaryOperation>();
+    auto ret = std::make_unique<sem::NewArrayExpression>(scope.getType(*ast.type));
     return ret;
 }
 

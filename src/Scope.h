@@ -43,8 +43,8 @@ public:
     virtual ~Scope(void);
     virtual Variable* getVariable(const std::string& name) = 0;
     virtual Method* getMethod(const std::string& name) = 0;
-    virtual Type* getType(const ast::Type& name) = 0;
-    virtual Type* getReturnableType(void) = 0;
+    virtual std::shared_ptr<Type> getType(const ast::Type& name) = 0;
+    virtual std::shared_ptr<Type> getReturnableType(void) = 0;
 
     virtual std::string toString(void) = 0;
 };
@@ -58,8 +58,8 @@ public:
 public:
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual Type* getType(const ast::Type& name);
-    virtual Type* getReturnableType(void);
+    virtual std::shared_ptr<Type> getType(const ast::Type& name);
+    virtual std::shared_ptr<Type> getReturnableType(void);
 
     virtual std::string toString(void);
 };
@@ -69,9 +69,9 @@ class qlow::sem::NativeScope : public GlobalScope
 {
     static NativeScope instance;
 public:
-    SymbolTable<NativeType> types;
+    SymbolTable<std::shared_ptr<NativeType>> types;
 public:
-    virtual Type* getType(const ast::Type& name);
+    virtual std::shared_ptr<Type> getType(const ast::Type& name);
 
     virtual std::string toString(void);
     
@@ -91,8 +91,8 @@ public:
     }
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual Type* getType(const ast::Type& name);
-    virtual Type* getReturnableType(void);
+    virtual std::shared_ptr<Type> getType(const ast::Type& name);
+    virtual std::shared_ptr<Type> getReturnableType(void);
     virtual std::string toString(void);
 };
 
@@ -101,7 +101,7 @@ class qlow::sem::LocalScope : public Scope
 {
     Scope& parentScope;
     SymbolTable<Variable> localVariables;
-    Type* returnType;
+    std::shared_ptr<Type> returnType;
 public:
     inline LocalScope(Scope& parentScope, Type* returnType) :
         parentScope{ parentScope },
@@ -112,9 +112,9 @@ public:
     inline LocalScope(Scope& parentScope) :
         parentScope{ parentScope }
     {
-        Type* returnable = parentScope.getReturnableType();
+        auto returnable = parentScope.getReturnableType();
         if (returnable) {
-            returnType = returnable;
+            returnType = std::move(returnable);
         }
         else {
             returnType = nullptr;
@@ -126,8 +126,8 @@ public:
 
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual Type* getType(const ast::Type& name);
-    virtual Type* getReturnableType(void);
+    virtual std::shared_ptr<Type> getType(const ast::Type& name);
+    virtual std::shared_ptr<Type> getReturnableType(void);
     virtual std::string toString(void);
 };
 

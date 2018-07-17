@@ -15,9 +15,9 @@ sem::Type::~Type(void)
 }
 
 
-bool sem::Type::equals(const Type* other) const
+bool sem::Type::equals(const Type& other) const
 {
-    return this == other;
+    return this == &other;
 }
 
 
@@ -26,20 +26,31 @@ sem::Type* sem::Type::INTEGER = new sem::NativeType(sem::NativeType::Type::INTEG
 sem::Type* sem::Type::BOOLEAN = new sem::NativeType(sem::NativeType::Type::BOOLEAN);
 
 
+sem::Scope& sem::ClassType::getScope(void)
+{
+    return classType->scope;
+}
+
+
 llvm::Type* sem::ClassType::getLlvmType (llvm::LLVMContext& context) const
 {
     return classType->llvmType;
 }
 
 
-bool sem::ClassType::equals(const Type* other) const
+bool sem::ClassType::equals(const Type& other) const
 {
-    if (auto* oct = dynamic_cast<const ClassType*>(other); oct) {
+    if (auto* oct = dynamic_cast<const ClassType*>(&other); oct) {
         return this->classType == oct->classType;
     }
     else {
         return false;
     }
+}
+
+
+sem::Scope& sem::ArrayType::getScope(void)
+{
 }
 
 
@@ -50,14 +61,19 @@ llvm::Type* sem::ArrayType::getLlvmType (llvm::LLVMContext& context) const
 }
 
 
-bool sem::ArrayType::equals(const Type* other) const
+bool sem::ArrayType::equals(const Type& other) const
 {
-    if (auto* oct = dynamic_cast<const ArrayType*>(other); oct) {
-        return this->arrayType->equals(oct->arrayType);
+    if (auto* oct = dynamic_cast<const ArrayType*>(&other); oct) {
+        return this->arrayType->equals(*oct->arrayType);
     }
     else {
         return false;
     }
+}
+
+
+sem::Scope& sem::NativeType::getScope(void)
+{
 }
 
 
@@ -126,9 +142,9 @@ llvm::Type* sem::NativeType::getLlvmType (llvm::LLVMContext& context) const
 }
 
 
-bool sem::NativeType::equals(const sem::Type* other) const
+bool sem::NativeType::equals(const sem::Type& other) const
 {
-    if (auto* oct = dynamic_cast<const NativeType*>(other); oct) {
+    if (auto* oct = dynamic_cast<const NativeType*>(&other); oct) {
         return this->type == oct->type;
     }
     else {
