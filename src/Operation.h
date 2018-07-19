@@ -14,6 +14,6 @@ namespace qlow
 class qlow::sem::InlineOperation
 {
     
-}
+};
 
 #endif // QLOW_SEM_OPERATION_H

@@ -9,26 +9,28 @@
 
 using namespace qlow;
 
-std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
+llvm::Value* ExpressionCodegenVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
 {
     assert(lve.var->allocaInst != nullptr);
     if (llvm::dyn_cast<llvm::AllocaInst>(lve.var->allocaInst)) {
         llvm::Value* val = builder.CreateLoad(lve.var->allocaInst);
-        return { val, lve.var->type.get() };
+        return val;
     }
     else {
-        return { lve.var->allocaInst, lve.var->type.get() };
+        return lve.var->allocaInst;
     }
 }
 
 
-std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::IRBuilder<>& builder)
+llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
     using sem::Type;
-    auto [left, leftType] = binop.left->accept(*this, builder);
-    auto [right, rightType] = binop.right->accept(*this, builder);
+    auto left = binop.left->accept(*this, builder);
+    auto right = binop.right->accept(*this, builder);
     
+    auto& leftType = binop.left->type;
+    auto& rightType = binop.right->type;
     
     if (!leftType->isNativeType() || !rightType->isNativeType())
         throw "invalid types in BinaryOperation";
@@ -41,9 +43,9 @@ std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::BinaryO
     
     Value* implicitelyCastedRight = right;
     if (!leftType->equals(*rightType))
-        implicitelyCastedRight = dynamic_cast<sem::NativeType*>(leftType)->generateImplicitCast(right);
+        implicitelyCastedRight = dynamic_cast<sem::NativeType*>(leftType.get())->generateImplicitCast(right);
     
-    if (dynamic_cast<sem::NativeType*>(leftType)->isIntegerType()) {
+    if (dynamic_cast<sem::NativeType*>(leftType.get())->isIntegerType()) {
         // TODO allow integer operations
     }
     
@@ -51,55 +53,56 @@ std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::BinaryO
     // TODO insert type checks
     switch (binop.op) {
         case ast::Operation::Operator::PLUS:
-            return { builder.CreateAdd(left, right, "add"), leftType };
+            return builder.CreateAdd(left, right, "add");
         case ast::Operation::Operator::MINUS:
-            return { builder.CreateSub(left, right, "sub"), leftType };
+            return builder.CreateSub(left, right, "sub");
         case ast::Operation::Operator::ASTERISK:
-            return { builder.CreateMul(left, right, "mul"), leftType };
+            return builder.CreateMul(left, right, "mul");
         case ast::Operation::Operator::SLASH:
-            return { builder.CreateSDiv(left, right, "sdiv"), leftType };
+            return builder.CreateSDiv(left, right, "sdiv");
             
         case ast::Operation::Operator::AND:
-            return { builder.CreateAnd(left, right, "and"), Type::BOOLEAN };
+            return builder.CreateAnd(left, right, "and");
         case ast::Operation::Operator::OR:
-            return { builder.CreateOr(left, right, "or"), Type::BOOLEAN };
+            return builder.CreateOr(left, right, "or");
         case ast::Operation::Operator::XOR:
-            return { builder.CreateXor(left, right, "xor"), Type::BOOLEAN };
+            return builder.CreateXor(left, right, "xor");
             
         case ast::Operation::Operator::EQUALS:
-            return { builder.CreateICmpEQ(left, right, "equals"), Type::BOOLEAN };
+            return builder.CreateICmpEQ(left, right, "equals");
         case ast::Operation::Operator::NOT_EQUALS:
-            return { builder.CreateICmpNE(left, right, "not_equals"), Type::BOOLEAN };
+            return builder.CreateICmpNE(left, right, "not_equals");
     }
 }
 
 
-std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::UnaryOperation& unop, llvm::IRBuilder<>& builder)
+llvm::Value* ExpressionCodegenVisitor::visit(sem::UnaryOperation& unop, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
-    auto [value, type] = unop.arg->accept(*this, builder);
+    auto value = unop.arg->accept(*this, builder);
+    auto& type = unop.arg->type;
     
-    if (type != sem::Type::INTEGER)
+    if (type->equals(sem::NativeType(sem::NativeType::Type::VOID)))
         throw "invalid type to negate";
 
     switch (unop.op) {
         case ast::Operation::Operator::MINUS:
-            return { builder.CreateNeg(value, "negate"), sem::Type::INTEGER };
+            return builder.CreateNeg(value, "negate");
         case ast::Operation::Operator::NOT:
-            return { builder.CreateNot(value, "not"), sem::Type::BOOLEAN };
+            return builder.CreateNot(value, "not");
         default:
             throw "operator not supported";
     }
 }
 
 
-std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::NewArrayExpression& naexpr, llvm::IRBuilder<>& builder)
+llvm::Value* ExpressionCodegenVisitor::visit(sem::NewArrayExpression& naexpr, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
     // TODO implement
 }
 
-std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::FeatureCallExpression& call, llvm::IRBuilder<>& builder)
+llvm::Value* ExpressionCodegenVisitor::visit(sem::FeatureCallExpression& call, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
     std::vector<Value*> arguments;
@@ -109,9 +112,9 @@ std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::Feature
     for (size_t i = 0; i < call.arguments.size(); i++) {
         // : call.arguments) {
         auto& arg = call.arguments[i];
-        auto [value, type] = arg->accept(*this, builder);
+        auto value = arg->accept(*this, builder);
         
-        if (!type->equals(*call.callee->arguments[i]->type.get())) {
+        if (!arg->type->equals(*call.callee->arguments[i]->type.get())) {
             throw "argument type mismatch";
         }
         
@@ -120,16 +123,13 @@ std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::Feature
     auto returnType = call.callee->returnType;
     llvm::CallInst* callInst = builder.CreateCall(call.callee->llvmNode, arguments);
     
-    return { callInst, returnType.get() };
-    //return { nullptr, sem::Type::NULL_TYPE };
+    return callInst;
 }
 
-std::pair<llvm::Value*, sem::Type*> ExpressionCodegenVisitor::visit(sem::IntConst& node, llvm::IRBuilder<>& builder)
+llvm::Value* ExpressionCodegenVisitor::visit(sem::IntConst& node, llvm::IRBuilder<>& builder)
 {
-    return {
-        llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, std::to_string(node.value), 10)),
-        sem::Type::INTEGER
-    };
+    return llvm::ConstantInt::get(builder.getContext(),
+        llvm::APInt(32, std::to_string(node.value), 10));
 }
 
 
@@ -151,7 +151,7 @@ llvm::Value* StatementVisitor::visit(sem::IfElseBlock& ifElseBlock,
     
     llvm::IRBuilder<> builder(fg.getContext());
     builder.SetInsertPoint(fg.getCurrentBlock());
-    auto [condition, condType] = ifElseBlock.condition->accept(fg.expressionVisitor, builder);
+    auto condition = ifElseBlock.condition->accept(fg.expressionVisitor, builder);
     
     llvm::Function* function = fg.getCurrentBlock()->getParent();
     
@@ -200,7 +200,7 @@ llvm::Value* StatementVisitor::visit(sem::WhileBlock& whileBlock,
     builder.CreateBr(startloop);
     fg.pushBlock(startloop);
     builder.SetInsertPoint(startloop);
-    auto [condition, condType] = whileBlock.condition->accept(fg.expressionVisitor, builder);
+    auto condition = whileBlock.condition->accept(fg.expressionVisitor, builder);
     Value* boolCond = builder.CreateIntCast(condition, llvm::Type::getInt1Ty(fg.getContext()), false);
     builder.CreateCondBr(condition, body, merge);
     fg.popBlock();
@@ -220,7 +220,7 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
     Logger& logger = Logger::getInstance();
     llvm::IRBuilder<> builder(fg.getContext());
     builder.SetInsertPoint(fg.getCurrentBlock());
-    auto [val, type] = assignment.value->accept(fg.expressionVisitor, builder);
+    auto val = assignment.value->accept(fg.expressionVisitor, builder);
     if (auto* targetVar =
         dynamic_cast<sem::LocalVariableExpression*>(assignment.target.get()); targetVar) {
         logger.debug() << "assigning to LocalVariableExpression" << std::endl;
@@ -247,7 +247,7 @@ llvm::Value* StatementVisitor::visit(sem::ReturnStatement& returnStatement,
 {
     llvm::IRBuilder<> builder(fg.getContext());
     builder.SetInsertPoint(fg.getCurrentBlock());
-    auto [val, type] = returnStatement.value->accept(fg.expressionVisitor, builder);
+    auto val = returnStatement.value->accept(fg.expressionVisitor, builder);
     builder.CreateRet(val);
     return val;
 }

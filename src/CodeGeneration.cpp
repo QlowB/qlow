@@ -273,7 +273,7 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     //Value* val = llvm::ConstantFP::get(context, llvm::APFloat(5.0));
     
     builder.SetInsertPoint(getCurrentBlock());
-    if (method.returnType->equals(*sem::Type::VOID)) {
+    if (method.returnType->equals(sem::NativeType(sem::NativeType::Type::VOID))) {
         if (!getCurrentBlock()->getTerminator())
             builder.CreateRetVoid();
     }

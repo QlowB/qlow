@@ -71,6 +71,7 @@ int Driver::run(void)
 {
     Logger& logger = Logger::getInstance();
     
+    logger.debug() << "starting parser" << std::endl;
     //logger.logError("driver not yet implemented", {options.emitAssembly ? "asm" : "noasm", 10, 11, 12, 13});
     
     std::vector<std::unique_ptr<qlow::ast::AstObject>> objects;

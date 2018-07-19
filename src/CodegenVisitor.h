@@ -32,7 +32,7 @@ namespace qlow
 
 class qlow::ExpressionCodegenVisitor :
     public Visitor<
-        std::pair<llvm::Value*, sem::Type*>,
+        llvm::Value*,
         llvm::IRBuilder<>,
 
         sem::LocalVariableExpression,
@@ -44,12 +44,12 @@ class qlow::ExpressionCodegenVisitor :
     >
 {
 public:
-    std::pair<llvm::Value*, sem::Type*> visit(sem::LocalVariableExpression& node, llvm::IRBuilder<>&) override;
-    std::pair<llvm::Value*, sem::Type*> visit(sem::BinaryOperation& node, llvm::IRBuilder<>&) override;
-    std::pair<llvm::Value*, sem::Type*> visit(sem::UnaryOperation& node, llvm::IRBuilder<>&) override;
-    std::pair<llvm::Value*, sem::Type*> visit(sem::NewArrayExpression& node, llvm::IRBuilder<>&) override;
-    std::pair<llvm::Value*, sem::Type*> visit(sem::FeatureCallExpression& node, llvm::IRBuilder<>&) override;
-    std::pair<llvm::Value*, sem::Type*> visit(sem::IntConst& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::LocalVariableExpression& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::BinaryOperation& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::UnaryOperation& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::NewArrayExpression& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::FeatureCallExpression& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::IntConst& node, llvm::IRBuilder<>&) override;
 };
 
 

@@ -62,9 +62,9 @@ public:
     
     virtual bool equals(const Type& other) const;
     
-    static Type* VOID;
-    static Type* INTEGER;
-    static Type* BOOLEAN;
+//    static std::shared_ptr<Type> VOID;
+//    static std::shared_ptr<Type> INTEGER;
+//    static std::shared_ptr<Type> BOOLEAN;
 };
 
 

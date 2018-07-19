@@ -29,7 +29,7 @@ sem::Method* sem::GlobalScope::getMethod(const std::string& name)
 std::shared_ptr<sem::Type> sem::GlobalScope::getType(const ast::Type& name)
 {
     if (const auto* arr = dynamic_cast<const ast::ArrayType*>(&name); arr) {
-        return std::make_unique<sem::ArrayType>(getType(*arr->arrayType));
+        return std::make_shared<sem::ArrayType>(getType(*arr->arrayType));
     }
     
     auto native = NativeScope::getInstance().getType(name);

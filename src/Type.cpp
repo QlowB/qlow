@@ -21,10 +21,13 @@ bool sem::Type::equals(const Type& other) const
 }
 
 
-sem::Type* sem::Type::VOID = new sem::NativeType(sem::NativeType::Type::VOID);
-sem::Type* sem::Type::INTEGER = new sem::NativeType(sem::NativeType::Type::INTEGER);
-sem::Type* sem::Type::BOOLEAN = new sem::NativeType(sem::NativeType::Type::BOOLEAN);
-
+/*std::shared_ptr<sem::Type> sem::Type::VOID =
+    std::make_shared<sem::NativeType>(sem::NativeType::Type::VOID);
+std::shared_ptr<sem::Type> sem::Type::INTEGER =
+    std::make_shared<sem::NativeType>(sem::NativeType::Type::INTEGER);
+std::shared_ptr<sem::Type> sem::Type::BOOLEAN =
+    std::make_shared<sem::NativeType>(sem::NativeType::Type::BOOLEAN);
+*/
 
 sem::Scope& sem::ClassType::getScope(void)
 {
