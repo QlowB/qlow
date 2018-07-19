@@ -209,7 +209,7 @@ std::string sem::LocalScope::toString(void)
 
 sem::Variable* sem::TypeScope::getVariable(const std::string& name)
 {
-    if (ClassType* ct = dynamic_cast<ClassType*>(type.get()); ct) {
+    if (ClassType* ct = dynamic_cast<ClassType*>(&type); ct) {
         auto& fields = ct->getClassType()->fields;
         if (fields.find(name) != fields.end())
             return fields[name].get();
@@ -221,7 +221,7 @@ sem::Variable* sem::TypeScope::getVariable(const std::string& name)
 
 sem::Method* sem::TypeScope::getMethod(const std::string& name)
 {
-    if (ClassType* ct = dynamic_cast<ClassType*>(type.get()); ct) {
+    if (ClassType* ct = dynamic_cast<ClassType*>(&type); ct) {
         auto& methods = ct->getClassType()->methods;
         if (methods.find(name) != methods.end())
             return methods[name].get();
@@ -246,6 +246,12 @@ std::string sem::TypeScope::toString(void)
 {
     std::string ret;
     return ret;
+}
+
+
+sem::Method* sem::NativeTypeScope::getMethod(const std::string& name)
+{
+    
 }
 
 

@@ -140,10 +140,10 @@ public:
 class qlow::sem::TypeScope : public Scope
 {
 protected:
-    std::shared_ptr<Type> type;
+    Type& type;
 public:
-    inline TypeScope(std::shared_ptr<Type> type) :
-        type{ std::move(type) }
+    inline TypeScope(Type& type) :
+        type{ type }
     {
     }
     
@@ -158,14 +158,17 @@ public:
 
 class qlow::sem::NativeTypeScope : public TypeScope
 {
+    NativeType& nativeType;
 public:
-    inline NativeTypeScope(std::shared_ptr<Type> type) :
-        TypeScope{ std::move(type) }
+    inline NativeTypeScope(NativeType& type) :
+        TypeScope{ (Type&) type },
+        nativeType{ type }
     {
     }
     
     
-    std::shared_ptr<Type> implementInlineOperation(const std::string&, llvm::Value* a); 
+    virtual Method* getMethod(const std::string& name);
+    std::shared_ptr<Type> implementInlineOperation(const std::string&, llvm::Value* a);
 };
 
 

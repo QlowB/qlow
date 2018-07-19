@@ -11,10 +11,24 @@ namespace qlow
     namespace sem
     {
         NativeScope generateNativeScope(void);
+        
+        struct NativeMethod;
+        class IntegerNativeScope;
     }
 }
 
 
+struct qlow::sem::NativeMethod : public sem::Method
+{
+    llvm::Value* generateCode(std::vector<llvm::Value*> arguments);
+}
+
+
+class qlow::sem::IntegerNativeScope : public NativeScope
+{
+public:
+    void generateAdd();
+};
 
 
 

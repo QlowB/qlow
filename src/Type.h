@@ -46,8 +46,7 @@ struct qlow::sem::SemanticObject
 
 
 
-class qlow::sem::Type : public SemanticObject,
-                        protected std::enable_shared_from_this<Type>
+class qlow::sem::Type : public SemanticObject
 {
 public:
     virtual ~Type(void);
@@ -75,7 +74,7 @@ class qlow::sem::ClassType : public Type
 public:
     inline ClassType(sem::Class* classType) :
         classType{ classType },
-        scope{ shared_from_this() }
+        scope{ *this }
     {
     }
     
@@ -99,7 +98,7 @@ public:
     
     inline ArrayType(std::shared_ptr<sem::Type> arrayType) :
         arrayType{ std::move(arrayType) },
-        scope{ shared_from_this() }
+        scope{ *this }
     {
     }
     
@@ -134,7 +133,7 @@ public:
     
     inline NativeType(Type type) :
         type{ type },
-        scope{ shared_from_this() }
+        scope{ *this }
     {
     }
     

@@ -21,7 +21,7 @@ std::unique_ptr<GlobalScope>
     Logger& logger = Logger::getInstance();
 
 #ifdef DEBUGGING
-    printf("starting building semantic representation (%d objects)\n", objects.size());
+    printf("starting building semantic representation (%d objects)\n", (int) objects.size());
 #endif
 
     // create classes
