@@ -103,20 +103,21 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 ":"                     return SET_TOKEN(COLON);
 ";"                     return SET_TOKEN(SEMICOLON);
 ","                     return SET_TOKEN(COMMA);
-":="                    return SET_TOKEN(ASSIGN);
 "."                     return SET_TOKEN(DOT);
 
-"=="                    return SET_TOKEN(EQUALS);
-"!="                    return SET_TOKEN(NOT_EQUALS);
-"and"                   return SET_TOKEN(AND);
-"or"                    return SET_TOKEN(OR);
-"xor"                   return SET_TOKEN(XOR);
-"not"                   return SET_TOKEN(NOT);
+":="                    SET_STRING; return ASSIGN;
 
-"+"                     return SET_TOKEN(PLUS);
-"-"                     return SET_TOKEN(MINUS);
-"*"                     return SET_TOKEN(ASTERISK);
-"/"                     return SET_TOKEN(SLASH);
+"=="                    SET_STRING; return EQUALS;
+"!="                    SET_STRING; return NOT_EQUALS;
+"and"                   SET_STRING; return AND;
+"or"                    SET_STRING; return OR;
+"xor"                   SET_STRING; return XOR;
+"not"                   SET_STRING; return NOT;
+
+"+"                     SET_STRING; return PLUS;
+"-"                     SET_STRING; return MINUS;
+"*"                     SET_STRING; return ASTERISK;
+"/"                     SET_STRING; return SLASH;
 
 "("                     return SET_TOKEN(ROUND_LEFT);
 ")"                     return SET_TOKEN(ROUND_RIGHT);

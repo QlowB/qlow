@@ -2,6 +2,7 @@
 #define QLOW_CODE_GENERATION_H
 
 #include "Semantic.h"
+#include "Builtin.h"
 #include "CodegenVisitor.h"
 
 #include <stack>

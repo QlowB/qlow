@@ -430,24 +430,12 @@ struct qlow::ast::IntConst : public Expression
 
 struct qlow::ast::Operation : public Expression
 {
-    enum Operator {
-        PLUS,
-        MINUS,
-        ASTERISK,
-        SLASH,
-        EQUALS,
-        NOT_EQUALS,
-        AND,
-        OR,
-        XOR,
-        NOT
-    };
-    Operator op;
+    std::string opString;
 
-    inline Operation(Operator op, const CodePosition& cp) :
+    inline Operation(const std::string& opString, const CodePosition& cp) :
         AstObject{ cp },
         Expression{ cp },
-        op(op)
+        opString{ opString }
     {
     }
 };
@@ -464,11 +452,12 @@ struct qlow::ast::UnaryOperation : public Operation
     Side side;
     std::unique_ptr<Expression> expr;
 
-    inline UnaryOperation(std::unique_ptr<Expression> expr, Side side, Operator op, const CodePosition& cp) :
+    inline UnaryOperation(std::unique_ptr<Expression> expr, Side side,
+                          const std::string& op, const CodePosition& cp) :
         AstObject{ cp },
-        Operation(op, cp),
-        side(side),
-        expr(std::move(expr))
+        Operation{ op, cp },
+        side{ side },
+        expr{ std::move(expr) }
     {
     }
 
@@ -481,9 +470,9 @@ struct qlow::ast::BinaryOperation : public Operation
     std::unique_ptr<Expression> left;
     std::unique_ptr<Expression> right;
 
-    inline BinaryOperation(std::unique_ptr<Expression> left, std::unique_ptr<Expression> right, Operator op, const CodePosition& cp) :
+    inline BinaryOperation(std::unique_ptr<Expression> left, std::unique_ptr<Expression> right, const std::string& op, const CodePosition& cp) :
         AstObject{ cp },
-        Operation(op, cp),
+        Operation{ op, cp },
         left(std::move(left)), right(std::move(right))
     {
     }

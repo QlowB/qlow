@@ -4,6 +4,7 @@
 #include "Visitor.h"
 #include "Ast.h"
 #include "Semantic.h"
+#include "Builtin.h"
 #include "Scope.h"
 
 

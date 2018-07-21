@@ -190,7 +190,7 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
         builder.LoopVectorize = true;
         builder.SLPVectorize = true;
     }
-    
+
     builder.populateModulePassManager(pm);
 
     const char cpu[] = "generic";

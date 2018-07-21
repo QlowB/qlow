@@ -2,6 +2,9 @@
 #include "CodeGeneration.h"
 
 #include "Type.h"
+#include "Builtin.h"
+
+#include "ErrorReporting.h"
 
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/IRBuilder.h>
@@ -35,7 +38,51 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::
     if (!leftType->isNativeType() || !rightType->isNativeType())
         throw "invalid types in BinaryOperation";
     
+    std::string methodName;
     
+    switch (binop.op) {
+        case ast::Operation::Operator::PLUS:
+            methodName = "+";
+        case ast::Operation::Operator::MINUS:
+            methodName = "-";
+        case ast::Operation::Operator::ASTERISK:
+            methodName = "*";
+        case ast::Operation::Operator::SLASH:
+            methodName = "/";
+            
+        case ast::Operation::Operator::AND:
+            methodName = "and";
+        case ast::Operation::Operator::OR:
+            methodName = "or";
+        case ast::Operation::Operator::XOR:
+            methodName = "xor";
+            
+        case ast::Operation::Operator::EQUALS:
+            methodName = "==";
+        case ast::Operation::Operator::NOT_EQUALS:
+            methodName = "!=";
+            ;
+    }
+    
+    sem::Method* operation =
+        leftType->getScope().resolveMethod(methodName, {leftType, rightType});
+    
+    if (operation != nullptr) {
+        if (sem::NativeMethod* nm = dynamic_cast<sem::NativeMethod*>(operation); nm) {
+            return nm->generateCode(builder, {left, right});
+        }
+        else
+            throw "only native operations supported at the moment";
+    }
+    else {
+        auto errMsg = std::string("operator ") + methodName + " not found for types "
+            + leftType->asString() + " and " + rightType->asString();
+        throw SemanticError(SemanticError::OPERATOR_NOT_FOUND, errMsg,
+            binop.astNode->pos
+        );
+    }
+    
+        
     if (left == nullptr) {
         printf("WOW: %s\n", binop.left->toString().c_str());
     }

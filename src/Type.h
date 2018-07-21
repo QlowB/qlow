@@ -18,6 +18,8 @@ namespace qlow
         struct Class;
         
         class Scope;
+        
+        struct NativeMethod;
     }
 
 
@@ -45,7 +47,6 @@ struct qlow::sem::SemanticObject
 };
 
 
-
 class qlow::sem::Type : public SemanticObject
 {
 public:
@@ -55,6 +56,7 @@ public:
     virtual bool isNativeType(void) const = 0;
     virtual bool isArrayType(void) const = 0;
 
+    virtual std::string asString(void) const = 0;
     virtual Scope& getScope(void) = 0;
     
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const = 0;
@@ -82,6 +84,7 @@ public:
     inline bool isNativeType(void) const override { return false; }
     inline bool isArrayType(void) const override { return false; }
     
+    std::string asString(void) const;
     Scope& getScope(void);
     
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
@@ -106,6 +109,7 @@ public:
     inline bool isNativeType(void) const override { return false; }
     inline bool isArrayType(void) const override { return true; }
     
+    std::string asString(void) const;
     Scope& getScope(void);
     
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
@@ -131,6 +135,8 @@ public:
     
     Type type;
     
+    SymbolTable<NativeMethod> nativeMethods;
+    
     inline NativeType(Type type) :
         type{ type },
         scope{ *this }
@@ -141,6 +147,7 @@ public:
     inline bool isNativeType(void) const override { return true; }
     inline bool isArrayType(void) const override { return false; }
     
+    std::string asString(void) const;
     Scope& getScope(void);
     
     bool isIntegerType(void) const;

@@ -4,6 +4,7 @@
 
 #include "Ast.h"
 #include "Semantic.h"
+#include "Builtin.h"
 #include "CodeGeneration.h"
 
 #include "Driver.h"

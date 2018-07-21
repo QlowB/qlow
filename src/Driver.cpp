@@ -2,6 +2,7 @@
 
 #include "Ast.h"
 #include "Semantic.h"
+#include "Builtin.h"
 #include "CodeGeneration.h"
 
 #include "Logging.h"
@@ -165,6 +166,10 @@ int Driver::run(void)
     }
     catch (const char* err) {
         logger.logError(err);
+        return 1;
+    }
+    catch (SemanticError& err) {
+        err.print(logger);
         return 1;
     }
     catch (...) {

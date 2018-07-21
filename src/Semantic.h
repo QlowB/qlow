@@ -49,8 +49,6 @@ namespace qlow
         struct FeatureCallExpression;
         
         struct IntConst;
-
-        class SemanticException;
     }
 
     class ExpressionCodegenVisitor;
@@ -104,7 +102,7 @@ struct qlow::sem::Variable : public SemanticObject
     llvm::Value* allocaInst;
     
     Variable(void) = default;
-    inline Variable(std::shared_ptr<Type> type, std::string& name) :
+    inline Variable(std::shared_ptr<Type> type, const std::string& name) :
         type{ std::move(type) }, name{ name }, allocaInst { nullptr } {}
         
     virtual std::string toString(void) const override;
@@ -264,9 +262,14 @@ struct qlow::sem::BinaryOperation : public Operation
 {
     std::unique_ptr<Expression> left;
     std::unique_ptr<Expression> right;
+    ast::BinaryOperation* astNode;
     
-    inline BinaryOperation(std::shared_ptr<Type> type) :
-        Operation{ std::move(type) }
+    /// method that is called to execute the operator
+    sem::Method* operationMethod;
+    
+    inline BinaryOperation(std::shared_ptr<Type> type, ast::BinaryOperation* astNode) :
+        Operation{ std::move(type) },
+        astNode{ astNode }
     {
     }
     

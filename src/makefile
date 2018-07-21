@@ -9,7 +9,7 @@ INCLUDEDIRS := -I $(shell $(LLVMCONFIG) --includedir)
 CXXFLAGS := -std=c++17 $(INCLUDEDIRS) # -Wall -Wextra
 
 ifdef STATIC
-LDFLAGS := $(shell $(LLVMCONFIG) --link-static --ldflags --system-libs --libs all) -static
+LDFLAGS := $(shell $(LLVMCONFIG) --link-static --ldflags --system-libs --libs all) -static -dead-strip -s
 else
 LDFLAGS := $(shell $(LLVMCONFIG) --ldflags --system-libs --libs all)
 endif

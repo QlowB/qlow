@@ -29,6 +29,13 @@ std::shared_ptr<sem::Type> sem::Type::BOOLEAN =
     std::make_shared<sem::NativeType>(sem::NativeType::Type::BOOLEAN);
 */
 
+std::string sem::ClassType::asString(void) const
+{
+    return classType->name;
+}
+
+
+
 sem::Scope& sem::ClassType::getScope(void)
 {
     return scope;
@@ -52,6 +59,12 @@ bool sem::ClassType::equals(const Type& other) const
 }
 
 
+std::string sem::ArrayType::asString(void) const
+{
+    return std::string("[") + arrayType->asString() + "]";
+}
+
+
 sem::Scope& sem::ArrayType::getScope(void)
 {
     return scope;
@@ -72,6 +85,47 @@ bool sem::ArrayType::equals(const Type& other) const
     }
     else {
         return false;
+    }
+}
+
+
+std::string sem::NativeType::asString(void) const
+{
+    switch(type) {
+        case VOID:
+            return "Void";
+        case INTEGER:
+            return "Integer";
+        case BOOLEAN:
+            return "Boolean";
+        case CHAR:
+            return "Char";
+        case INT8:
+            return "Int8";
+        case INT16:
+            return "Int16";
+        case INT32:
+            return "Int32";
+        case INT64:
+            return "Int64";
+        case INT128:
+            return "Int128";
+        case UINT8:
+            return "UInt8";
+        case UINT16:
+            return "UInt16";
+        case UINT32:
+            return "UInt32";
+        case UINT64:
+            return "UInt64";
+        case UINT128:
+            return "UInt128";
+        case FLOAT32:
+            return "Float32";
+        case FLOAT64:
+            return "Float64";
+        case FLOAT128:
+            return "Float128";
     }
 }
 

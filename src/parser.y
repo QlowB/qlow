@@ -127,10 +127,11 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 
 %token <string> IDENTIFIER
 %token <string> INT_LITERAL
+%token <string> ASTERISK SLASH PLUS MINUS EQUALS NOT_EQUALS AND OR XOR CUSTOM_OPERATOR
 %token <token> TRUE FALSE
 %token <token> CLASS DO END IF ELSE WHILE RETURN NEW EXTERN
 %token <token> NEW_LINE
-%token <token> SEMICOLON COLON COMMA DOT ASSIGN EQUALS NOT_EQUALS
+%token <token> SEMICOLON COLON COMMA DOT ASSIGN
 %token <token> ROUND_LEFT ROUND_RIGHT SQUARE_LEFT SQUARE_RIGHT
 %token <string> UNEXPECTED_SYMBOL
 
@@ -172,6 +173,8 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %left NOT
 %left AND
 %left OR XOR
+%left CUSTOM_OPERATOR
+%left ASSIGN
 
 %start topLevel
 

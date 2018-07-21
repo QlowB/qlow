@@ -79,6 +79,7 @@ public:
         DUPLICATE_FIELD_DECLARATION,
         DUPLICATE_METHOD_DEFINITION,
         
+        OPERATOR_NOT_FOUND,
         FEATURE_NOT_FOUND,
     };
     
@@ -90,7 +91,8 @@ public:
             CompileError{ where },
             message{ arg },
             errorCode{ ec }
-    {}
+    {
+    }
 
     virtual void print(Logger&) const override;
 };

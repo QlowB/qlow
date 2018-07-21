@@ -11,6 +11,25 @@ sem::Scope::~Scope(void)
 }
 
 
+sem::Method* sem::Scope::resolveMethod(const std::string& name,
+    const std::vector<std::shared_ptr<Type>> argumentTypes)
+{
+    sem::Method* m = getMethod(name);
+    if (!m)
+        return nullptr;
+    
+    if (m->arguments.size() != argumentTypes.size())
+        return nullptr;
+    
+    for (size_t i = 0; i < argumentTypes.size(); i++) {
+        if (!m->arguments[i]->type->equals(*argumentTypes[i]))
+            return nullptr;
+    }
+    
+    return m;
+}
+
+
 sem::Variable* sem::GlobalScope::getVariable(const std::string& name)
 {
     return nullptr;
@@ -251,7 +270,11 @@ std::string sem::TypeScope::toString(void)
 
 sem::Method* sem::NativeTypeScope::getMethod(const std::string& name)
 {
-    
+    auto m = nativeType.nativeMethods.find(name);
+    if (m != nativeType.nativeMethods.end())
+        return m->second.get();
+    else
+        return TypeScope::getMethod(name);
 }
 
 

@@ -263,7 +263,11 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
     auto leftEval = unique_dynamic_cast<sem::Expression>(ast.left->accept(*this, scope));
     auto rightEval = unique_dynamic_cast<sem::Expression>(ast.right->accept(*this, scope));
     
-    auto ret = std::make_unique<sem::BinaryOperation>(leftEval->type);
+    sem::Method* operationMethod = leftEval->type->getScope().resolveMethod(
+        "+", {}
+    );
+    
+    auto ret = std::make_unique<sem::BinaryOperation>(leftEval->type, &ast);
     
     ret->op = ast.op;
     ret->left = std::move(leftEval);
