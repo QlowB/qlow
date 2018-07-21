@@ -179,19 +179,64 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::Expression& as
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& ast, sem::Scope& scope)
 {
-    std::unique_ptr<sem::SemanticObject> target = nullptr;
+    std::unique_ptr<sem::Expression> target = nullptr;
     if (ast.target) {
-        target = ast.target->accept(*this, scope);
+        target = unique_dynamic_cast<sem::Expression>(
+            ast.target->accept(*this, scope));
     }
     
-    auto* method = scope.getMethod(ast.name);
-    auto* var = scope.getVariable(ast.name);
+    sem::Method* method;
+    sem::Variable* var;
     
-    if (var) {
+    if (target) {
+        method = target->type->getScope().getMethod(ast.name);
+        var = target->type->getScope().getVariable(ast.name);
+    }
+    else {
+        method = scope.getMethod(ast.name);
+        var = scope.getVariable(ast.name);
+    }
+    
+    if (target) {
+        if (var) {
+        }
+        else if (method) {
+            auto fce = std::make_unique<sem::FeatureCallExpression>(
+                std::move(target), method);
+    
+            if (ast.arguments.size() != method->arguments.size())
+                throw SemanticError(SemanticError::WRONG_NUMBER_OF_ARGUMENTS, ast.name, ast.pos);
+            for (size_t i = 0; i < ast.arguments.size(); i++) {
+                auto& arg = ast.arguments[i];
+                auto& argTypeShouldHave = method->arguments[i]->type;
+                auto argument = arg->accept(*this, scope);
+                if (sem::Expression* expr =
+                        dynamic_cast<sem::Expression*>(argument.get()); expr) {
+                    if (!expr->type->equals(*argTypeShouldHave))
+                        throw SemanticError(SemanticError::TYPE_MISMATCH,
+                            "argument passed to function has wrong type: '" +
+                            expr->type->asString() + "' instead of '" +
+                            argTypeShouldHave->asString() + "'",
+                            arg->pos
+                        );
+                    fce->arguments.push_back(
+                        unique_dynamic_cast<sem::Expression>(std::move(argument)));
+                }
+                else {
+                    throw "internal error: non-expression passed as function parameter";
+                }
+            }
+            return fce;
+        }
+        else {
+            throw SemanticError(SemanticError::FEATURE_NOT_FOUND, ast.name, ast.pos);
+        }
+    }
+    else if (var) {
         return std::make_unique<sem::LocalVariableExpression>(var);
     }
     else if (method) {
-        auto fce = std::make_unique<sem::FeatureCallExpression>(method->returnType);
+        auto fce = std::make_unique<sem::FeatureCallExpression>(nullptr, method);
         for (auto& arg : ast.arguments) {
             auto argument = arg->accept(*this, scope);
             if (dynamic_cast<sem::Expression*>(argument.get())) {
@@ -251,7 +296,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::UnaryOperation
     auto argument = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
     auto ret = std::make_unique<sem::UnaryOperation>(argument->type);
             // TODO not a feasible assumption
-    ret->op = ast.op;
+    ret->opString = ast.opString;
     ret->side = ast.side;
     ret->arg = std::move(argument);
     return ret;
@@ -264,12 +309,22 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
     auto rightEval = unique_dynamic_cast<sem::Expression>(ast.right->accept(*this, scope));
     
     sem::Method* operationMethod = leftEval->type->getScope().resolveMethod(
-        "+", {}
+        ast.opString, { rightEval->type }
     );
+    
+    Logger::getInstance().debug() << "looked for operation method for operator " <<
+    ast.opString << std::endl;
+    if (!operationMethod) {
+        throw SemanticError(SemanticError::OPERATOR_NOT_FOUND,
+            std::string("operator ") + ast.opString + " not found for types '" +
+            leftEval->type->asString() + "' and '" + rightEval->type->asString() + "'",
+            ast.opPos);
+    }
     
     auto ret = std::make_unique<sem::BinaryOperation>(leftEval->type, &ast);
     
-    ret->op = ast.op;
+    ret->operationMethod = operationMethod;
+    ret->opString = ast.opString;
     ret->left = std::move(leftEval);
     ret->right = std::move(rightEval);
     return ret;
@@ -280,5 +335,14 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::NewArrayExpres
 {
     auto ret = std::make_unique<sem::NewArrayExpression>(scope.getType(*ast.type));
     return ret;
+}
+
+
+std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::CastExpression& ast, sem::Scope& scope)
+{
+    auto expr = unique_dynamic_cast<sem::Expression>(ast.expression->accept(*this, scope));
+    auto type = scope.getType(*ast.targetType);
+    return std::make_unique<sem::CastExpression>(
+        std::move(expr), std::move(type), &ast);
 }
 

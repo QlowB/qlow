@@ -113,11 +113,13 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 "or"                    SET_STRING; return OR;
 "xor"                   SET_STRING; return XOR;
 "not"                   SET_STRING; return NOT;
+"as"                    return SET_TOKEN(AS);
 
 "+"                     SET_STRING; return PLUS;
 "-"                     SET_STRING; return MINUS;
 "*"                     SET_STRING; return ASTERISK;
 "/"                     SET_STRING; return SLASH;
+[\+\-\*\/=!<>]+         SET_STRING; return CUSTOM_OPERATOR;
 
 "("                     return SET_TOKEN(ROUND_LEFT);
 ")"                     return SET_TOKEN(ROUND_RIGHT);

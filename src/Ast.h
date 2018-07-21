@@ -75,6 +75,8 @@ namespace qlow
         struct BinaryOperation;
         
         struct NewArrayExpression;
+        
+        struct CastExpression;
     }
 
     namespace sem
@@ -431,11 +433,14 @@ struct qlow::ast::IntConst : public Expression
 struct qlow::ast::Operation : public Expression
 {
     std::string opString;
+    CodePosition opPos;
 
-    inline Operation(const std::string& opString, const CodePosition& cp) :
+    inline Operation(const std::string& opString, const CodePosition& cp,
+                     const CodePosition& opPos) :
         AstObject{ cp },
         Expression{ cp },
-        opString{ opString }
+        opString{ opString },
+        opPos{ opPos }
     {
     }
 };
@@ -453,9 +458,11 @@ struct qlow::ast::UnaryOperation : public Operation
     std::unique_ptr<Expression> expr;
 
     inline UnaryOperation(std::unique_ptr<Expression> expr, Side side,
-                          const std::string& op, const CodePosition& cp) :
+                          const std::string& op, const CodePosition& cp,
+                          const CodePosition& opPos
+                         ) :
         AstObject{ cp },
-        Operation{ op, cp },
+        Operation{ op, cp, opPos },
         side{ side },
         expr{ std::move(expr) }
     {
@@ -470,10 +477,16 @@ struct qlow::ast::BinaryOperation : public Operation
     std::unique_ptr<Expression> left;
     std::unique_ptr<Expression> right;
 
-    inline BinaryOperation(std::unique_ptr<Expression> left, std::unique_ptr<Expression> right, const std::string& op, const CodePosition& cp) :
+    inline BinaryOperation(std::unique_ptr<Expression> left,
+                           std::unique_ptr<Expression> right,
+                           const std::string& op,
+                           const CodePosition& cp,
+                           const CodePosition& opPos
+                          ) :
         AstObject{ cp },
-        Operation{ op, cp },
-        left(std::move(left)), right(std::move(right))
+        Operation{ op, cp, opPos },
+        left{ std::move(left) },
+        right{ std::move(right) }
     {
     }
 
@@ -492,6 +505,25 @@ struct qlow::ast::NewArrayExpression : public Expression
         Expression{ cp },
         type{ std::move(type) },
         length{ std::move(length) }
+    {
+    }
+    
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
+};
+
+
+struct qlow::ast::CastExpression : public Expression
+{
+    std::unique_ptr<ast::Expression> expression;
+    std::unique_ptr<ast::Type> targetType;
+    
+    inline CastExpression(std::unique_ptr<ast::Expression> expression,
+                          std::unique_ptr<ast::Type> targetType,
+                          const CodePosition& cp) :
+        AstObject{ cp },
+        Expression{ cp },
+        expression{ std::move(expression) },
+        targetType{ std::move(targetType) }
     {
     }
     

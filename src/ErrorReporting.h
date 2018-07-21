@@ -81,6 +81,8 @@ public:
         
         OPERATOR_NOT_FOUND,
         FEATURE_NOT_FOUND,
+        WRONG_NUMBER_OF_ARGUMENTS,
+        TYPE_MISMATCH,
     };
     
     

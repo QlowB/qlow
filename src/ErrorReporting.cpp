@@ -128,6 +128,7 @@ void SemanticError::print(Logger& logger) const
         {DUPLICATE_FIELD_DECLARATION, "duplicate field declaration"},
         {DUPLICATE_METHOD_DEFINITION, "duplicate method definition"},
         {OPERATOR_NOT_FOUND, ""},
+        {WRONG_NUMBER_OF_ARGUMENTS, "wrong number of arguments passed"},
     };
     std::string& errMsg = error[errorCode];
     logger.logError(errMsg + (errMsg != "" ?  ": " : "") + message, where);

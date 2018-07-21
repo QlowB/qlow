@@ -49,7 +49,8 @@ class qlow::StructureVisitor :
         ast::IntConst,
         ast::UnaryOperation,
         ast::BinaryOperation,
-        ast::NewArrayExpression
+        ast::NewArrayExpression,
+        ast::CastExpression
     >
 {
 public:
@@ -73,6 +74,7 @@ public:
     ReturnType visit(ast::UnaryOperation& ast, sem::Scope& scope) override;
     ReturnType visit(ast::BinaryOperation& ast, sem::Scope& scope) override;
     ReturnType visit(ast::NewArrayExpression& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::CastExpression& ast, sem::Scope& scope) override;
 };
 
 

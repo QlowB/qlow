@@ -204,6 +204,11 @@ llvm::Type* sem::NativeType::getLlvmType (llvm::LLVMContext& context) const
 bool sem::NativeType::equals(const sem::Type& other) const
 {
     if (auto* oct = dynamic_cast<const NativeType*>(&other); oct) {
+        if (this->type == Type::INTEGER || this->type == Type::INT32) {
+            if (oct->type == Type::INTEGER || oct->type == Type::INT32)
+                // Int32 == Integer
+                return true;
+        }
         return this->type == oct->type;
     }
     else {

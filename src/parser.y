@@ -104,7 +104,6 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
     qlow::ast::WhileBlock* whileBlock;    
     qlow::ast::Statement* statement;
     qlow::ast::Expression* expression;
-    qlow::ast::Operation::Operator op;
 
     qlow::ast::FieldDeclaration* fieldDeclaration;
     qlow::ast::MethodDefinition* methodDefinition;
@@ -118,6 +117,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
     qlow::ast::BinaryOperation* binaryOperation;
 
     qlow::ast::NewArrayExpression* newArrayExpression;
+    qlow::ast::CastExpression* castExpression;
 
     const char* cString;
     std::string* string;
@@ -129,7 +129,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %token <string> INT_LITERAL
 %token <string> ASTERISK SLASH PLUS MINUS EQUALS NOT_EQUALS AND OR XOR CUSTOM_OPERATOR
 %token <token> TRUE FALSE
-%token <token> CLASS DO END IF ELSE WHILE RETURN NEW EXTERN
+%token <token> CLASS DO END IF ELSE WHILE RETURN NEW EXTERN AS
 %token <token> NEW_LINE
 %token <token> SEMICOLON COLON COMMA DOT ASSIGN
 %token <token> ROUND_LEFT ROUND_RIGHT SQUARE_LEFT SQUARE_RIGHT
@@ -152,21 +152,23 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %type <whileBlock> whileBlock
 %type <statement> statement
 %type <expression> expression operationExpression paranthesesExpression
-%type <op> operator
 %type <featureCall> featureCall
 %type <assignmentStatement> assignmentStatement 
 %type <returnStatement> returnStatement 
 %type <localVariableStatement> localVariableStatement
+%type <string> operator
 %type <unaryOperation> unaryOperation
 %type <binaryOperation> binaryOperation
 %type <newArrayExpression> newArrayExpression
+%type <castExpression> castExpression
 
 %destructor { } <token>
-%destructor { } <op>
+//%destructor { if ($$) delete $$ } <op>
 %destructor { } <topLevel> // don't delete everything ;)
 %destructor { if ($$) delete $$; } <*>
 
 %left DOT
+%nonassoc AS 
 %left ASTERISK SLASH
 %left PLUS MINUS
 %left EQUALS
@@ -498,6 +500,10 @@ expression:
         $$ = $1;
     }
     |
+    castExpression {
+        $$ = $1;
+    }
+    |
     INT_LITERAL {
         $$ = new IntConst(std::move(*$1), @$);
         delete $1;
@@ -524,40 +530,45 @@ operationExpression:
 binaryOperation:
     expression operator expression {
         $$ = new BinaryOperation(std::unique_ptr<Expression>($1), 
-            std::unique_ptr<Expression>($3), $2, @$);
+            std::unique_ptr<Expression>($3), *$2, @$, @2);
+        delete $2; $2 = nullptr;
     };
 
 
 unaryOperation:
     expression operator {
         $$ = new UnaryOperation(std::unique_ptr<Expression>($1),
-            UnaryOperation::SUFFIX, $2, @$);
+            UnaryOperation::SUFFIX, *$2, @$, @2);
+        delete $2; $2 = nullptr;
     }
     |
     operator expression {
         $$ = new UnaryOperation(std::unique_ptr<Expression>($2),
-            UnaryOperation::PREFIX, $1, @$);
+            UnaryOperation::PREFIX, *$1, @$, @2);
+        delete $1; $1 = nullptr;
     };
 
 
 operator:
-    PLUS { $$ = qlow::ast::Operation::Operator::PLUS; }
+    PLUS { $$ = $1; }
     |
-    MINUS { $$ = qlow::ast::Operation::Operator::MINUS; }
+    MINUS { $$ = $1; }
     |
-    ASTERISK { $$ = qlow::ast::Operation::Operator::ASTERISK; }
+    ASTERISK { $$ = $1; }
     |
-    SLASH { $$ = qlow::ast::Operation::Operator::SLASH; }
+    SLASH { $$ = $1; }
     |
-    EQUALS { $$ = qlow::ast::Operation::Operator::EQUALS; }
+    EQUALS { $$ = $1; }
     |
-    NOT_EQUALS { $$ = qlow::ast::Operation::Operator::NOT_EQUALS; }
+    NOT_EQUALS { $$ = $1; }
     |
-    AND { $$ = qlow::ast::Operation::Operator::AND; }
+    AND { $$ = $1; }
     |
-    OR { $$ = qlow::ast::Operation::Operator::OR; }
+    OR { $$ = $1; }
     |
-    XOR { $$ = qlow::ast::Operation::Operator::XOR; };
+    XOR { $$ = $1; }
+    |
+    CUSTOM_OPERATOR { $$ = $1; };
 
 
 paranthesesExpression:
@@ -567,7 +578,13 @@ paranthesesExpression:
 
 newArrayExpression:
     NEW SQUARE_LEFT type SEMICOLON expression SQUARE_RIGHT {
-        
+        $$ = nullptr;
+    };
+    
+castExpression:
+    expression AS type {
+        $$ = new CastExpression(std::unique_ptr<Expression>($1),
+            std::unique_ptr<qlow::ast::Type>($3), @$);
     };
 
 assignmentStatement:

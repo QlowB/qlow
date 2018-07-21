@@ -6,6 +6,7 @@ fast_fibonacci(i: Integer): Integer do
     count := i
     a := 0
     b := 1
+    //b := a <=> b
     while count != 0 do
         temp := a
         a := a + b
@@ -26,7 +27,7 @@ bignumbers do
     //b := a + c
 end
 
-main do
+main2 do
     value: Integer
     do_shit
 end

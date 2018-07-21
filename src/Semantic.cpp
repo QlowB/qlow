@@ -171,6 +171,7 @@ ReturnType ClassName::accept(Visitor& v, Arg arg) \
 
 ACCEPT_DEFINITION(LocalVariableExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(BinaryOperation, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(CastExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(NewArrayExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(UnaryOperation, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(FeatureCallExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
@@ -212,6 +213,13 @@ std::string BinaryOperation::toString(void) const
 {
     return "BinaryOperation[" + left->toString() + ", " +
         right->toString() + "]";
+}
+
+
+std::string CastExpression::toString(void) const
+{
+    return "CastExpression[" + expression->toString() + " to " +
+        targetType->toString() + "]";
 }
 
 

@@ -47,9 +47,62 @@ sem::NativeScope qlow::sem::generateNativeScope(void)
         
         native->nativeMethods.insert(
             { "+",
-                std::make_unique<BinaryNativeMethod>( native, native,
+                std::make_unique<BinaryNativeMethod>(native, native,
                 [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
                     return builder.CreateAdd(a, b);
+                })
+            }
+        );
+        native->nativeMethods.insert(
+            { "-",
+                std::make_unique<BinaryNativeMethod>(native, native,
+                [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                    return builder.CreateSub(a, b);
+                })
+            }
+        );
+        native->nativeMethods.insert(
+            { "*",
+                std::make_unique<BinaryNativeMethod>(native, native,
+                [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                    return builder.CreateMul(a, b);
+                })
+            }
+        );
+        if (name[0] == 'U') {
+            native->nativeMethods.insert(
+                { "/",
+                    std::make_unique<BinaryNativeMethod>(native, native,
+                    [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                        return builder.CreateUDiv(a, b);
+                    })
+                }
+            );
+        }
+        else {
+            native->nativeMethods.insert(
+                { "/",
+                    std::make_unique<BinaryNativeMethod>(native, native,
+                    [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                        return builder.CreateSDiv(a, b);
+                    })
+                }
+            );
+        }
+        
+        native->nativeMethods.insert(
+            { "==",
+                std::make_unique<BinaryNativeMethod>(std::make_shared<NativeType>(NativeType::BOOLEAN), native,
+                [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                    return builder.CreateICmpEQ(a, b);
+                })
+            }
+        );
+        native->nativeMethods.insert(
+            { "!=",
+                std::make_unique<BinaryNativeMethod>(std::make_shared<NativeType>(NativeType::BOOLEAN), native,
+                [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                    return builder.CreateICmpNE(a, b);
                 })
             }
         );

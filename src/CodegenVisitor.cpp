@@ -25,6 +25,27 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::LocalVariableExpression& lve, 
 }
 
 
+llvm::Value* ExpressionCodegenVisitor::visit(sem::UnaryOperation& unop, llvm::IRBuilder<>& builder)
+{
+    using llvm::Value;
+    auto value = unop.arg->accept(*this, builder);
+    auto& type = unop.arg->type;
+    
+    if (type->equals(sem::NativeType(sem::NativeType::Type::VOID)))
+        throw "invalid type to negate";
+
+    /*
+    switch (unop.op) {
+        case ast::Operation::Operator::MINUS:
+            return builder.CreateNeg(value, "negate");
+        case ast::Operation::Operator::NOT:
+            return builder.CreateNot(value, "not");
+        default:
+            throw "operator not supported";
+    }*/
+}
+
+
 llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
@@ -35,37 +56,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::
     auto& leftType = binop.left->type;
     auto& rightType = binop.right->type;
     
-    if (!leftType->isNativeType() || !rightType->isNativeType())
-        throw "invalid types in BinaryOperation";
-    
-    std::string methodName;
-    
-    switch (binop.op) {
-        case ast::Operation::Operator::PLUS:
-            methodName = "+";
-        case ast::Operation::Operator::MINUS:
-            methodName = "-";
-        case ast::Operation::Operator::ASTERISK:
-            methodName = "*";
-        case ast::Operation::Operator::SLASH:
-            methodName = "/";
-            
-        case ast::Operation::Operator::AND:
-            methodName = "and";
-        case ast::Operation::Operator::OR:
-            methodName = "or";
-        case ast::Operation::Operator::XOR:
-            methodName = "xor";
-            
-        case ast::Operation::Operator::EQUALS:
-            methodName = "==";
-        case ast::Operation::Operator::NOT_EQUALS:
-            methodName = "!=";
-            ;
-    }
-    
-    sem::Method* operation =
-        leftType->getScope().resolveMethod(methodName, {leftType, rightType});
+    sem::Method* operation = binop.operationMethod;
     
     if (operation != nullptr) {
         if (sem::NativeMethod* nm = dynamic_cast<sem::NativeMethod*>(operation); nm) {
@@ -75,18 +66,12 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::
             throw "only native operations supported at the moment";
     }
     else {
-        auto errMsg = std::string("operator ") + methodName + " not found for types "
-            + leftType->asString() + " and " + rightType->asString();
-        throw SemanticError(SemanticError::OPERATOR_NOT_FOUND, errMsg,
-            binop.astNode->pos
-        );
+        throw "internal error: operation method null";
     }
-    
         
     if (left == nullptr) {
         printf("WOW: %s\n", binop.left->toString().c_str());
     }
-    
     
     Value* implicitelyCastedRight = right;
     if (!leftType->equals(*rightType))
@@ -96,7 +81,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::
         // TODO allow integer operations
     }
     
-    
+   /* 
     // TODO insert type checks
     switch (binop.op) {
         case ast::Operation::Operator::PLUS:
@@ -119,27 +104,17 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::
             return builder.CreateICmpEQ(left, right, "equals");
         case ast::Operation::Operator::NOT_EQUALS:
             return builder.CreateICmpNE(left, right, "not_equals");
-    }
+    }*/
 }
 
 
-llvm::Value* ExpressionCodegenVisitor::visit(sem::UnaryOperation& unop, llvm::IRBuilder<>& builder)
+llvm::Value* ExpressionCodegenVisitor::visit(sem::CastExpression& cast, llvm::IRBuilder<>& builder)
 {
-    using llvm::Value;
-    auto value = unop.arg->accept(*this, builder);
-    auto& type = unop.arg->type;
-    
-    if (type->equals(sem::NativeType(sem::NativeType::Type::VOID)))
-        throw "invalid type to negate";
-
-    switch (unop.op) {
-        case ast::Operation::Operator::MINUS:
-            return builder.CreateNeg(value, "negate");
-        case ast::Operation::Operator::NOT:
-            return builder.CreateNot(value, "not");
-        default:
-            throw "operator not supported";
-    }
+    return builder.CreateCast(
+        llvm::Instruction::CastOps::SExt,
+        cast.expression->accept(*this, builder),
+        cast.targetType->getLlvmType(builder.getContext())
+    );
 }
 
 
@@ -306,9 +281,18 @@ llvm::Value* StatementVisitor::visit(sem::FeatureCallStatement& fc, gen::Functio
     llvm::IRBuilder<> builder(fg.getContext());
     builder.SetInsertPoint(fg.getCurrentBlock());
     //llvm::Constant* c = module->getOrInsertFunction(fc.expr->callee->name, {});
+    
+    return fc.expr->accept(fg.expressionVisitor, builder);
+    
+    /*
     llvm::Function* f = fc.expr->callee->llvmNode;
+    std::vector<llvm::Value*> arguments;
+    for (auto& arg : fc.expr->arguments) {
+        arguments
+    }
     builder.CreateCall(f, {});
-    return llvm::ConstantFP::get(fg.getContext(), llvm::APFloat(5.0));
+    */
+    // return llvm::ConstantFP::get(fg.getContext(), llvm::APFloat(5.0));
 }
 
 

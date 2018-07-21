@@ -202,10 +202,11 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
 
     if (!target) {
         logger.debug() << "could not create target: " << error << std::endl;
+        throw "internal error";
     }
 
     TargetOptions targetOptions;
-    auto relocModel = llvm::Optional<llvm::Reloc::Model>();
+    auto relocModel = llvm::Optional<llvm::Reloc::Model>(llvm::Reloc::Model::PIC_);
     std::unique_ptr<TargetMachine> targetMachine(target->createTargetMachine(targetTriple, cpu,
             features, targetOptions, relocModel));
 

@@ -44,6 +44,8 @@ namespace qlow
         struct UnaryOperation;
         struct BinaryOperation;
         
+        struct CastExpression;
+        
         struct NewArrayExpression;
 
         struct FeatureCallExpression;
@@ -234,7 +236,7 @@ struct qlow::sem::Expression :
 
 struct qlow::sem::Operation : public Expression
 {
-    ast::Operation::Operator op;
+    std::string opString;
     
     inline Operation(std::shared_ptr<Type> type) :
         Expression{ std::move(type) }
@@ -279,6 +281,29 @@ struct qlow::sem::BinaryOperation : public Operation
 };
 
 
+struct qlow::sem::CastExpression : public Expression
+{
+    std::unique_ptr<Expression> expression;
+    std::shared_ptr<Type> targetType;
+    
+    ast::CastExpression* astNode;
+    
+    inline CastExpression(std::unique_ptr<Expression> expression,
+                          std::shared_ptr<Type> type,
+                          ast::CastExpression* astNode) :
+        Expression{ type },
+        expression{ std::move(expression) },
+        targetType{ std::move(type) },
+        astNode{ astNode }
+    {
+    }
+    
+    virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    
+    virtual std::string toString(void) const override;
+};
+
+
 struct qlow::sem::NewArrayExpression : public Expression
 {
     std::shared_ptr<Type> arrayType;
@@ -313,10 +338,12 @@ struct qlow::sem::UnaryOperation : public Operation
 struct qlow::sem::FeatureCallExpression : public Expression
 {
     Method* callee;
+    std::unique_ptr<Expression> target;
     OwningList<Expression> arguments;
     
-    inline FeatureCallExpression(std::shared_ptr<Type> type) :
-        Expression{ std::move(type) }
+    inline FeatureCallExpression(std::unique_ptr<Expression> target,
+                                 Method* callee) :
+        Expression{ callee->returnType }
     {
     }
     
