@@ -7,6 +7,8 @@
 
 #include "Util.h"
 
+#include <memory>
+
 using namespace qlow::sem;
 
 namespace qlow
@@ -87,13 +89,17 @@ std::unique_ptr<GlobalScope>
     
     for (auto& [name, semClass] : globalScope->classes) {
         for (auto& [name, method] : semClass->methods) {
-            if (method->astNode->body) // if not declaration
+            if (method->astNode->body) { // if not declaration
+                method->containingType = semClass.get();
+                method->generateThisExpression();
                 method->body = unique_dynamic_cast<sem::DoEndBlock>(method->astNode->body->accept(av, method->scope));
+            }
         }
     }
     for (auto& [name, method] : globalScope->functions) {
-        if (method->astNode->body) // if not declaration
+        if (method->astNode->body) { // if not declaration
             method->body = unique_dynamic_cast<sem::DoEndBlock>(method->astNode->body->accept(av, method->scope));
+        }
     }
     
 #ifdef DEBUGGING
@@ -155,6 +161,14 @@ std::string Field::toString(void) const
 }
 
 
+void Method::generateThisExpression(void)
+{
+    auto te = std::make_unique<ThisExpression>(this);
+    thisExpression = te.get();
+    scope.putVariable(this->thisExpression->name, std::move(te));
+}
+
+
 std::string Method::toString(void) const
 {
     return "Method[" + this->name + "]";
@@ -178,6 +192,10 @@ ACCEPT_DEFINITION(MethodCallExpression, ExpressionCodegenVisitor, llvm::Value*, 
 ACCEPT_DEFINITION(FieldAccessExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(IntConst, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(ThisExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
+
+ACCEPT_DEFINITION(Expression, LValueVisitor, llvm::Value*, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(LocalVariableExpression, LValueVisitor, llvm::Value*, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(FieldAccessExpression, LValueVisitor, llvm::Value*, llvm::IRBuilder<>&)
 
 ACCEPT_DEFINITION(AssignmentStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 ACCEPT_DEFINITION(DoEndBlock, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
@@ -234,7 +252,10 @@ std::string NewArrayExpression::toString(void) const
 
 std::string MethodCallExpression::toString(void) const
 {
-    return "FeatureCallExpression[" + callee->toString() + "]";
+    if (this->target)
+        return "MethodCallExpression[" + target->toString() + "." + callee->toString() + "]";
+    else
+        return "MethodCallExpression[" + callee->toString() + "]";
 }
 
 

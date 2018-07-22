@@ -57,6 +57,7 @@ namespace qlow
     }
 
     class ExpressionCodegenVisitor;
+    class LValueVisitor;
     class StatementVisitor;
 
     namespace gen
@@ -101,6 +102,7 @@ struct qlow::sem::Variable : public SemanticObject
 {
     std::shared_ptr<Type> type;
     std::string name;
+    bool isParameter;
 
     /// if this is a local variable, this stores a reference to the llvm
     /// instance of this variable. If it is a parameter, the parameter value
@@ -108,7 +110,11 @@ struct qlow::sem::Variable : public SemanticObject
     
     Variable(void) = default;
     inline Variable(std::shared_ptr<Type> type, const std::string& name) :
-        type{ std::move(type) }, name{ name }, allocaInst { nullptr } {}
+        type{ std::move(type) },
+        name{ name },
+        allocaInst { nullptr }
+    {
+    }
         
     virtual std::string toString(void) const override;
 };
@@ -127,7 +133,7 @@ struct qlow::sem::Method : public SemanticObject
     std::vector<Variable*> arguments;
     std::string name;
     ast::MethodDefinition* astNode;
-    std::unique_ptr<ThisExpression> thisExpression;
+    ThisExpression* thisExpression;
     std::unique_ptr<DoEndBlock> body;
 
     LocalScope scope;
@@ -138,7 +144,7 @@ struct qlow::sem::Method : public SemanticObject
         containingType{ nullptr },
         returnType{ std::move(returnType) },
         scope{ parentScope, this },
-        thisExpression{ std::make_unique<ThisExpression>(this) },
+        thisExpression{ nullptr },
         body{ nullptr }
     {
     }
@@ -148,10 +154,12 @@ struct qlow::sem::Method : public SemanticObject
         astNode{ astNode },
         name{ astNode->name },
         scope{ parentScope, this },
-        thisExpression{ std::make_unique<ThisExpression>(this) },
+        thisExpression{ nullptr },
         body{ nullptr }
     {
     }
+    
+    void generateThisExpression(void);
     
     virtual std::string toString(void) const override;
 };
@@ -161,8 +169,8 @@ struct qlow::sem::ThisExpression : public Variable
 {
     Method* method;
     inline ThisExpression(Method* method) :
-        Variable{ method->returnType, "this" },
-        method{ method}
+        Variable{ std::make_shared<PointerType>(std::make_shared<ClassType>(method->containingType)), "this" },
+        method{ method }
     {
     }
     
@@ -244,7 +252,10 @@ struct qlow::sem::Expression :
     public SemanticObject,
     public Visitable<llvm::Value*,
                      llvm::IRBuilder<>,
-                     qlow::ExpressionCodegenVisitor>
+                     qlow::ExpressionCodegenVisitor>,
+    public Visitable<llvm::Value*,
+                     llvm::IRBuilder<>,
+                     qlow::LValueVisitor>
 {
     std::shared_ptr<sem::Type> type;
     
@@ -252,6 +263,9 @@ struct qlow::sem::Expression :
         type{ std::move(type) }
     {
     }
+    
+    virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override = 0;
+    virtual llvm::Value* accept(LValueVisitor& visitor, llvm::IRBuilder<>& arg2) override;
 };
 
 
@@ -277,6 +291,7 @@ struct qlow::sem::LocalVariableExpression : public Expression
     }
 
     virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual llvm::Value* accept(LValueVisitor& visitor, llvm::IRBuilder<>& arg2);
     virtual std::string toString(void) const override;
 };
 
@@ -365,6 +380,7 @@ struct qlow::sem::MethodCallExpression : public Expression
     inline MethodCallExpression(std::unique_ptr<Expression> target,
                                  Method* callee) :
         Expression{ callee->returnType },
+        target{ std::move(target) },
         callee{ callee }
     {
     }
@@ -379,7 +395,7 @@ struct qlow::sem::FieldAccessExpression : public Expression
 {
     sem::Field* accessed;
     std::unique_ptr<Expression> target;
-    OwningList<Expression> arguments;
+    //OwningList<Expression> arguments;
     
     inline FieldAccessExpression(std::unique_ptr<Expression> target,
                                  Field* accessed ) :
@@ -390,6 +406,7 @@ struct qlow::sem::FieldAccessExpression : public Expression
     }
     
     virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual llvm::Value* accept(LValueVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     
     virtual std::string toString(void) const override;
 };

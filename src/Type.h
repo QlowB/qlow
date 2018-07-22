@@ -29,6 +29,7 @@ namespace qlow
         
         class Type;
         
+        class PointerType;
         class ClassType;
         class ArrayType;
         class NativeType;
@@ -52,9 +53,17 @@ class qlow::sem::Type : public SemanticObject
 public:
     virtual ~Type(void);
 
-    virtual bool isClassType(void) const = 0;
-    virtual bool isNativeType(void) const = 0;
-    virtual bool isArrayType(void) const = 0;
+    /// \returns false by default
+    virtual inline bool isPointerType(void) const { return false; }
+    
+    /// \returns false by default
+    virtual inline bool isClassType(void) const { return false; }
+    
+    /// \returns false by default
+    virtual inline bool isNativeType(void) const { return false; }
+    
+    /// \returns false by default
+    virtual inline bool isArrayType(void) const { return false; }
 
     virtual std::string asString(void) const = 0;
     virtual Scope& getScope(void) = 0;
@@ -66,6 +75,30 @@ public:
 //    static std::shared_ptr<Type> VOID;
 //    static std::shared_ptr<Type> INTEGER;
 //    static std::shared_ptr<Type> BOOLEAN;
+};
+
+
+class qlow::sem::PointerType : public Type
+{
+    std::shared_ptr<Type> derefType;
+    sem::TypeScope scope;
+public:
+    inline PointerType(std::shared_ptr<Type> derefType) :
+        derefType{ derefType },
+        scope{ *this }
+    {
+    }
+    
+    const std::shared_ptr<Type>& getDerefType(void) const { return derefType; }
+    
+    inline bool isPointerType(void) const override { return true; }
+    
+    virtual std::string asString(void) const override;
+    virtual Scope& getScope(void) override;
+    
+    virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
+    
+    virtual bool equals(const Type& other) const override;
 };
 
 
@@ -81,8 +114,6 @@ public:
     }
     
     inline bool isClassType(void) const override { return true; }
-    inline bool isNativeType(void) const override { return false; }
-    inline bool isArrayType(void) const override { return false; }
     
     std::string asString(void) const;
     Scope& getScope(void);
@@ -105,8 +136,6 @@ public:
     {
     }
     
-    inline bool isClassType(void) const override { return false; }
-    inline bool isNativeType(void) const override { return false; }
     inline bool isArrayType(void) const override { return true; }
     
     std::string asString(void) const;
@@ -143,9 +172,7 @@ public:
     {
     }
     
-    inline bool isClassType(void) const override { return false; }
     inline bool isNativeType(void) const override { return true; }
-    inline bool isArrayType(void) const override { return false; }
     
     std::string asString(void) const;
     Scope& getScope(void);

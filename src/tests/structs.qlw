@@ -6,8 +6,8 @@ class Vec
 
     yuhu: Integer do
         //x := 123
-        //return x
-        return 123
+        return x
+        //return 123
     end
 end
 
@@ -15,9 +15,11 @@ end
 main: Integer do
     var: Vec
     value: Integer
-    value := 5
+    value := 2
 
-    var.x := 2
+    var.x := value + 10
+
+    //var.x := 2
     value := var.yuhu
 //    var.x := 4
 //    var.hohoo := 4

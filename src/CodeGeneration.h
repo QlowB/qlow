@@ -32,9 +32,12 @@ public:
 
     StatementVisitor statementVisitor;
     ExpressionCodegenVisitor expressionVisitor;
+    LValueVisitor lvalueVisitor;
 
     inline FunctionGenerator(const sem::Method& m, llvm::Module* module) :
-        method{ m }, module{ module }
+        method{ m },
+        module{ module },
+        expressionVisitor{ *this }
     {
     }
 

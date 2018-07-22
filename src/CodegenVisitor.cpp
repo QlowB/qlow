@@ -135,8 +135,14 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, ll
     std::vector<Value*> arguments;
     
     if (call.target != nullptr) {
-        auto* target = call.target->accept(*this, builder);
-        arguments.push_back(target);
+        auto* target = call.target->accept(fg.lvalueVisitor, builder);
+        
+        Logger::getInstance().debug() << "creating 'this' argument";
+        if (llvm::LoadInst* li = llvm::dyn_cast<llvm::LoadInst>(target); li) {
+            llvm::Value* ptr = builder.CreateLoad(call.target->type->getLlvmType(builder.getContext())->getPointerTo(), li, "ptrload");
+            arguments.push_back(ptr);
+        } else
+            arguments.push_back(target);
     }
     
     for (size_t i = 0; i < call.arguments.size(); i++) {
@@ -150,9 +156,8 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, ll
         
         arguments.push_back(value);
     }
-    auto returnType = call.callee->returnType;
+    //auto returnType = call.callee->returnType;
     llvm::CallInst* callInst = builder.CreateCall(call.callee->llvmNode, arguments);
-    
     return callInst;
 }
 
@@ -160,8 +165,31 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, ll
 llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
+    using llvm::Type;
     
-    builder.CreateStructGEP(access.type->getLlvmType(builder.getContext()), llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false)), 0);
+    Type* type = access.target->type->getLlvmType(builder.getContext());
+    
+    if (type == nullptr)
+        throw "no access type";
+    if (type->isPointerTy()) {
+        type = type->getPointerElementType();
+    }
+    
+    llvm::Value* target = access.target->accept(fg.lvalueVisitor, builder);
+    
+    llvm::ArrayRef<Value*> indexList = {
+        llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false)),
+        llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false))
+    };
+    Value* ptr = builder.CreateGEP(type, target, indexList);
+    return builder.CreateLoad(ptr);
+    
+    
+    //builder.CreateStructGEP(type,
+    //                               llvm::ConstantInt::get(builder.getContext(),
+    //                               llvm::APInt(32, 0, false)), 0);
+    return llvm::ConstantInt::get(builder.getContext(),
+                                   llvm::APInt(32, 0, false));
 }
 
 
@@ -175,6 +203,76 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::IntConst& node, llvm::IRBuilde
 llvm::Value* ExpressionCodegenVisitor::visit(sem::ThisExpression& thisExpr, llvm::IRBuilder<>& builder)
 {
     return thisExpr.allocaInst;
+}
+
+
+llvm::Value* LValueVisitor::visit(sem::Expression& e, llvm::IRBuilder<>& builder)
+{
+    throw "cannot construct lvalue from expression";
+}
+
+
+llvm::Value* LValueVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
+{
+    assert(lve.var->allocaInst != nullptr);
+    
+    if (llvm::dyn_cast<llvm::AllocaInst>(lve.var->allocaInst)) {
+        return lve.var->allocaInst;
+        
+        /*llvm::Value* val = builder.CreateLoad(
+            lve.type->getLlvmType(builder.getContext())->getPointerTo(),
+            lve.var->allocaInst
+        );
+        return val;*/
+    }
+    else if (llvm::dyn_cast<llvm::PointerType> (lve.var->allocaInst->getType())) {
+        return lve.var->allocaInst;
+    }
+    else {
+        throw "unable to find alloca instance of local variable";
+    }
+}
+
+
+llvm::Value* LValueVisitor::visit(sem::FieldAccessExpression& access, llvm::IRBuilder<>& builder)
+{
+    /*
+    using llvm::Value;
+    using llvm::Type;
+    
+    auto& fieldType = fae.accessed->type;
+    Type* ptr = fieldType->getLlvmType(builder.getContext())->getPointerTo();
+    
+    llvm::Value* allocaInst = fae.target->accept(*this, builder);
+    
+    if (ptr == nullptr)
+        throw "no access type";
+    
+    llvm::ArrayRef<Value*> indices = {
+        llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false)),
+        llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false))
+    };
+    */
+    
+    using llvm::Value;
+    using llvm::Type;
+    
+    Type* type = access.target->type->getLlvmType(builder.getContext());
+    
+    if (type == nullptr)
+        throw "no access type";
+    if (type->isPointerTy()) {
+        type = type->getPointerElementType();
+    }
+    
+    llvm::Value* target = access.target->accept(*this, builder);
+    
+    llvm::ArrayRef<Value*> indexList = {
+        llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false)),
+        llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false))
+    };
+    Value* ptr = builder.CreateGEP(type, target, indexList);
+    return ptr;
 }
 
 
@@ -266,7 +364,12 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
     Logger& logger = Logger::getInstance();
     llvm::IRBuilder<> builder(fg.getContext());
     builder.SetInsertPoint(fg.getCurrentBlock());
+    
     auto val = assignment.value->accept(fg.expressionVisitor, builder);
+    auto target = assignment.target->accept(fg.lvalueVisitor, builder);
+    
+    return builder.CreateStore(val, target);
+    
     if (auto* targetVar =
         dynamic_cast<sem::LocalVariableExpression*>(assignment.target.get()); targetVar) {
         logger.debug() << "assigning to LocalVariableExpression" << std::endl;
@@ -278,7 +381,10 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
         logger.debug() << "assigning to FieldAccessExpression" << std::endl;
         if (targetVar->target) {
             llvm::Value* target = targetVar->target->accept(fg.expressionVisitor, builder);
-            auto elementPtr = builder.CreateGEP(target, llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0)));
+            
+            //auto elementPtr = builder.CreateGEP(targetVar->target->type->getLlvmType(fg.getContext()), target, llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0)));
+            auto elementPtr = llvm::ConstantPointerNull::get(val->getType()->getPointerTo());
+            
             builder.CreateStore(val, elementPtr);
         }
         else {
@@ -286,7 +392,6 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
         }
     }
     else {
-        
         logger.debug() << "assigning to instance of " << assignment.target->toString() << std::endl;
         throw "only local variables are assignable at the moment";
     }

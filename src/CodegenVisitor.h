@@ -26,6 +26,7 @@ namespace qlow
 namespace qlow
 {
     class ExpressionCodegenVisitor;
+    class LValueVisitor;
     class StatementVisitor;
 }
 
@@ -47,6 +48,12 @@ class qlow::ExpressionCodegenVisitor :
     >
 {
 public:
+    gen::FunctionGenerator& fg;
+    inline ExpressionCodegenVisitor(gen::FunctionGenerator& fg) :
+        fg{ fg }
+    {
+    }
+    
     llvm::Value* visit(sem::LocalVariableExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::UnaryOperation& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::BinaryOperation& node, llvm::IRBuilder<>&) override;
@@ -56,6 +63,23 @@ public:
     llvm::Value* visit(sem::FieldAccessExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::IntConst& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::ThisExpression& node, llvm::IRBuilder<>&) override;
+};
+
+
+class qlow::LValueVisitor :
+    public Visitor<
+        llvm::Value*,
+        llvm::IRBuilder<>,
+
+        sem::Expression,
+        sem::LocalVariableExpression,
+        sem::FieldAccessExpression
+    >
+{
+public:
+    llvm::Value* visit(sem::Expression& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::LocalVariableExpression& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::FieldAccessExpression& node, llvm::IRBuilder<>&) override;
 };
 
 
@@ -80,6 +104,9 @@ public:
     llvm::Value* visit(sem::ReturnStatement& node, gen::FunctionGenerator&) override;
     llvm::Value* visit(sem::FeatureCallStatement& node, gen::FunctionGenerator&) override;
 };
+
+
+
 
 #endif // QLOW_CODEGEN_VISITOR_H
 

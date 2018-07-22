@@ -84,8 +84,10 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
             Function* f = fg.generate();
             logger.debug() << "verifying function: " << method->name << std::endl;
             bool corrupt = llvm::verifyFunction(*f, &verifyStream);
-            if (corrupt)
+            if (corrupt) {
+                module->print(verifyStream, nullptr);
                 throw "corrupt llvm function";
+            }
 #ifdef DEBUGGING
             printf("verified function: %s\n", method->name.c_str());
 #endif
@@ -99,8 +101,10 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
         Function* f = fg.generate();
         logger.debug() << "verifying function: " << method->name << std::endl;
         bool corrupt = llvm::verifyFunction(*f, &verifyStream);
-        if (corrupt)
+        if (corrupt) {
+            module->print(verifyStream, nullptr);
             throw "corrupt llvm function";
+        }
 #ifdef DEBUGGING
         printf("verified function: %s\n", method->name.c_str());
 #endif
@@ -142,19 +146,24 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
         throw "invalid return type";
     Function* func = Function::Create(funcType, Function::ExternalLinkage, method->name, module);
     method->llvmNode = func;
-    size_t index = 0;
     
+    // linking alloca instances for funcs
+    auto argIterator = func->arg_begin();
     if (method->thisExpression != nullptr) {
-        method->thisExpression->allocaInst = &*func->args().begin();
-        index++;
+        method->thisExpression->allocaInst = &*argIterator;
+        Logger::getInstance().debug() << "allocaInst of this";
+        argIterator++;
     }
     
-    for (auto arg = func->args().begin() + index; arg != func->args().end(); arg++) {
-        method->arguments[index]->allocaInst = &*arg;
+    size_t argIndex = 0;
+    for (; argIterator != func->arg_end(); argIterator++) {
+        if (argIndex > method->arguments.size())
+            throw "internal error";
+        method->arguments[argIndex]->allocaInst = &*argIterator;
 #ifdef DEBUGGING
-        printf("allocaInst of arg '%s': %p\n", method->arguments[index]->name.c_str(), method->arguments[index]->allocaInst);
+        printf("allocaInst of arg '%s': %p\n", method->arguments[argIndex]->name.c_str(), method->arguments[argIndex]->allocaInst);
 #endif 
-        index++;
+        argIndex++;
     }
     
     //printf("UEEEEEEEE %s\n", method->name.c_str());

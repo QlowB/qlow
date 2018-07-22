@@ -29,6 +29,34 @@ std::shared_ptr<sem::Type> sem::Type::BOOLEAN =
     std::make_shared<sem::NativeType>(sem::NativeType::Type::BOOLEAN);
 */
 
+std::string sem::PointerType::asString(void) const
+{
+    return derefType->asString() + "*";
+}
+
+
+sem::Scope& sem::PointerType::getScope(void)
+{
+    return scope;
+}
+
+
+llvm::Type* sem::PointerType::getLlvmType(llvm::LLVMContext& context) const
+{
+    return derefType->getLlvmType(context)->getPointerTo();
+}
+
+
+bool sem::PointerType::equals(const Type& other) const
+{
+    if (const PointerType* opt = dynamic_cast<const PointerType*>(&other); opt) {
+        return derefType->equals(*opt->getDerefType());
+    }
+    else
+        return false;
+}
+
+
 std::string sem::ClassType::asString(void) const
 {
     return classType->name;

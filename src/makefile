@@ -1,12 +1,12 @@
 # building depends on debian packages: "g++" "llvm-dev" "bison" "flex" (and "make", duh)
 # running depends on "llvm" if not statically linked
 
-CXX := g++
+CXX := clang++
 
-LLVMCONFIG := llvm-config
+LLVMCONFIG := llvm-config-5.0
 
 INCLUDEDIRS := -I $(shell $(LLVMCONFIG) --includedir)
-CXXFLAGS := -std=c++17 $(INCLUDEDIRS) # -Wall -Wextra
+CXXFLAGS := -std=c++17 $(INCLUDEDIRS) -w # -Wall -Wextra
 
 ifdef STATIC
 LDFLAGS := $(shell $(LLVMCONFIG) --link-static --ldflags --system-libs --libs all) -static -dead-strip -s

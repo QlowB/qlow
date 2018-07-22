@@ -61,6 +61,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefiniti
         if (dynamic_cast<sem::Variable*>(var.get())) {
             std::unique_ptr<sem::Variable> variable =
                 unique_dynamic_cast<sem::Variable>(std::move(var));
+            variable->isParameter = true;
             m->arguments.push_back(variable.get());
             std::string varname = variable->name;
             m->scope.putVariable(varname, std::move(variable));
@@ -241,9 +242,11 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
             auto* thisExpr = scope.getVariable("this");
             if (!thisExpr)
                 throw "no this found";
+            Logger::getInstance().debug() << "feature call " << var->toString() << " is a field\n";
             return std::make_unique<sem::FieldAccessExpression>(std::make_unique<sem::LocalVariableExpression>(thisExpr), field);
         }
         else {
+            Logger::getInstance().debug() << "feature call " << var->toString() << " is not a field\n";
             return std::make_unique<sem::LocalVariableExpression>(var);
         }
     }

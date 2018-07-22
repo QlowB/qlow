@@ -203,9 +203,11 @@ sem::SymbolTable<sem::Variable>& sem::LocalScope::getLocals(void)
 
 sem::Variable* sem::LocalScope::getVariable(const std::string& name)
 {
+    /*
     if (name == "this") {
         return enclosingMethod->thisExpression.get();
     }
+    */
     
     auto m = localVariables.find(name);
     if (m != localVariables.end())
