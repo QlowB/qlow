@@ -42,7 +42,8 @@ class qlow::ExpressionCodegenVisitor :
         sem::NewArrayExpression,
         sem::MethodCallExpression,
         sem::FieldAccessExpression,
-        sem::IntConst
+        sem::IntConst,
+        sem::ThisExpression
     >
 {
 public:
@@ -54,6 +55,7 @@ public:
     llvm::Value* visit(sem::MethodCallExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::FieldAccessExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::IntConst& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::ThisExpression& node, llvm::IRBuilder<>&) override;
 };
 
 

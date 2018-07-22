@@ -25,7 +25,7 @@ bignumbers do
     c: Int64
 
     b := a + c as Int128
-    c := b as Int64
+    //c := b as Int64
 end
 
 main2 do

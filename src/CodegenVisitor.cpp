@@ -128,10 +128,17 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::NewArrayExpression& naexpr, ll
 llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
-    std::vector<Value*> arguments;
     if (call.arguments.size() != call.callee->arguments.size()) {
         throw "wrong number of arguments";
     }
+    
+    std::vector<Value*> arguments;
+    
+    if (call.target != nullptr) {
+        auto* target = call.target->accept(*this, builder);
+        arguments.push_back(target);
+    }
+    
     for (size_t i = 0; i < call.arguments.size(); i++) {
         // : call.arguments) {
         auto& arg = call.arguments[i];
@@ -162,6 +169,12 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::IntConst& node, llvm::IRBuilde
 {
     return llvm::ConstantInt::get(builder.getContext(),
         llvm::APInt(32, std::to_string(node.value), 10));
+}
+
+
+llvm::Value* ExpressionCodegenVisitor::visit(sem::ThisExpression& thisExpr, llvm::IRBuilder<>& builder)
+{
+    return thisExpr.allocaInst;
 }
 
 
@@ -260,9 +273,13 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
         builder.CreateStore(val, targetVar->var->allocaInst);
     }
     else if (auto* targetVar =
-        dynamic_cast<sem::MethodCallExpression*>(assignment.target.get()); targetVar) {
+        dynamic_cast<sem::FieldAccessExpression*>(assignment.target.get()); targetVar) {
         
-        logger.debug() << "assigning to MethodCallExpression" << std::endl;
+        logger.debug() << "assigning to FieldAccessExpression" << std::endl;
+    
+        llvm::Value* target = targetVar->target->accept(fg.expressionVisitor, builder);
+        auto elementPtr = builder.CreateGEP(target, llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0)));
+        builder.CreateStore(val, elementPtr);
     }
     else {
         

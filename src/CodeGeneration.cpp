@@ -116,12 +116,17 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
     using llvm::Type;
     using llvm::FunctionType;
     
-    std::vector<Type*> argumentTypes;
     Type* returnType;
     if (method->returnType)
         returnType = method->returnType->getLlvmType(context);
     else
         returnType = llvm::Type::getVoidTy(context);
+    
+    std::vector<Type*> argumentTypes;
+    if (method->containingType != nullptr) {
+        Type* enclosingType = method->containingType->llvmType;
+        argumentTypes.push_back(enclosingType);
+    }
     
     for (auto& arg : method->arguments) {
         Type* argumentType = arg->type->getLlvmType(context);

@@ -168,7 +168,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %destructor { if ($$) delete $$; } <*>
 
 %left DOT
-%nonassoc AS 
+%left AS 
 %left ASTERISK SLASH
 %left PLUS MINUS
 %left EQUALS

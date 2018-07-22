@@ -163,6 +163,8 @@ struct qlow::sem::ThisExpression : public Variable
         method{ method}
     {
     }
+    
+    llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2);
 };
 
 
