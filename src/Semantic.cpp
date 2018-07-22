@@ -240,7 +240,10 @@ std::string MethodCallExpression::toString(void) const
 
 std::string FieldAccessExpression::toString(void) const
 {
-    return "FieldAccessExpression[" + accessed->toString() + "]";
+    if (this->target)
+        return "FieldAccessExpression[" + target->toString() + "." + accessed->toString() + "]";
+    else
+        return "FieldAccessExpression[" + accessed->toString() + "]";
 }
 
 

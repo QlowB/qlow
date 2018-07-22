@@ -276,10 +276,14 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
         dynamic_cast<sem::FieldAccessExpression*>(assignment.target.get()); targetVar) {
         
         logger.debug() << "assigning to FieldAccessExpression" << std::endl;
-    
-        llvm::Value* target = targetVar->target->accept(fg.expressionVisitor, builder);
-        auto elementPtr = builder.CreateGEP(target, llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0)));
-        builder.CreateStore(val, elementPtr);
+        if (targetVar->target) {
+            llvm::Value* target = targetVar->target->accept(fg.expressionVisitor, builder);
+            auto elementPtr = builder.CreateGEP(target, llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0)));
+            builder.CreateStore(val, elementPtr);
+        }
+        else {
+            throw "field access without target";
+        }
     }
     else {
         

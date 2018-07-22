@@ -123,8 +123,8 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
         returnType = llvm::Type::getVoidTy(context);
     
     std::vector<Type*> argumentTypes;
-    if (method->containingType != nullptr) {
-        Type* enclosingType = method->containingType->llvmType;
+    if (method->thisExpression != nullptr) {
+        Type* enclosingType = method->thisExpression->type->getLlvmType(context);
         argumentTypes.push_back(enclosingType);
     }
     
@@ -143,8 +143,14 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
     Function* func = Function::Create(funcType, Function::ExternalLinkage, method->name, module);
     method->llvmNode = func;
     size_t index = 0;
-    for (auto& arg : func->args()) {
-        method->arguments[index]->allocaInst = &arg;
+    
+    if (method->thisExpression != nullptr) {
+        method->thisExpression->allocaInst = &*func->args().begin();
+        index++;
+    }
+    
+    for (auto arg = func->args().begin() + index; arg != func->args().end(); arg++) {
+        method->arguments[index]->allocaInst = &*arg;
 #ifdef DEBUGGING
         printf("allocaInst of arg '%s': %p\n", method->arguments[index]->name.c_str(), method->arguments[index]->allocaInst);
 #endif 

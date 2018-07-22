@@ -135,6 +135,7 @@ struct qlow::sem::Method : public SemanticObject
     llvm::Function* llvmNode;
 
     inline Method(Scope& parentScope, std::shared_ptr<Type> returnType) :
+        containingType{ nullptr },
         returnType{ std::move(returnType) },
         scope{ parentScope, this },
         thisExpression{ std::make_unique<ThisExpression>(this) },
@@ -143,6 +144,7 @@ struct qlow::sem::Method : public SemanticObject
     }
     
     inline Method(ast::MethodDefinition* astNode, Scope& parentScope) :
+        containingType{ nullptr },
         astNode{ astNode },
         name{ astNode->name },
         scope{ parentScope, this },
@@ -382,6 +384,7 @@ struct qlow::sem::FieldAccessExpression : public Expression
     inline FieldAccessExpression(std::unique_ptr<Expression> target,
                                  Field* accessed ) :
         Expression{ accessed->type },
+        target{ std::move(target) },
         accessed{ accessed }
     {
     }

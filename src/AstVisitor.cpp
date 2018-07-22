@@ -239,6 +239,8 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
     else if (var) {
         if (sem::Field* field = dynamic_cast<sem::Field*>(var); field) {
             auto* thisExpr = scope.getVariable("this");
+            if (!thisExpr)
+                throw "no this found";
             return std::make_unique<sem::FieldAccessExpression>(std::make_unique<sem::LocalVariableExpression>(thisExpr), field);
         }
         else {
