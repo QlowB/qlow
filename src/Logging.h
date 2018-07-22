@@ -80,7 +80,16 @@ public:
     void logError(const std::string& errMsg);
     void logError(const std::string& errMsg, const qlow::CodePosition& cp);
 
-    std::ostream& operator() (LogLevel ll);
+    inline std::ostream& operator()(LogLevel ll)
+    {
+        if (logLevel >= ll) {
+            return *this;
+        }
+        else {
+            return nullStream;
+        }
+    }
+    
     inline std::ostream& none (void) { return (*this)(LogLevel::NONE); }
     inline std::ostream& err  (void) { return (*this)(LogLevel::ERROR); }
     inline std::ostream& warn (void) { return (*this)(LogLevel::WARNING); }

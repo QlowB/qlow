@@ -46,16 +46,20 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
 
     // create llvm structs
     // TODO implement detection of circles
-    for (auto& [name, cl] : objects.classes){
+    for (auto& [name, cl] : objects.classes) {
         llvm::StructType* st;
         std::vector<llvm::Type*> fields;
 #ifdef DEBUGGING
         printf("creating llvm struct for %s\n", name.c_str());
-#endif 
+#endif
+        int llvmStructIndex = 0;
         for (auto& [name, field] : cl->fields) {
+            field->llvmStructIndex = llvmStructIndex;
             fields.push_back(field->type->getLlvmType(context));
             if (fields[fields.size() - 1] == nullptr)
                 throw "internal error: possible circular dependency";
+            
+            llvmStructIndex++;
         }
         st = llvm::StructType::create(context, fields, name);
         cl->llvmType = st;

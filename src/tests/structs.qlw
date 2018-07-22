@@ -9,6 +9,15 @@ class Vec
         return x
         //return 123
     end
+
+    increment_both do
+        x := x + 1
+        y := y + 1
+    end
+
+    get_sum: Integer do
+        return x + y
+    end
 end
 
 
@@ -18,9 +27,12 @@ main: Integer do
     value := 2
 
     var.x := value + 10
+    var.y := 100
 
     //var.x := 2
     value := var.yuhu
+    var.increment_both
+    value := var.get_sum
 //    var.x := 4
 //    var.hohoo := 4
     return value

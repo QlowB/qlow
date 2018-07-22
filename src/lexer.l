@@ -70,15 +70,15 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 
 <COMMENT>"/*"           commentDepth++;
 <COMMENT>"*/"           if ((--commentDepth) == 0) { BEGIN(INITIAL); };
-<COMMENT>\n             ;
+<COMMENT>\n             offset = 0;
 <COMMENT>.              ; // inside comment, ignore everything
 
-<LINE_COMMENT>\n        yy_pop_state(); //yy_push_state(INITIAL);
+<LINE_COMMENT>\n        offset = 0; yy_pop_state(); //yy_push_state(INITIAL);
 <LINE_COMMENT>.         ; // inside comment, ignore everything
 
 <STRING>"\""            yy_pop_state();
 <STRING>[^\"^\n]*          printf("%s\n", std::string(yytext, yyleng).c_str());
-<STRING>\n              SET_STRING; return UNEXPECTED_SYMBOL; 
+<STRING>\n              offset = 0; SET_STRING; return UNEXPECTED_SYMBOL; 
 
 "/*"                    yy_push_state(COMMENT); commentDepth = 1;
 "//"                    yy_push_state(LINE_COMMENT);

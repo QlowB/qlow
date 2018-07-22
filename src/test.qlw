@@ -16,7 +16,7 @@ fast_fibonacci(i: Integer): Integer do
     return a
 end
 
-extern do_shit
+//extern do_shit
 
 
 bignumbers do
@@ -30,7 +30,7 @@ end
 
 main2 do
     value: Integer
-    do_shit
+    //do_shit
 end
 
 

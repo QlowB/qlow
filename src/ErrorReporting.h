@@ -84,6 +84,7 @@ public:
         FEATURE_NOT_FOUND,
         WRONG_NUMBER_OF_ARGUMENTS,
         TYPE_MISMATCH,
+        INVALID_RETURN_TYPE,
     };
     
     

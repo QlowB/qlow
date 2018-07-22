@@ -122,6 +122,7 @@ struct qlow::sem::Variable : public SemanticObject
 
 struct qlow::sem::Field : public Variable
 {
+    int llvmStructIndex;
     virtual std::string toString(void) const override;
 };
 

@@ -282,14 +282,56 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::AssignmentStat
 //    as->target = unique_dynamic_cast<sem::Expression>(visit(*ast.target, classes));
     as->value = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
     as->target = unique_dynamic_cast<sem::Expression>(ast.target->accept(*this, scope));
-    return as;
+    
+    if (as->target->type->equals(*as->value->type)) {
+        return as;
+    }
+    else {
+        throw SemanticError(
+            SemanticError::TYPE_MISMATCH,
+            "Can't assign expression of type '" + as->value->type->asString() +
+            "' to value of type '" + as->target->type->asString() + "'.",
+            ast.pos
+        );
+    }
 }
 
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::ReturnStatement& ast, sem::Scope& scope)
 {
+    auto shouldReturn = scope.getReturnableType();
+    
+    if (shouldReturn == nullptr) {
+        if (ast.expr == nullptr)
+            return std::make_unique<sem::ReturnStatement>();
+        else
+            throw SemanticError(
+                SemanticError::INVALID_RETURN_TYPE,
+                "This method should not return any value.",
+                ast.expr->pos
+            );
+    }
+    else if (ast.expr == nullptr) {
+        throw SemanticError(
+            SemanticError::INVALID_RETURN_TYPE,
+            "This method should return a value.",
+            ast.pos
+        );
+    }
+    
+    auto returnValue = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
+    
+    if (!shouldReturn->equals(*returnValue->type)) {
+        throw SemanticError(
+            SemanticError::INVALID_RETURN_TYPE,
+            "return value must be of type '" + shouldReturn->asString() + "' (not '" +
+            returnValue->type->asString() + "')",
+            ast.expr->pos
+        );
+    }
+    
     auto as = std::make_unique<sem::ReturnStatement>();
-    as->value = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
+    as->value = std::move(returnValue);
     return as;
 }
 

@@ -40,6 +40,7 @@ int qlow_parser_error(const char* msg)
     //throw msg;
     //printf("error happened: %s\n", msg);
     // throw msg;
+    return 0;
 }
 
 std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::AstObject>>> parsedClasses;
@@ -595,6 +596,10 @@ assignmentStatement:
 returnStatement:
     RETURN expression {
         $$ = new ReturnStatement(std::unique_ptr<Expression>($2), @$);
+    }
+    |
+    RETURN {
+        $$ = new ReturnStatement(nullptr, @$);
     };
 
 localVariableStatement:
