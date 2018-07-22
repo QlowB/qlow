@@ -16,6 +16,20 @@ namespace qlow
         
         ce.print(logger);
     }
+    
+    
+    void reportError(const std::string& msg)
+    {
+        Logger& logger = Logger::getInstance();
+        
+        logger.logError(msg);
+        
+        logger.info() <<
+            "\n"
+            "This kind of error isn't supposed to happen.\n\n"
+            "Please submit a bug report to nicolas.winkler@gmx.ch\n"
+        ;
+    }
 }
 
 

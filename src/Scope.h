@@ -109,24 +109,10 @@ class qlow::sem::LocalScope : public Scope
     Scope& parentScope;
     SymbolTable<Variable> localVariables;
     std::shared_ptr<Type> returnType;
+    Method* enclosingMethod;
 public:
-    inline LocalScope(Scope& parentScope, Type* returnType) :
-        parentScope{ parentScope },
-        returnType{ returnType }
-    {
-    }
-
-    inline LocalScope(Scope& parentScope) :
-        parentScope{ parentScope }
-    {
-        auto returnable = parentScope.getReturnableType();
-        if (returnable) {
-            returnType = std::move(returnable);
-        }
-        else {
-            returnType = nullptr;
-        }
-    }
+    LocalScope(Scope& parentScope, Method* enclosingMethod);
+    LocalScope(LocalScope& parentScope);
 
     void putVariable(const std::string& name, std::unique_ptr<Variable> v);
     SymbolTable<Variable>& getLocals(void);

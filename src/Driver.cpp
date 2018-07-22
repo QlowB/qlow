@@ -93,11 +93,11 @@ int Driver::run(void)
             errorOccurred = true;
         }
         catch (const char* errMsg) {
-            logger.logError(errMsg);
+            reportError(errMsg);
             errorOccurred = true;
         }
         catch (...) {
-            logger.logError("an unknown error occurred.");
+            reportError("an unknown error occurred.");
             errorOccurred = true;
         }
         
@@ -120,11 +120,11 @@ int Driver::run(void)
         errorOccurred = true;
     }
     catch(const char* err) {
-        logger.logError(err);
+        reportError(err);
         errorOccurred = true;
     }
     catch (...) {
-        logger.logError("an unknown error occurred.");
+        reportError("an unknown error occurred.");
         errorOccurred = true;
     }
     
@@ -165,7 +165,7 @@ int Driver::run(void)
         mod = qlow::gen::generateModule(*semClasses);
     }
     catch (const char* err) {
-        logger.logError(err);
+        reportError(err);
         return 1;
     }
     catch (SemanticError& err) {
@@ -173,7 +173,7 @@ int Driver::run(void)
         return 1;
     }
     catch (...) {
-        logger.logError("unknown error during code generation");
+        reportError("unknown error during code generation");
         return 1;
     }
     
@@ -186,6 +186,7 @@ int Driver::run(void)
     }
     catch (...) {
         logger.logError("unknown error during object file creation");
+        reportError("unknown error during object file creation");
         return 1;
     }
     

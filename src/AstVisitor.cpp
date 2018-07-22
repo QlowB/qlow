@@ -103,7 +103,10 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::Statement& ast
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& ast, sem::Scope& scope)
 {
-    auto body = std::make_unique<sem::DoEndBlock>(scope);
+    sem::LocalScope* lscope = dynamic_cast<sem::LocalScope*>(&scope);
+    if (!lscope)
+        throw "error: non-method scope inside method";
+    auto body = std::make_unique<sem::DoEndBlock>(*lscope);
     for (auto& statement : ast.statements) {
         
         if (ast::LocalVariableStatement* nvs = dynamic_cast<ast::LocalVariableStatement*>(statement.get()); nvs) {
@@ -119,10 +122,10 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
         }
         
         auto v = statement->accept(*this, body->scope);
-        if (dynamic_cast<sem::FeatureCallExpression*>(v.get()) != nullptr) {
+        if (dynamic_cast<sem::MethodCallExpression*>(v.get()) != nullptr) {
             body->statements.push_back(
                 std::make_unique<sem::FeatureCallStatement>(
-                unique_dynamic_cast<sem::FeatureCallExpression>(std::move(v))));
+                unique_dynamic_cast<sem::MethodCallExpression>(std::move(v))));
         }
         else {
             body->statements.push_back(unique_dynamic_cast<sem::Statement>(std::move(v)));
@@ -199,9 +202,10 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
     
     if (target) {
         if (var) {
+            return std::make_unique<sem::FieldAccessExpression>(std::move(target), dynamic_cast<sem::Field*>(var));
         }
         else if (method) {
-            auto fce = std::make_unique<sem::FeatureCallExpression>(
+            auto fce = std::make_unique<sem::MethodCallExpression>(
                 std::move(target), method);
     
             if (ast.arguments.size() != method->arguments.size())
@@ -233,10 +237,16 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
         }
     }
     else if (var) {
-        return std::make_unique<sem::LocalVariableExpression>(var);
+        if (sem::Field* field = dynamic_cast<sem::Field*>(var); field) {
+            auto* thisExpr = scope.getVariable("this");
+            return std::make_unique<sem::FieldAccessExpression>(std::make_unique<sem::LocalVariableExpression>(thisExpr), field);
+        }
+        else {
+            return std::make_unique<sem::LocalVariableExpression>(var);
+        }
     }
     else if (method) {
-        auto fce = std::make_unique<sem::FeatureCallExpression>(nullptr, method);
+        auto fce = std::make_unique<sem::MethodCallExpression>(nullptr, method);
         for (auto& arg : ast.arguments) {
             auto argument = arg->accept(*this, scope);
             if (dynamic_cast<sem::Expression*>(argument.get())) {

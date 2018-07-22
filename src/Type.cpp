@@ -157,7 +157,7 @@ bool sem::NativeType::isIntegerType(void) const
 }
 
 
-llvm::Type* sem::NativeType::getLlvmType (llvm::LLVMContext& context) const
+llvm::Type* sem::NativeType::getLlvmType(llvm::LLVMContext& context) const
 {
     switch (type) {
         case VOID:
@@ -197,6 +197,8 @@ llvm::Type* sem::NativeType::getLlvmType (llvm::LLVMContext& context) const
             return llvm::Type::getDoubleTy(context);
         case FLOAT128:
             return llvm::Type::getFP128Ty(context);
+        default:
+            return nullptr;
     }
 }
 

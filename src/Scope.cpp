@@ -174,6 +174,21 @@ std::shared_ptr<sem::Type> sem::ClassScope::getReturnableType(void)
 }
 
 
+sem::LocalScope::LocalScope(Scope& parentScope, Method* enclosingMethod) :
+    parentScope{ parentScope },
+    returnType{ enclosingMethod->returnType },
+    enclosingMethod{ enclosingMethod }
+{
+}
+
+sem::LocalScope::LocalScope(LocalScope& parentScope) :
+    parentScope{ parentScope },
+    returnType{ parentScope.returnType },
+    enclosingMethod{ parentScope.enclosingMethod }
+{
+}
+
+
 void sem::LocalScope::putVariable(const std::string& name, std::unique_ptr<Variable> v)
 {
     localVariables.insert({name, std::move(v)});
@@ -188,6 +203,10 @@ sem::SymbolTable<sem::Variable>& sem::LocalScope::getLocals(void)
 
 sem::Variable* sem::LocalScope::getVariable(const std::string& name)
 {
+    if (name == "this") {
+        return enclosingMethod->thisExpression.get();
+    }
+    
     auto m = localVariables.find(name);
     if (m != localVariables.end())
         return (*m).second.get();

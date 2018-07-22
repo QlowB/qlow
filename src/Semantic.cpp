@@ -88,12 +88,12 @@ std::unique_ptr<GlobalScope>
     for (auto& [name, semClass] : globalScope->classes) {
         for (auto& [name, method] : semClass->methods) {
             if (method->astNode->body) // if not declaration
-                method->body = unique_dynamic_cast<sem::DoEndBlock>(av.visit(*method->astNode->body, method->scope));
+                method->body = unique_dynamic_cast<sem::DoEndBlock>(method->astNode->body->accept(av, method->scope));
         }
     }
     for (auto& [name, method] : globalScope->functions) {
         if (method->astNode->body) // if not declaration
-            method->body = unique_dynamic_cast<sem::DoEndBlock>(av.visit(*method->astNode->body, method->scope));
+            method->body = unique_dynamic_cast<sem::DoEndBlock>(method->astNode->body->accept(av, method->scope));
     }
     
 #ifdef DEBUGGING
@@ -174,7 +174,8 @@ ACCEPT_DEFINITION(BinaryOperation, ExpressionCodegenVisitor, llvm::Value*, llvm:
 ACCEPT_DEFINITION(CastExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(NewArrayExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(UnaryOperation, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
-ACCEPT_DEFINITION(FeatureCallExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(MethodCallExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(FieldAccessExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(IntConst, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 
 ACCEPT_DEFINITION(AssignmentStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
@@ -230,9 +231,15 @@ std::string NewArrayExpression::toString(void) const
 }
 
 
-std::string FeatureCallExpression::toString(void) const
+std::string MethodCallExpression::toString(void) const
 {
     return "FeatureCallExpression[" + callee->toString() + "]";
+}
+
+
+std::string FieldAccessExpression::toString(void) const
+{
+    return "FieldAccessExpression[" + accessed->toString() + "]";
 }
 
 

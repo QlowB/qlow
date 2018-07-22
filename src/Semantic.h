@@ -30,6 +30,8 @@ namespace qlow
 
         struct Statement;
         struct Expression;
+        
+        struct ThisExpression;
 
         struct DoEndBlock;
         struct IfElseBlock;
@@ -48,7 +50,8 @@ namespace qlow
         
         struct NewArrayExpression;
 
-        struct FeatureCallExpression;
+        struct MethodCallExpression;
+        struct FieldAccessExpression;
         
         struct IntConst;
     }
@@ -124,6 +127,7 @@ struct qlow::sem::Method : public SemanticObject
     std::vector<Variable*> arguments;
     std::string name;
     ast::MethodDefinition* astNode;
+    std::unique_ptr<ThisExpression> thisExpression;
     std::unique_ptr<DoEndBlock> body;
 
     LocalScope scope;
@@ -132,7 +136,8 @@ struct qlow::sem::Method : public SemanticObject
 
     inline Method(Scope& parentScope, std::shared_ptr<Type> returnType) :
         returnType{ std::move(returnType) },
-        scope{ parentScope },
+        scope{ parentScope, this },
+        thisExpression{ std::make_unique<ThisExpression>(this) },
         body{ nullptr }
     {
     }
@@ -140,12 +145,24 @@ struct qlow::sem::Method : public SemanticObject
     inline Method(ast::MethodDefinition* astNode, Scope& parentScope) :
         astNode{ astNode },
         name{ astNode->name },
-        scope{ parentScope },
+        scope{ parentScope, this },
+        thisExpression{ std::make_unique<ThisExpression>(this) },
         body{ nullptr }
     {
     }
     
     virtual std::string toString(void) const override;
+};
+
+
+struct qlow::sem::ThisExpression : public Variable
+{
+    Method* method;
+    inline ThisExpression(Method* method) :
+        Variable{ method->returnType, "this" },
+        method{ method}
+    {
+    }
 };
 
 
@@ -160,7 +177,7 @@ struct qlow::sem::DoEndBlock : public Statement
     LocalScope scope;
     OwningList<Statement> statements;
 
-    inline DoEndBlock(Scope& parentScope) :
+    inline DoEndBlock(LocalScope& parentScope) :
         scope{ parentScope } {}
     
     virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) override;
@@ -335,15 +352,35 @@ struct qlow::sem::UnaryOperation : public Operation
 };
 
 
-struct qlow::sem::FeatureCallExpression : public Expression
+struct qlow::sem::MethodCallExpression : public Expression
 {
     Method* callee;
     std::unique_ptr<Expression> target;
     OwningList<Expression> arguments;
     
-    inline FeatureCallExpression(std::unique_ptr<Expression> target,
+    inline MethodCallExpression(std::unique_ptr<Expression> target,
                                  Method* callee) :
-        Expression{ callee->returnType }
+        Expression{ callee->returnType },
+        callee{ callee }
+    {
+    }
+    
+    virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    
+    virtual std::string toString(void) const override;
+};
+
+
+struct qlow::sem::FieldAccessExpression : public Expression
+{
+    sem::Field* accessed;
+    std::unique_ptr<Expression> target;
+    OwningList<Expression> arguments;
+    
+    inline FieldAccessExpression(std::unique_ptr<Expression> target,
+                                 Field* accessed ) :
+        Expression{ accessed->type },
+        accessed{ accessed }
     {
     }
     
@@ -369,8 +406,8 @@ struct qlow::sem::IntConst : public Expression
 
 struct qlow::sem::FeatureCallStatement : public Statement 
 {
-    std::unique_ptr<FeatureCallExpression> expr;
-    inline FeatureCallStatement(std::unique_ptr<FeatureCallExpression> expr) :
+    std::unique_ptr<MethodCallExpression> expr;
+    inline FeatureCallStatement(std::unique_ptr<MethodCallExpression> expr) :
         expr{ std::move(expr) } {}
 
     virtual std::string toString(void) const override;

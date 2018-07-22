@@ -14,6 +14,7 @@ namespace qlow
     class SemanticError;
     
     void reportError(const CompileError& ce);
+    void reportError(const std::string& message);
 }
 
 

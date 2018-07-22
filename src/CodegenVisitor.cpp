@@ -124,7 +124,8 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::NewArrayExpression& naexpr, ll
     // TODO implement
 }
 
-llvm::Value* ExpressionCodegenVisitor::visit(sem::FeatureCallExpression& call, llvm::IRBuilder<>& builder)
+
+llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
     std::vector<Value*> arguments;
@@ -147,6 +148,15 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::FeatureCallExpression& call, l
     
     return callInst;
 }
+
+
+llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access, llvm::IRBuilder<>& builder)
+{
+    using llvm::Value;
+    
+    builder.CreateStructGEP(access.type->getLlvmType(builder.getContext()), llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false)), 0);
+}
+
 
 llvm::Value* ExpressionCodegenVisitor::visit(sem::IntConst& node, llvm::IRBuilder<>& builder)
 {
@@ -233,6 +243,7 @@ llvm::Value* StatementVisitor::visit(sem::WhileBlock& whileBlock,
     builder.CreateBr(startloop);
     fg.popBlock();
     fg.pushBlock(merge);
+    return nullptr;
 }
 
 
@@ -249,9 +260,9 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
         builder.CreateStore(val, targetVar->var->allocaInst);
     }
     else if (auto* targetVar =
-        dynamic_cast<sem::FeatureCallExpression*>(assignment.target.get()); targetVar) {
+        dynamic_cast<sem::MethodCallExpression*>(assignment.target.get()); targetVar) {
         
-        logger.debug() << "assigning to FeatureCallExpression" << std::endl;
+        logger.debug() << "assigning to MethodCallExpression" << std::endl;
     }
     else {
         
