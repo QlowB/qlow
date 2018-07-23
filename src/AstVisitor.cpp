@@ -373,7 +373,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
     ast.opString << std::endl;
     if (!operationMethod) {
         throw SemanticError(SemanticError::OPERATOR_NOT_FOUND,
-            std::string("operator ") + ast.opString + " not found for types '" +
+            "operator " + ast.opString + " not found for types '" +
             leftEval->type->asString() + "' and '" + rightEval->type->asString() + "'",
             ast.opPos);
     }

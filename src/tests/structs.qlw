@@ -15,27 +15,30 @@ class Vec
         y := y + 1
     end
 
+    inner_product: Integer do
+        return x * x + y * y
+    end
+
     get_sum: Integer do
         return x + y
     end
 end
 
 
+nothing do
+    var: Vec
+    var.x := 1
+    var.y := 1
+end
+
+
 main: Integer do
     var: Vec
-    value: Integer
-    value := 2
 
-    var.x := value + 10
-    var.y := 100
+    var.x := 3
+    var.y := 4
 
-    //var.x := 2
-    value := var.yuhu
-    var.increment_both
-    value := var.get_sum
-//    var.x := 4
-//    var.hohoo := 4
-    return value
+    return var.inner_product
 end
 
 

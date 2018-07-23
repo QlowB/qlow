@@ -9,6 +9,7 @@
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Attributes.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Support/TargetRegistry.h>
 #include <llvm/Support/TargetSelect.h>
@@ -65,18 +66,36 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
         cl->llvmType = st;
     }
     
+    llvm::AttrBuilder ab;
+    ab.addAttribute(llvm::Attribute::AttrKind::NoInline);
+    ab.addAttribute(llvm::Attribute::AttrKind::NoUnwind);
+    //ab.addAttribute(llvm::Attribute::AttrKind::OptimizeNone);
+    //ab.addAttribute(llvm::Attribute::AttrKind::UWTable);
+    ab.addAttribute("no-frame-pointer-elim", "true");
+    ab.addAttribute("no-frame-pointer-elim-non-leaf");
+    llvm::AttributeSet as = llvm::AttributeSet::get(context, ab);
+    
+    
     std::vector<llvm::Function*> functions;
     auto verifyStream = llvm::raw_os_ostream(logger.debug());
     
     // create all llvm functions
     for (auto& [name, cl] : objects.classes) {
         for (auto& [name, method] : cl->methods) {
-            functions.push_back(generateFunction(module.get(), method.get()));
+            Function* func = generateFunction(module.get(), method.get());
+            for (auto a : as) {
+                func->addFnAttr(a);
+            }
+            functions.push_back(func);
         }
     }
     
     for (auto& [name, method] : objects.functions) {
-        functions.push_back(generateFunction(module.get(), method.get()));
+        Function* func = generateFunction(module.get(), method.get());
+        for (auto a : as) {
+            func->addFnAttr(a);
+        }
+        functions.push_back(func);
     }
 
     for (auto& [name, cl] : objects.classes){
@@ -84,7 +103,7 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
             if (!method->body)
                 continue;
             
-            FunctionGenerator fg(*method, module.get());
+            FunctionGenerator fg(*method, module.get(), as);
             Function* f = fg.generate();
             logger.debug() << "verifying function: " << method->name << std::endl;
             bool corrupt = llvm::verifyFunction(*f, &verifyStream);
@@ -101,7 +120,7 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& objects)
         if (!method->body)
             continue;
         
-        FunctionGenerator fg(*method, module.get());
+        FunctionGenerator fg(*method, module.get(), as);
         Function* f = fg.generate();
         logger.debug() << "verifying function: " << method->name << std::endl;
         bool corrupt = llvm::verifyFunction(*f, &verifyStream);
@@ -188,7 +207,9 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
     Logger& logger = Logger::getInstance();
     logger.debug() << "verifying mod" << std::endl;
     auto ostr = llvm::raw_os_ostream(logger.debug());
+#ifdef DEBUGGING
     module->print(ostr, nullptr);
+#endif
     bool broken = llvm::verifyModule(*module);
     
     if (broken)
@@ -231,13 +252,15 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
 
     TargetOptions targetOptions;
     auto relocModel = llvm::Optional<llvm::Reloc::Model>(llvm::Reloc::Model::PIC_);
-    std::unique_ptr<TargetMachine> targetMachine(target->createTargetMachine(targetTriple, cpu,
+    std::unique_ptr<TargetMachine> targetMachine(
+        target->createTargetMachine(targetTriple, cpu,
             features, targetOptions, relocModel));
 
     std::error_code errorCode;
     raw_fd_ostream dest(filename, errorCode, llvm::sys::fs::F_None);
-    targetMachine->addPassesToEmitFile(pm, dest, llvm::LLVMTargetMachine::CGFT_ObjectFile,
-            llvm::TargetMachine::CGFT_ObjectFile);
+    targetMachine->addPassesToEmitFile(pm, dest,
+//        llvm::LLVMTargetMachine::CGFT_ObjectFile,
+        llvm::TargetMachine::CGFT_ObjectFile);
 
     pm.run(*module);
     dest.flush();

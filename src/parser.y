@@ -168,16 +168,16 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %destructor { } <topLevel> // don't delete everything ;)
 %destructor { if ($$) delete $$; } <*>
 
-%left DOT
-%left AS 
-%left ASTERISK SLASH
-%left PLUS MINUS
-%left EQUALS
-%left NOT
-%left AND
-%left OR XOR
-%left CUSTOM_OPERATOR
 %left ASSIGN
+%left CUSTOM_OPERATOR
+%left OR XOR
+%left AND
+%left NOT
+%left EQUALS
+%left PLUS MINUS
+%left ASTERISK SLASH
+%left AS 
+%left DOT
 
 %start topLevel
 
@@ -529,11 +529,66 @@ operationExpression:
 
 
 binaryOperation:
-    expression operator expression {
+    expression PLUS expression {
         $$ = new BinaryOperation(std::unique_ptr<Expression>($1), 
             std::unique_ptr<Expression>($3), *$2, @$, @2);
         delete $2; $2 = nullptr;
-    };
+    }
+    |
+    expression MINUS expression {
+        $$ = new BinaryOperation(std::unique_ptr<Expression>($1), 
+            std::unique_ptr<Expression>($3), *$2, @$, @2);
+        delete $2; $2 = nullptr;
+    }
+    |
+    expression ASTERISK expression {
+        $$ = new BinaryOperation(std::unique_ptr<Expression>($1), 
+            std::unique_ptr<Expression>($3), *$2, @$, @2);
+        delete $2; $2 = nullptr;
+    }
+    |
+    expression SLASH expression {
+        $$ = new BinaryOperation(std::unique_ptr<Expression>($1), 
+            std::unique_ptr<Expression>($3), *$2, @$, @2);
+        delete $2; $2 = nullptr;
+    }
+    |
+    expression EQUALS expression {
+        $$ = new BinaryOperation(std::unique_ptr<Expression>($1), 
+            std::unique_ptr<Expression>($3), *$2, @$, @2);
+        delete $2; $2 = nullptr;
+    }
+    |
+    expression NOT_EQUALS expression {
+        $$ = new BinaryOperation(std::unique_ptr<Expression>($1), 
+            std::unique_ptr<Expression>($3), *$2, @$, @2);
+        delete $2; $2 = nullptr;
+    }
+    |
+    expression AND expression {
+        $$ = new BinaryOperation(std::unique_ptr<Expression>($1), 
+            std::unique_ptr<Expression>($3), *$2, @$, @2);
+        delete $2; $2 = nullptr;
+    }
+    |
+    expression OR expression {
+        $$ = new BinaryOperation(std::unique_ptr<Expression>($1), 
+            std::unique_ptr<Expression>($3), *$2, @$, @2);
+        delete $2; $2 = nullptr;
+    }
+    |
+    expression XOR expression {
+        $$ = new BinaryOperation(std::unique_ptr<Expression>($1), 
+            std::unique_ptr<Expression>($3), *$2, @$, @2);
+        delete $2; $2 = nullptr;
+    }
+    |
+    expression CUSTOM_OPERATOR expression {
+        $$ = new BinaryOperation(std::unique_ptr<Expression>($1), 
+            std::unique_ptr<Expression>($3), *$2, @$, @2);
+        delete $2; $2 = nullptr;
+    }
+    ;
 
 
 unaryOperation:

@@ -25,6 +25,7 @@ class qlow::gen::FunctionGenerator
 {
     const sem::Method& method;
     llvm::Module* module;
+    llvm::AttributeSet& attributes;
 
     std::stack<llvm::BasicBlock*> basicBlocks;
 
@@ -34,9 +35,11 @@ public:
     ExpressionCodegenVisitor expressionVisitor;
     LValueVisitor lvalueVisitor;
 
-    inline FunctionGenerator(const sem::Method& m, llvm::Module* module) :
+    inline FunctionGenerator(const sem::Method& m, llvm::Module* module,
+        llvm::AttributeSet& attributes) :
         method{ m },
         module{ module },
+        attributes{ attributes },
         expressionVisitor{ *this }
     {
     }
