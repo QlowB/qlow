@@ -47,6 +47,7 @@ namespace qlow
         struct Type;
         struct ClassType;
         struct ArrayType;
+        struct PointerType;
         
         struct FeatureDeclaration;
 
@@ -68,6 +69,7 @@ namespace qlow
         struct AssignmentStatement;
         struct ReturnStatement;
         struct LocalVariableStatement;
+        struct AddressExpression;
         struct IntConst;
 
         struct Operation;
@@ -164,6 +166,22 @@ struct qlow::ast::ArrayType : public ast::Type
     
     inline std::string asString(void) const override {
         return std::string("[") + arrayType->asString() + "]";
+    }
+};
+
+
+struct qlow::ast::PointerType : public ast::Type 
+{
+    std::unique_ptr<ast::Type> derefType;
+    
+    inline PointerType(std::unique_ptr<ast::Type> derefType, const CodePosition& cp) :
+        Type{ cp },
+        derefType{ std::move(derefType) }
+    {
+    }
+    
+    inline std::string asString(void) const override {
+        return derefType->asString() + "*";
     }
 };
 
@@ -409,6 +427,21 @@ struct qlow::ast::LocalVariableStatement : public Statement
         Statement{ cp },
        name{ name },
        type{ std::move(type) }
+    {
+    } 
+
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
+};
+
+
+struct qlow::ast::AddressExpression : public Expression
+{
+    std::unique_ptr<Expression> target;
+    inline AddressExpression(std::unique_ptr<Expression> target,
+                             const CodePosition& cp) :
+        AstObject{ cp },
+        Expression{ cp },
+       target{ std::move(target) }
     {
     } 
 

@@ -135,6 +135,14 @@ void SyntaxError::print(Logger& logger) const
 
 void SemanticError::print(Logger& logger) const
 {
+    std::string errMsg = getMessage();
+    logger.logError(errMsg + (errMsg != "" ?  ": " : "") + message, where);
+    underlineError(logger);
+}
+
+
+std::string SemanticError::getMessage(void) const
+{
     static std::map<ErrorCode, std::string> error = {
         {UNKNOWN_TYPE, "unknown type"},
         {FEATURE_NOT_FOUND, "method or variable not found"},
@@ -144,9 +152,7 @@ void SemanticError::print(Logger& logger) const
         {OPERATOR_NOT_FOUND, ""},
         {WRONG_NUMBER_OF_ARGUMENTS, "wrong number of arguments passed"},
     };
-    std::string& errMsg = error[errorCode];
-    logger.logError(errMsg + (errMsg != "" ?  ": " : "") + message, where);
-    underlineError(logger);
+    return error[errorCode];
 }
 
 

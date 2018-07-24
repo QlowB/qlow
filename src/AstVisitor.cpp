@@ -342,6 +342,20 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::LocalVariableS
 }
 
 
+std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(
+    ast::AddressExpression& ast, sem::Scope& scope)
+{
+    auto target = unique_dynamic_cast<sem::Expression>(ast.target->accept(*this, scope));
+    auto& targetType = target->type;
+    
+    if (!target->isLValue()) {
+        throw NotLValue(targetType->asString(), ast.pos);
+    }
+    
+    return std::make_unique<sem::AddressExpression>(std::move(target));
+}
+
+
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::IntConst& ast, sem::Scope& scope)
 {
     return std::make_unique<sem::IntConst>(ast.value);

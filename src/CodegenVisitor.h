@@ -9,6 +9,7 @@
 #include "Semantic.h"
 #include "Scope.h"
 #include "Type.h"
+#include "Cast.h"
 
 
 #include <memory>
@@ -28,6 +29,7 @@ namespace qlow
     class ExpressionCodegenVisitor;
     class LValueVisitor;
     class StatementVisitor;
+    class CastGenerator;
 }
 
 
@@ -43,6 +45,7 @@ class qlow::ExpressionCodegenVisitor :
         sem::NewArrayExpression,
         sem::MethodCallExpression,
         sem::FieldAccessExpression,
+        sem::AddressExpression,
         sem::IntConst,
         sem::ThisExpression
     >
@@ -61,6 +64,7 @@ public:
     llvm::Value* visit(sem::NewArrayExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::MethodCallExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::FieldAccessExpression& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::AddressExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::IntConst& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::ThisExpression& node, llvm::IRBuilder<>&) override;
 };
@@ -106,6 +110,18 @@ public:
 };
 
 
+class qlow::CastGenerator
+{
+    sem::Cast cast;
+public:
+    inline CastGenerator(const sem::Cast& cast) :
+        cast{ cast }
+    {
+    }
+    
+    
+    llvm::Value* generateCast(llvm::Value* toCast, llvm::IRBuilder<>& b);
+};
 
 
 #endif // QLOW_CODEGEN_VISITOR_H

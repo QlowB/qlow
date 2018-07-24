@@ -25,18 +25,20 @@ class Vec
 end
 
 
-nothing do
+create_vec: Vec do
     var: Vec
-    var.x := 1
-    var.y := 1
+    var.x := 3
+    var.y := 4
+    return var
 end
 
 
 main: Integer do
     var: Vec
 
-    var.x := 3
-    var.y := 4
+    //var.x := 3
+    //var.y := 4
+    var := create_vec
 
     return var.inner_product
 end

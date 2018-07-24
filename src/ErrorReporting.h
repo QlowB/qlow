@@ -11,7 +11,9 @@ namespace qlow
     class CompileError;
     
     class SyntaxError;
+    
     class SemanticError;
+    class NotLValue;
     
     void reportError(const CompileError& ce);
     void reportError(const std::string& message);
@@ -97,8 +99,32 @@ public:
             errorCode{ ec }
     {
     }
+    
+    inline SemanticError(const CodePosition& where) :
+        CompileError{ where }
+    {
+    }
 
     virtual void print(Logger&) const override;
+    virtual std::string getMessage(void) const;
+};
+
+
+class qlow::NotLValue : public SemanticError
+{
+    std::string type;
+public:
+    inline NotLValue(const std::string& type, const CodePosition& where) :
+        SemanticError{ where },
+        type{ type }
+    {
+    }
+    
+    inline virtual std::string getMessage(void) const override
+    {
+        return "Can't take address of non-lvalue value of type '" +
+            type + "'";
+    }
 };
 
 

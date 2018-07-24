@@ -41,6 +41,7 @@ namespace qlow
         struct ReturnStatement;
         
         struct LocalVariableExpression;
+        struct AddressExpression;
 
         struct Operation;
         struct UnaryOperation;
@@ -265,6 +266,8 @@ struct qlow::sem::Expression :
     {
     }
     
+    inline virtual bool isLValue(void) const { return false; }
+    
     virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override = 0;
     virtual llvm::Value* accept(LValueVisitor& visitor, llvm::IRBuilder<>& arg2) override;
 };
@@ -290,10 +293,26 @@ struct qlow::sem::LocalVariableExpression : public Expression
         var{ var }
     {
     }
+    
+    inline virtual bool isLValue(void) const override { return true; }
 
     virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     virtual llvm::Value* accept(LValueVisitor& visitor, llvm::IRBuilder<>& arg2);
     virtual std::string toString(void) const override;
+};
+
+
+struct qlow::sem::AddressExpression : public Expression
+{
+    std::unique_ptr<sem::Expression> target;
+    
+    inline AddressExpression(std::unique_ptr<sem::Expression> target) :
+        Expression{ std::make_shared<sem::PointerType>(target->type) },
+        target{ std::move(target) }
+    {
+    }
+    
+    virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
 };
 
 
@@ -405,6 +424,8 @@ struct qlow::sem::FieldAccessExpression : public Expression
         accessed{ accessed }
     {
     }
+    
+    inline virtual bool isLValue(void) const override { return true; }
     
     virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     virtual llvm::Value* accept(LValueVisitor& visitor, llvm::IRBuilder<>& arg2) override;

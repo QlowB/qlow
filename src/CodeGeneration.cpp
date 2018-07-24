@@ -302,6 +302,9 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     for (auto& [name, var] : method.body->scope.getLocals()) {
         if (var.get() == nullptr)
             throw "wtf null variable";
+        if (var->type == nullptr)
+            throw "wtf null type";
+        
         llvm::AllocaInst* v = builder.CreateAlloca(var->type->getLlvmType(context));
         var->allocaInst = v;
     }

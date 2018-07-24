@@ -104,6 +104,7 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 ";"                     return SET_TOKEN(SEMICOLON);
 ","                     return SET_TOKEN(COMMA);
 "."                     return SET_TOKEN(DOT);
+"&"                     return SET_TOKEN(AMPERSAND);
 
 ":="                    SET_STRING; return ASSIGN;
 

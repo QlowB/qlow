@@ -194,6 +194,21 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access,
 }
 
 
+llvm::Value* ExpressionCodegenVisitor::visit(sem::AddressExpression& node, llvm::IRBuilder<>& builder)
+{
+    using llvm::Value;
+    Value* lvalue = node.target->accept(fg.lvalueVisitor, builder);
+    
+    // this check is unnecessary
+    if (auto* allocaInst = llvm::dyn_cast<llvm::AllocaInst>(lvalue)) {
+        return lvalue;
+    }
+    else {
+        return lvalue;
+    }
+}
+
+
 llvm::Value* ExpressionCodegenVisitor::visit(sem::IntConst& node, llvm::IRBuilder<>& builder)
 {
     return llvm::ConstantInt::get(builder.getContext(),
@@ -432,6 +447,15 @@ llvm::Value* StatementVisitor::visit(sem::FeatureCallStatement& fc, gen::Functio
     builder.CreateCall(f, {});
     */
     // return llvm::ConstantFP::get(fg.getContext(), llvm::APFloat(5.0));
+}
+
+
+llvm::Value* CastGenerator::generateCast(llvm::Value* toCast,
+                                          llvm::IRBuilder<>& b)
+{
+    return b.CreateCast(
+        llvm::Instruction::CastOps::BitCast, toCast,
+        cast.to->getLlvmType(b.getContext()));
 }
 
 

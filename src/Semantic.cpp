@@ -190,6 +190,7 @@ ACCEPT_DEFINITION(NewArrayExpression, ExpressionCodegenVisitor, llvm::Value*, ll
 ACCEPT_DEFINITION(UnaryOperation, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(MethodCallExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(FieldAccessExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(AddressExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(IntConst, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(ThisExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 

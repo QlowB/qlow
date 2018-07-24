@@ -93,6 +93,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
     qlow::ast::Type* type;
     qlow::ast::ClassType* classType;
     qlow::ast::ArrayType* arrayType;
+    qlow::ast::PointerType* pointerType;
     
     qlow::ast::FeatureDeclaration* featureDeclaration;
     std::vector<std::unique_ptr<qlow::ast::FeatureDeclaration>>* featureList;
@@ -113,6 +114,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
     qlow::ast::AssignmentStatement* assignmentStatement;
     qlow::ast::ReturnStatement* returnStatement;
     qlow::ast::LocalVariableStatement* localVariableStatement;
+    qlow::ast::AddressExpression* addressExpression;
 
     qlow::ast::UnaryOperation* unaryOperation;
     qlow::ast::BinaryOperation* binaryOperation;
@@ -132,7 +134,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %token <token> TRUE FALSE
 %token <token> CLASS DO END IF ELSE WHILE RETURN NEW EXTERN AS
 %token <token> NEW_LINE
-%token <token> SEMICOLON COLON COMMA DOT ASSIGN
+%token <token> SEMICOLON COLON COMMA DOT ASSIGN AMPERSAND
 %token <token> ROUND_LEFT ROUND_RIGHT SQUARE_LEFT SQUARE_RIGHT
 %token <string> UNEXPECTED_SYMBOL
 
@@ -157,6 +159,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %type <assignmentStatement> assignmentStatement 
 %type <returnStatement> returnStatement 
 %type <localVariableStatement> localVariableStatement
+%type <addressExpression> addressExpression 
 %type <string> operator
 %type <unaryOperation> unaryOperation
 %type <binaryOperation> binaryOperation
@@ -176,7 +179,7 @@ typedef qlow::CodePosition QLOW_PARSER_LTYPE;
 %left EQUALS
 %left PLUS MINUS
 %left ASTERISK SLASH
-%left AS 
+%left AS
 %left DOT
 
 %start topLevel
@@ -238,8 +241,14 @@ type:
         delete $1; $1 = nullptr;
     }
     |
+    type ASTERISK {
+        $$ = new qlow::ast::PointerType(std::unique_ptr<Type>($1), @$);
+        $1 = nullptr;
+    }
+    |
     SQUARE_LEFT type SQUARE_RIGHT {
         $$ = new qlow::ast::ArrayType(std::unique_ptr<qlow::ast::Type>($2), @$);
+        $2 = nullptr;
     }
     |
     SQUARE_LEFT error SQUARE_RIGHT {
@@ -505,6 +514,10 @@ expression:
         $$ = $1;
     }
     |
+    addressExpression {
+        $$ = $1;
+    }
+    |
     INT_LITERAL {
         $$ = new IntConst(std::move(*$1), @$);
         delete $1;
@@ -626,6 +639,11 @@ operator:
     |
     CUSTOM_OPERATOR { $$ = $1; };
 
+addressExpression:
+    AMPERSAND expression {
+        $$ = new AddressExpression(std::unique_ptr<Expression>($2), @$);
+        $2 = nullptr;
+    };
 
 paranthesesExpression:
     ROUND_LEFT expression ROUND_RIGHT {

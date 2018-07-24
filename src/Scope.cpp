@@ -51,6 +51,10 @@ std::shared_ptr<sem::Type> sem::GlobalScope::getType(const ast::Type& name)
         return std::make_shared<sem::ArrayType>(getType(*arr->arrayType));
     }
     
+    if (const auto* ptr = dynamic_cast<const ast::PointerType*>(&name)) {
+        return std::make_shared<sem::PointerType>(getType(*ptr->derefType));
+    }
+    
     auto native = NativeScope::getInstance().getType(name);
     if (native) {
         return native;
