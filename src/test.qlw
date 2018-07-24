@@ -28,8 +28,10 @@ bignumbers do
     //c := b as Int64
 end
 
-main2 do
+main: Integer do
     value: Integer
+    value := 42
+    return value
     //do_shit
 end
 

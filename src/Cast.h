@@ -18,21 +18,17 @@ namespace qlow
 class qlow::sem::Cast
 {
 public:
-    std::shared_ptr<Type> from;
-    std::shared_ptr<Type> to;
+    std::weak_ptr<Type> to;
     
     bool isExplicit;
     
-    inline Cast(std::shared_ptr<Type> from, std::shared_ptr<Type> to) :
-        from{ std::move(from) },
+    inline Cast(std::weak_ptr<Type> to) :
         to{ std::move(to) },
         isExplicit{ true }
     {
     }
     
-    inline Cast(std::shared_ptr<Type> from, std::shared_ptr<Type> to,
-                bool isExplicit) :
-        from{ std::move(from) },
+    inline Cast(std::weak_ptr<Type> to, bool isExplicit) :
         to{ std::move(to) },
         isExplicit{ isExplicit }
     {
