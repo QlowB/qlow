@@ -18,8 +18,10 @@ namespace qlow
 {
     namespace sem
     {
-        std::unique_ptr<GlobalScope>
-            createFromAst(const std::vector<std::unique_ptr<qlow::ast::AstObject>>& objects);
+
+        class Semantic;
+
+        std::unique_ptr<Semantic> createFromAst(ast::Ast& ast);
 
         struct Class;
 
@@ -68,6 +70,18 @@ namespace qlow
 }
 
 
+class qlow::sem::Semantic
+{
+    std::unique_ptr<GlobalScope> globalScope;
+
+    std::vector<std::unique_ptr<Type>> types;
+public:
+    const SymbolTable<Class> getClasses(void) const;
+
+    TypeId getOrInsert(Class* cl);
+};
+
+
 struct qlow::sem::Class : public SemanticObject
 {
     qlow::ast::Class* astNode;
@@ -101,7 +115,7 @@ struct qlow::sem::Class : public SemanticObject
 
 struct qlow::sem::Variable : public SemanticObject
 {
-    std::shared_ptr<Type> type;
+    TypeId type;
     std::string name;
     bool isParameter;
 
@@ -110,13 +124,13 @@ struct qlow::sem::Variable : public SemanticObject
     llvm::Value* allocaInst;
     
     Variable(void) = default;
-    inline Variable(std::shared_ptr<Type> type, const std::string& name) :
-        type{ std::move(type) },
+    inline Variable(TypeId type, const std::string& name) :
+        type{ type },
         name{ name },
         allocaInst { nullptr }
     {
     }
-        
+
     virtual std::string toString(void) const override;
 };
 
@@ -131,7 +145,7 @@ struct qlow::sem::Field : public Variable
 struct qlow::sem::Method : public SemanticObject
 {
     Class* containingType;
-    std::shared_ptr<Type> returnType;
+    std::optional<TypeId> returnType;
     std::vector<Variable*> arguments;
     std::string name;
     ast::MethodDefinition* astNode;
@@ -142,7 +156,7 @@ struct qlow::sem::Method : public SemanticObject
 
     llvm::Function* llvmNode;
 
-    inline Method(Scope& parentScope, std::shared_ptr<Type> returnType) :
+    inline Method(Scope& parentScope, std::optional<TypeId> returnType) :
         containingType{ nullptr },
         returnType{ std::move(returnType) },
         scope{ parentScope, this },
@@ -171,7 +185,7 @@ struct qlow::sem::ThisExpression : public Variable
 {
     Method* method;
     inline ThisExpression(Method* method) :
-        Variable{ std::make_shared<PointerType>(std::make_shared<ClassType>(method->containingType)), "this" },
+        Variable{ ClassType{ method->containingType }, "this" },
         method{ method }
     {
     }
@@ -261,7 +275,7 @@ struct qlow::sem::Expression :
 {
     std::shared_ptr<sem::Type> type;
     
-    inline Expression(std::shared_ptr<Type> type) :
+    inline Expression(std::optional<TypeId> type) :
         type{ std::move(type) }
     {
     }
@@ -277,7 +291,7 @@ struct qlow::sem::Operation : public Expression
 {
     std::string opString;
     
-    inline Operation(std::shared_ptr<Type> type) :
+    inline Operation(std::optional<TypeId> type) :
         Expression{ std::move(type) }
     {
     }
@@ -325,7 +339,7 @@ struct qlow::sem::BinaryOperation : public Operation
     /// method that is called to execute the operator
     sem::Method* operationMethod;
     
-    inline BinaryOperation(std::shared_ptr<Type> type, ast::BinaryOperation* astNode) :
+    inline BinaryOperation(std::optional<TypeId> type, ast::BinaryOperation* astNode) :
         Operation{ std::move(type) },
         astNode{ astNode }
     {
@@ -340,12 +354,12 @@ struct qlow::sem::BinaryOperation : public Operation
 struct qlow::sem::CastExpression : public Expression
 {
     std::unique_ptr<Expression> expression;
-    std::shared_ptr<Type> targetType;
+    std::optional<TypeId> targetType;
     
     ast::CastExpression* astNode;
     
     inline CastExpression(std::unique_ptr<Expression> expression,
-                          std::shared_ptr<Type> type,
+                          std::optional<TypeId> type,
                           ast::CastExpression* astNode) :
         Expression{ type },
         expression{ std::move(expression) },
@@ -362,10 +376,10 @@ struct qlow::sem::CastExpression : public Expression
 
 struct qlow::sem::NewArrayExpression : public Expression
 {
-    std::shared_ptr<Type> arrayType;
+    std::optional<TypeId> arrayType;
     std::unique_ptr<Expression> length;
     
-    inline NewArrayExpression(std::shared_ptr<Type> arrayType) :
+    inline NewArrayExpression(std::optional<TypeId> arrayType) :
         Expression{ std::make_shared<ArrayType>(arrayType) },
         arrayType{ std::move(arrayType) }
     {
@@ -381,7 +395,7 @@ struct qlow::sem::UnaryOperation : public Operation
     qlow::ast::UnaryOperation::Side side;
     std::unique_ptr<Expression> arg;
     
-    inline UnaryOperation(std::shared_ptr<Type> type) :
+    inline UnaryOperation(std::optional<TypeId> type) :
         Operation{ std::move(type) }
     {
     }

@@ -8,7 +8,7 @@ namespace qlow::sem
 {
     class Context;
     
-    using TypeId = size_t;
+    using TypeId = size_tg
 }
 
 

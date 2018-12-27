@@ -12,7 +12,7 @@ sem::Scope::~Scope(void)
 
 
 sem::Method* sem::Scope::resolveMethod(const std::string& name,
-    const std::vector<std::shared_ptr<Type>> argumentTypes)
+    const std::vector<TypeId> argumentTypes)
 {
     sem::Method* m = getMethod(name);
     if (!m)
@@ -45,7 +45,7 @@ sem::Method* sem::GlobalScope::getMethod(const std::string& name)
 }
 
 
-std::shared_ptr<sem::Type> sem::GlobalScope::getType(const ast::Type& name)
+qlow::sem::TypeId sem::GlobalScope::getType(const ast::Type& name)
 {
     if (const auto* arr = dynamic_cast<const ast::ArrayType*>(&name); arr) {
         return std::make_shared<sem::ArrayType>(getType(*arr->arrayType));
