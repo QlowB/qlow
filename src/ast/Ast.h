@@ -39,6 +39,8 @@ namespace qlow
     class StructureVisitor;
     namespace ast
     {
+        class Ast;
+
         // base class
         struct AstObject;
 
@@ -93,6 +95,13 @@ namespace qlow
     }
 }
 
+
+class qlow::ast::Ast
+{
+    OwningList<AstObject> objects;
+public:
+    inline const OwningList<AstObject>& getObjects(void) const { return objects; }
+};
 
 
 struct qlow::ast::AstObject :
