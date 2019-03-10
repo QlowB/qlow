@@ -3,7 +3,7 @@
 
 CXX := clang++
 
-LLVMCONFIG := llvm-config-5.0
+LLVMCONFIG := llvm-config
 
 INCLUDEDIRS := -I$(shell $(LLVMCONFIG) --includedir) -I. -I.. -Isem/ -Iast/
 CXXFLAGS := -std=c++17 $(INCLUDEDIRS) -w $(FLAGS) # -Wall -Wextra
