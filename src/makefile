@@ -5,8 +5,8 @@ CXX := clang++
 
 LLVMCONFIG := llvm-config
 
-INCLUDEDIRS := -I$(shell $(LLVMCONFIG) --includedir) -I. -I.. -Isem/ -Iast/
-CXXFLAGS := -std=c++17 $(INCLUDEDIRS) -w $(FLAGS) # -Wall -Wextra
+INCLUDEDIRS := -I$(shell $(LLVMCONFIG) --includedir):. -I.. -Isem/ -Iast/ -I.
+CXXFLAGS := -std=c++17 $(INCLUDEDIRS) -w # -Wall -Wextra
 
 ifdef STATIC
 LDFLAGS := $(shell $(LLVMCONFIG) --link-static --ldflags --system-libs --libs all) -static -dead-strip -s

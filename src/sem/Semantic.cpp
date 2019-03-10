@@ -16,7 +16,8 @@ namespace qlow
 namespace sem
 {
 
-std::unique_ptr<Semantic> createFromAst(Ast& ast)
+std::unique_ptr<GlobalScope>
+    createFromAst(const std::vector<std::unique_ptr<qlow::ast::AstObject>>& objects)
 {
     
     Logger& logger = Logger::getInstance();
@@ -27,7 +28,7 @@ std::unique_ptr<Semantic> createFromAst(Ast& ast)
 
     // create classes
     std::unique_ptr<sem::GlobalScope> globalScope = std::make_unique<sem::GlobalScope>();
-    for (auto& astObject : ast.getObjects()) {
+    for (auto& astObject : objects) {
         if (auto* cls = dynamic_cast<ast::Class*>(astObject.get()); cls) {
             globalScope->classes[cls->name] = std::make_unique<sem::Class>(cls, *globalScope);
         }
@@ -105,7 +106,7 @@ std::unique_ptr<Semantic> createFromAst(Ast& ast)
     printf("created all method bodies\n");
 #endif
     
-    return std::make_unique<Semantic>(globalScope);
+    return globalScope;
 }
 
 }
