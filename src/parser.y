@@ -19,6 +19,16 @@
 //
 // ===========================================================================*/
 
+%code requires {
+#include "Ast.h"
+    using QLOW_PARSER_LTYPE = qlow::CodePosition;
+    union QLOW_PARSER_STYPE;
+    using YYLTYPE = QLOW_PARSER_LTYPE;
+    using YYSTYPE = QLOW_PARSER_STYPE;
+#define QLOW_PARSER_LTYPE_IS_DECLARED
+
+#include "lexer.h"
+}
 
 %{
 
@@ -31,11 +41,15 @@
 
 using namespace qlow::ast;
 
-extern int qlow_parser_lex();
 
-void yy_pop_state(void);
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+using yyscan_t = void*;
+#endif
+//extern int qlow_parser_lex();
+//void yy_pop_state();
 
-int qlow_parser_error(const char* msg)
+int qlow_parser_error(qlow::CodePosition* loc, yyscan_t scan, const char* msg)
 {
     //throw msg;
     //printf("error happened: %s\n", msg);
@@ -64,20 +78,20 @@ do                                                        \
         YYRHSLOC(Rhs, 0).last_column;                     \
     }                                                     \
 while (0)
-
 %}
+
+%lex-param   { yyscan_t scanner }
+%parse-param { yyscan_t scanner }
 
 
 %define api.prefix {qlow_parser_}
 %define parse.error verbose
+%define api.pure full
 // %define parse.lac full
 
 %locations
-%code requires {
-#include "Ast.h"
-typedef qlow::CodePosition QLOW_PARSER_LTYPE;
-#define QLOW_PARSER_LTYPE_IS_DECLARED
-}
+%defines
+
 
 %initial-action
 {

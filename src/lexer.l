@@ -19,21 +19,29 @@
 //
 // ===========================================================================*/
 
+%option reentrant bison-bridge bison-locations
+/*%option prefix="qlow_parser_"
+*/
+%option yylineno nounput noinput
+/*%option stack
+*/
+%option 8bit
+%option header-file="lexer.h"
+
 %{
 #include "Ast.h"
 #include "parser.hpp"
 
 
 #define yylval qlow_parser_lval
-#define SET_TOKEN(t) (yylval.token = t)
-#define SET_STRING (yylval.string = new std::string(yytext, yyleng))
+#define SET_TOKEN(t) (yylval_param->token = t)
+#define SET_STRING (yylval_param->string = new std::string(yytext, yyleng))
 
-extern "C" int yywrap()
+extern "C" int yywrap(yyscan_t s)
 {
     return 1; /* do not continue on EOF */
 }
-/*  */
-int commentDepth;
+
 
 size_t offset;
 extern QLOW_PARSER_LTYPE qlow_parser_lloc;
@@ -52,10 +60,6 @@ extern const char* qlow_parser_filename;
 %}
 
 
-%option prefix="qlow_parser_"
-%option yylineno
-%option stack
-
 %x COMMENT
 %x LINE_COMMENT
 %x STRING
@@ -68,21 +72,23 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 
 %%
 
+    int commentDepth = 0;
+
 <COMMENT>"/*"           commentDepth++;
 <COMMENT>"*/"           if ((--commentDepth) == 0) { BEGIN(INITIAL); };
 <COMMENT>\n             offset = 0;
 <COMMENT>.              ; // inside comment, ignore everything
 
-<LINE_COMMENT>\n        offset = 0; yy_pop_state(); //yy_push_state(INITIAL);
+<LINE_COMMENT>\n        offset = 0; yy_pop_state(yyscanner); //yy_push_state(INITIAL);
 <LINE_COMMENT>.         ; // inside comment, ignore everything
 
-<STRING>"\""            yy_pop_state();
+<STRING>"\""            yy_pop_state(yyscanner);
 <STRING>[^\"^\n]*          printf("%s\n", std::string(yytext, yyleng).c_str());
 <STRING>\n              offset = 0; SET_STRING; return UNEXPECTED_SYMBOL; 
 
-"/*"                    yy_push_state(COMMENT); commentDepth = 1;
-"//"                    yy_push_state(LINE_COMMENT);
-"\""                    yy_push_state(STRING);
+"/*"                    yy_push_state(COMMENT, yyscanner); commentDepth = 1;
+"//"                    yy_push_state(LINE_COMMENT, yyscanner);
+"\""                    yy_push_state(STRING, yyscanner);
 
 
 [\t ]                   ; // Space or tab ignored
@@ -90,8 +96,8 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 \n                      offset = 0; //return SET_TOKEN(NEW_LINE);
 
 "class"                 return SET_TOKEN(CLASS);
-"do"                    yy_push_state(METHOD); return SET_TOKEN(DO);
-<METHOD>"end"           yy_pop_state(); return SET_TOKEN(END);
+"do"                    yy_push_state(METHOD, yyscanner); return SET_TOKEN(DO);
+<METHOD>"end"           yy_pop_state(yyscanner); return SET_TOKEN(END);
 <INITIAL>"end"          return SET_TOKEN(END);
 "if"                    return SET_TOKEN(IF);
 "while"                 return SET_TOKEN(WHILE);
