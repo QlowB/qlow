@@ -8,6 +8,8 @@
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Value.h>
 
+#include "Util.h"
+
 namespace qlow
 {
     namespace ast

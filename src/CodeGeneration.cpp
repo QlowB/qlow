@@ -258,7 +258,7 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
 
     std::error_code errorCode;
     raw_fd_ostream dest(filename, errorCode, llvm::sys::fs::F_None);
-    targetMachine->addPassesToEmitFile(pm, dest,
+    targetMachine->addPassesToEmitFile(pm, dest, &dest,
 //        llvm::LLVMTargetMachine::CGFT_ObjectFile,
         llvm::TargetMachine::CGFT_ObjectFile);
 
