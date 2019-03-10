@@ -20,27 +20,25 @@
 // ===========================================================================*/
 
 %option reentrant bison-bridge bison-locations
-/*%option prefix="qlow_parser_"
-*/
+%option prefix="qlow_parser_"
 %option yylineno nounput noinput
-/*%option stack
-*/
+%option stack
+
 %option 8bit
 %option header-file="lexer.h"
 
 %{
-#include "Ast.h"
-#include "parser.hpp"
+#include "syntax.hpp"
 
 
 #define yylval qlow_parser_lval
 #define SET_TOKEN(t) (yylval_param->token = t)
 #define SET_STRING (yylval_param->string = new std::string(yytext, yyleng))
 
-extern "C" int yywrap(yyscan_t s)
+/*extern "C" int yywrap(yyscan_t s)
 {
     return 1; /* do not continue on EOF */
-}
+/*}*/
 
 
 size_t offset;

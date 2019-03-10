@@ -17,11 +17,11 @@ endif
 YACC := bison
 YACCFLAGS := -d
 LEX := flex
-LEXFLAGS := "-8"
+LEXFLAGS :=
 
 #OBJECTS := $(patsubst %.cpp, %.o, $(wildcard *.cpp */*.cpp))
-OBJECTS := $(patsubst %.cpp, %.o, $(wildcard *.cpp)) \
-    parser.o lexer.o
+OBJECTS := $(patsubst %.cpp, %.o, $(wildcard *.cpp */*.cpp)) \
+    ast/syntax.o ast/lexer.o
 LIBRARIES := 
 EXECUTABLE := qlow
 
@@ -38,7 +38,7 @@ debug: all
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-parser.o: parser.cpp
+ast/syntax.o: ast/syntax.cpp
 	$(CXX) -c -o $@ $< $(CXXFLAGS) -fno-strict-aliasing
 
 %.o: %.cpp
@@ -47,13 +47,13 @@ parser.o: parser.cpp
 %.cpp: %.y
 	$(YACC) -o $@ $< $(YACCFLAGS)
 
-%.cpp: %.l parser.cpp
+%.cpp: %.l ast/syntax.cpp
 	$(LEX) $(LEXFLAGS) -o $@ $<
 
 
 
 .PHONY: clean
 clean:
-	rm -f $(EXECUTABLE) $(OBJECTS) parser.cpp parser.hpp lexer.cpp
+	rm -f $(EXECUTABLE) $(OBJECTS) ast/syntax.cpp ast/syntax.hpp ast/lexer.cpp ast/lexer.h
 
 

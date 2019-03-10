@@ -21,13 +21,18 @@
 
 %code requires {
 #include "Ast.h"
-    using QLOW_PARSER_LTYPE = qlow::CodePosition;
-    union QLOW_PARSER_STYPE;
-    using YYLTYPE = QLOW_PARSER_LTYPE;
-    using YYSTYPE = QLOW_PARSER_STYPE;
+
+using QLOW_PARSER_LTYPE = qlow::CodePosition;
+using YYLTYPE = QLOW_PARSER_LTYPE;
 #define QLOW_PARSER_LTYPE_IS_DECLARED
 
-#include "lexer.h"
+union QLOW_PARSER_STYPE;
+using YYSTYPE = QLOW_PARSER_STYPE;
+
+#ifndef YY_TYPEDEF_YY_SCANNER_T
+#define YY_TYPEDEF_YY_SCANNER_T
+typedef void* yyscan_t;
+#endif
 }
 
 %{
@@ -38,14 +43,12 @@
 #include <cstdio>
 #include "Ast.h"
 #include "ErrorReporting.h"
+#include "syntax.h"
+#include "lexer.h"
 
 using namespace qlow::ast;
 
 
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
-using yyscan_t = void*;
-#endif
 //extern int qlow_parser_lex();
 //void yy_pop_state();
 
