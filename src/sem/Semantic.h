@@ -101,7 +101,7 @@ struct qlow::sem::Class : public SemanticObject
 
 struct qlow::sem::Variable : public SemanticObject
 {
-    std::shared_ptr<Type> type;
+    TypeId type;
     std::string name;
     bool isParameter;
 

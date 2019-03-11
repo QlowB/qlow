@@ -1,5 +1,53 @@
 #include "Type.h"
 
+#include "Context.h"
+
+using qlow::sem::Type;
+
+Type::Kind Type::getKind(void) const
+{
+    return static_cast<Kind>(type.index());
+}
+
+
+std::string Type::asString(void) const
+{
+    return std::visit(
+        [&] (const auto& t) -> std::string {
+            using T = std::decay_t<decltype(t)>;
+            if constexpr (std::is_same<T, NativeType>) {
+                return this->name;
+            }
+            else if constexpr (std::is_same<T, ClassType>) {
+                return this->name;
+            }
+            else if constexpr (std::is_same<T, PointerType>) {
+                auto& context = t.targetType.getContext();
+                return context.getType(t.targetType) + "*";
+            }
+            else if constexpr (std::is_same<T, ArrayType>) {
+                auto& context = t.targetType.getContext();
+                return "[" + context.getType(t.targetType) + "]";
+            }
+        }
+        ,
+        type
+    );
+}
+
+bool Type::operator==(const Type& other) const
+{
+    return this->name == other.name &&
+           this->kind == other.kind &&
+           this->type == other.type;
+}
+
+
+
+
+
+
+#if 0
 #include "Semantic.h"
 #include "Builtin.h"
 
@@ -257,4 +305,4 @@ llvm::Value* sem::NativeType::generateImplicitCast(llvm::Value* value)
 {
     // TODO implement
 }
-
+#endif

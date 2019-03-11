@@ -6,12 +6,12 @@
 #include <vector>
 #include <optional>
 
+#include "Type.h"
+
 namespace qlow::sem
 {
     class Type;
     class Context;
-    
-    using TypeId = size_t;
 }
 
 namespace std

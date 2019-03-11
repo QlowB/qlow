@@ -1,6 +1,89 @@
 #ifndef QLOW_SEM_TYPE_H
 #define QLOW_SEM_TYPE_H
 
+#include <variant>
+#include <string>
+
+namespace qlow::sem
+{
+    struct SemanticObject;
+    class Type;
+    
+    struct TypeId;
+
+    // forward declarations to other files
+    struct Class;
+    struct Context;
+}
+
+
+struct qlow::sem::SemanticObject
+{
+    virtual ~SemanticObject(void);
+    
+    /**
+     * \brief converts the object to a readable string for debugging purposes. 
+     */
+    virtual std::string toString(void) const;
+};
+
+
+class qlow::sem::TypeId
+{
+    Context& context;
+    size_t id;
+public:
+    inline TypeId(Context& context, size_t id) :
+        context{ context }, id{ id } {}
+
+    inline Context& getContext(void) const { return context; }
+    inline size_t getId(void) const { return id; }
+};
+
+
+class qlow::sem::Type
+{
+public:
+    enum class Kind
+    {
+        NATIVE,
+        CLASS,
+        POINTER,
+        ARRAY
+    };
+private:
+    std::string name;
+
+    struct NativeType
+    {
+    };
+
+    struct ClassType
+    {
+        Class* classType;
+    };
+
+    struct PointerType
+    {
+        TypeId targetType;
+    };
+
+    struct ArrayType 
+    {
+        TypeId targetType;
+    };
+
+    std::variant<NativeType, ClassType, PointerType, ArrayType> type;
+public:
+    Kind getKind(void) const;
+    std::string asString(void) const;
+    size_t hash(void) const;
+
+    bool operator == (const Type& other) const;
+};
+
+ 
+#if 0
 #include "Scope.h"
 
 #include <memory>
@@ -37,18 +120,6 @@ namespace qlow
         class NativeType;
     }
 }
-
-
-struct qlow::sem::SemanticObject
-{
-    virtual ~SemanticObject(void);
-    
-    /**
-     * \brief converts the object to a readable string for debugging purposes. 
-     */
-    virtual std::string toString(void) const;
-};
-
 
 class qlow::sem::Type : public SemanticObject
 {
@@ -190,5 +261,6 @@ public:
     llvm::Value* generateImplicitCast(llvm::Value* value);
 };
 
+#endif
 
 #endif // QLOW_SEM_TYPE_H
