@@ -9,6 +9,7 @@
 #include <llvm/IR/Value.h>
 
 #include "Util.h"
+#include "Context.h"
 
 namespace qlow
 {
@@ -66,6 +67,8 @@ public:
     SymbolTable<Class> classes;
     SymbolTable<Method> functions;
     OwningList<Cast> casts;
+
+    Context typeContext;
 public:
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
@@ -138,7 +141,6 @@ public:
         type{ type }
     {
     }
-    
     
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);

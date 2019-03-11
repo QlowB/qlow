@@ -193,10 +193,11 @@ bool Driver::parseStage(void)
 
 bool Driver::semanticStage(void)
 {
+    Logger& logger = Logger::getInstance();
     bool errorOccurred = false;
 
     try {
-        this->semClasses = qlow::sem::createFromAst(this->ast);
+        this->semClasses = qlow::sem::createFromAst(*this->ast);
     }
     catch(SemanticError& se) {
         se.print(logger);

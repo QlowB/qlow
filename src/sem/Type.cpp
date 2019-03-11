@@ -21,6 +21,12 @@ bool sem::Type::equals(const Type& other) const
 }
 
 
+size_t sem::Type::hash(void) const
+{
+    return std::hash<std::string>()(this->asString());
+}
+
+
 /*std::shared_ptr<sem::Type> sem::Type::VOID =
     std::make_shared<sem::NativeType>(sem::NativeType::Type::VOID);
 std::shared_ptr<sem::Type> sem::Type::INTEGER =

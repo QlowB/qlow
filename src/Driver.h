@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 #include "Parser.h"
+#include "Scope.h"
 
 namespace qlow
 {

@@ -1,8 +1,10 @@
 #ifndef QLOW_SEM_TYPE_H
 #define QLOW_SEM_TYPE_H
 
-#include <memory>
 #include "Scope.h"
+
+#include <memory>
+#include <string>
 
 namespace llvm {
     class Value;
@@ -71,6 +73,8 @@ public:
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const = 0;
     
     virtual bool equals(const Type& other) const;
+
+    virtual size_t hash(void) const;
     
 //    static std::shared_ptr<Type> VOID;
 //    static std::shared_ptr<Type> INTEGER;
@@ -115,12 +119,12 @@ public:
     
     inline bool isClassType(void) const override { return true; }
     
-    std::string asString(void) const;
-    Scope& getScope(void);
+    std::string asString(void) const override;
+    Scope& getScope(void) override;
     
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
     inline sem::Class* getClassType(void) { return classType; }
-    virtual bool equals(const Type& other) const;
+    virtual bool equals(const Type& other) const override;
 };
 
 
@@ -138,12 +142,12 @@ public:
     
     inline bool isArrayType(void) const override { return true; }
     
-    std::string asString(void) const;
-    Scope& getScope(void);
+    std::string asString(void) const override;
+    Scope& getScope(void) override;
     
     virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
     inline std::shared_ptr<sem::Type> getArrayType(void) { return arrayType; }
-    virtual bool equals(const Type& other) const;
+    virtual bool equals(const Type& other) const override;
 };
 
 
@@ -167,20 +171,20 @@ public:
     SymbolTable<NativeMethod> nativeMethods;
     
     inline NativeType(Type type) :
-        type{ type },
-        scope{ *this }
+        scope{ *this },
+        type{ type }
     {
     }
     
     inline bool isNativeType(void) const override { return true; }
     
-    std::string asString(void) const;
-    Scope& getScope(void);
+    std::string asString(void) const override;
+    Scope& getScope(void) override;
     
     bool isIntegerType(void) const;
     
     llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
-    virtual bool equals(const sem::Type& other) const;
+    virtual bool equals(const sem::Type& other) const override;
     
     /// cast an llvm::Value from another native type to this one
     llvm::Value* generateImplicitCast(llvm::Value* value);
