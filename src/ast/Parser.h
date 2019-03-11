@@ -1,7 +1,8 @@
-#ifndef QLOW_PARSER_H
-#define QLOW_PARSER_H
+#ifndef QLOW_AST_PARSER_H
+#define QLOW_AST_PARSER_H
 
 #include <cstdio>
+#include <string>
 #include "Ast.h"
 
 namespace qlow
@@ -15,11 +16,15 @@ namespace qlow
 class qlow::ast::Parser
 {
     FILE* stream;
+    std::string filename;
 public:
-    inline Parser(FILE* stream) :
-        stream{ stream } {}
+    inline Parser(FILE* stream, std::string filename) :
+        stream{ stream }, filename{ std::move(filename) } {}
     
-    std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::AstObject>>> parse(void);
+    Ast parse(void);
+
+    inline const std::string& getFilename(void) const { return filename; }
 };
 
-#endif // QLOW_PARSER_H
+#endif // QLOW_AST_PARSER_H
+

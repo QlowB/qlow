@@ -100,7 +100,8 @@ class qlow::ast::Ast
 {
     OwningList<AstObject> objects;
 public:
-    inline const OwningList<AstObject>& getObjects(void) const { return objects; }
+    inline const OwningList<AstObject>& getObjects(void) const  { return objects; }
+    inline       OwningList<AstObject>& getObjects(void)        { return objects; }
 };
 
 

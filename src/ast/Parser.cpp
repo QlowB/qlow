@@ -3,13 +3,12 @@
 #include "lexer.h"
 using qlow::ast::Parser;
 
-std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::AstObject>>> Parser::parse(void)
+qlow::ast::Ast Parser::parse(void)
 {
-    std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::AstObject>>> result =
-        std::make_unique<std::vector<std::unique_ptr<qlow::ast::AstObject>>>();
+    qlow::ast::Ast result;
     yyscan_t scanner;
     qlow_parser_lex_init(&scanner);
-    auto ret = qlow_parser_parse(scanner, *result);
+    auto error = qlow_parser_parse(scanner, result, *this);
     qlow_parser_lex_destroy(scanner);
     return result;
 }

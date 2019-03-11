@@ -41,19 +41,18 @@ typedef void* yyscan_t;
 #include <vector>
 #include <iostream>
 #include <cstdio>
-#include "Ast.h"
+#include "Parser.h"
 #include "ErrorReporting.h"
 #include "syntax.hpp"
 #include "lexer.h"
 
 using namespace qlow::ast;
 
-
 //extern int qlow_parser_lex();
 //void yy_pop_state();
 
 int qlow_parser_error(qlow::CodePosition* loc, yyscan_t scan,
-    std::vector<std::unique_ptr<qlow::ast::AstObject>>& results, const char* msg)
+    Ast& ast, const Parser& parser, const char* msg)
 {
     //throw msg;
     //printf("error happened: %s\n", msg);
@@ -61,8 +60,6 @@ int qlow_parser_error(qlow::CodePosition* loc, yyscan_t scan,
     return 0;
 }
 
-std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::AstObject>>> parsedClasses;
-const char* qlow_parser_filename = "";
 
 # define YYLLOC_DEFAULT(Cur, Rhs, N)                      \
 do                                                        \
@@ -86,7 +83,8 @@ while (0)
 
 %lex-param   { yyscan_t scanner }
 %parse-param { yyscan_t scanner }
-%parse-param { std::vector<std::unique_ptr<qlow::ast::AstObject>>& results }
+%parse-param { qlow::ast::Ast& ast }
+%parse-param { const qlow::ast::Parser& parser }
 
 
 %define api.prefix {qlow_parser_}
@@ -100,13 +98,15 @@ while (0)
 
 %initial-action
 {
-    @$.filename = qlow_parser_filename;
+    // NOTE: the filename only lives as long as the parser.
+    // Do not use after deletion of the parser.
+    @$.filename = parser.getFilename().c_str();
 };
 
 //%define api.location.type {qlow::CodePosition}
 
 %union {
-    std::vector<std::unique_ptr<qlow::ast::AstObject>>* topLevel;
+    qlow::ast::Ast* topLevel;
     qlow::ast::Class* classDefinition;
     
     qlow::ast::Type* type;
@@ -208,35 +208,40 @@ while (0)
 /* list of class definitions */
 topLevel:
     /* empty */ {
-       $$ = &results;
+       $$ = &ast;
     }
     |
     topLevel classDefinition {
-        $$->push_back(std::move(std::unique_ptr<qlow::ast::Class>($2)));
+        $$ = $1;
+        $$->getObjects().push_back(std::move(std::unique_ptr<qlow::ast::Class>($2)));
         $2 = nullptr;
     }
     |
     topLevel methodDefinition {
-        $$->push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($2)));
+        $$ = $1;
+        $$->getObjects().push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($2)));
         $2 = nullptr;
     }
     |
     topLevel externMethodDeclaration {
-        $$->push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($2)));
+        $$ = $1;
+        $$->getObjects().push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($2)));
         $2 = nullptr;
     }
     |
     topLevel error methodDefinition {
+        $$ = $1;
         reportError(qlow::SyntaxError(@2));
         yyerrok;
-        $$->push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($3)));
+        $$->getObjects().push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($3)));
         $3 = nullptr;
     }
     |
     topLevel error classDefinition {
         reportError(qlow::SyntaxError(@2));
         yyerrok;
-        $$->push_back(std::move(std::unique_ptr<qlow::ast::Class>($3)));
+        $$ = $1;
+        $$->getObjects().push_back(std::move(std::unique_ptr<qlow::ast::Class>($3)));
         $3 = nullptr;
     };
 

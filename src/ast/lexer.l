@@ -28,6 +28,7 @@
 %option header-file="lexer.h"
 
 %{
+#include "Parser.h"
 #include "syntax.hpp"
 
 
