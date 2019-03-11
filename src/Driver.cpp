@@ -81,23 +81,7 @@ int Driver::run(void)
         return 1;
     }
     
-    std::unique_ptr<qlow::sem::GlobalScope> semClasses = nullptr;
-    try {
-        semClasses =
-            qlow::sem::createFromAst(this->ast);
-    }
-    catch(SemanticError& se) {
-        se.print(logger);
-        errorOccurred = true;
-    }
-    catch(const char* err) {
-        reportError(err);
-        errorOccurred = true;
-    }
-    catch (...) {
-        reportError("an unknown error occurred.");
-        errorOccurred = true;
-    }
+    errorOccurred = semanticStage();
     
     if (errorOccurred) {
         logger << "Aborting due to semantic errors." << std::endl;
@@ -203,6 +187,30 @@ bool Driver::parseStage(void)
         if (file)
             std::fclose(file);
     }
+    return errorOccurred;
+}
+
+
+bool Driver::semanticStage(void)
+{
+    bool errorOccurred = false;
+
+    try {
+        this->semClasses = qlow::sem::createFromAst(this->ast);
+    }
+    catch(SemanticError& se) {
+        se.print(logger);
+        errorOccurred = true;
+    }
+    catch(const char* err) {
+        reportError(err);
+        errorOccurred = true;
+    }
+    catch (...) {
+        reportError("an unknown error occurred.");
+        errorOccurred = true;
+    }
+
     return errorOccurred;
 }
 
