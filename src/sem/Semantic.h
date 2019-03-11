@@ -19,7 +19,7 @@ namespace qlow
     namespace sem
     {
         std::unique_ptr<GlobalScope>
-            createFromAst(const std::vector<std::unique_ptr<qlow::ast::AstObject>>& objects);
+            createFromAst(const qlow::ast::Ast& ast);
 
         struct Class;
 

@@ -169,7 +169,9 @@ int Driver::run(void)
 
 bool Driver::parseStage(void)
 {
-    using std::literals;
+    using namespace std::literals;
+    Logger& logger = Logger::getInstance();
+
     this->ast = std::make_unique<ast::Ast>();
     bool errorOccurred = false;
 

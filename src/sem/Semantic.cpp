@@ -17,10 +17,11 @@ namespace sem
 {
 
 std::unique_ptr<GlobalScope>
-    createFromAst(const std::vector<std::unique_ptr<qlow::ast::AstObject>>& objects)
+    createFromAst(const qlow::ast::Ast& ast)
 {
     
     Logger& logger = Logger::getInstance();
+    auto& objects = ast.getObjects();
 
 #ifdef DEBUGGING
     printf("starting building semantic representation (%d objects)\n", (int) objects.size());
@@ -40,7 +41,7 @@ std::unique_ptr<GlobalScope>
 #ifdef DEBUGGING
     printf("created symbol table entries for all classes\n");
 #endif 
-        
+    
     StructureVisitor av;
     
     // create all methods and fields
