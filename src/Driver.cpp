@@ -74,36 +74,7 @@ int Driver::run(void)
     
     logger.debug() << "starting parser" << std::endl;
     //logger.logError("driver not yet implemented", {options.emitAssembly ? "asm" : "noasm", 10, 11, 12, 13});
-    
-    std::vector<std::unique_ptr<qlow::ast::AstObject>> objects;
-    bool errorOccurred = false;
-    
-    for (auto& filename : options.infiles) {
-        std::FILE* file = std::fopen(filename.c_str(), "r");
-        ::qlow_parser_filename = filename.c_str();
-        
-        try {
-            auto newObjects = parseFile(file);
-            objects.insert(objects.end(),
-                           std::make_move_iterator(newObjects.begin()),
-                           std::make_move_iterator(newObjects.end()));
-        }
-        catch (const CompileError& ce) {
-            ce.print(logger);
-            errorOccurred = true;
-        }
-        catch (const char* errMsg) {
-            reportError(errMsg);
-            errorOccurred = true;
-        }
-        catch (...) {
-            reportError("an unknown error occurred.");
-            errorOccurred = true;
-        }
-        
-        if (file)
-            std::fclose(file);
-    }
+    bool errorOccurred = parseStage();
     
     if (errorOccurred) {
         logger << "Aborting due to syntax errors." << std::endl;
@@ -113,7 +84,7 @@ int Driver::run(void)
     std::unique_ptr<qlow::sem::GlobalScope> semClasses = nullptr;
     try {
         semClasses =
-            qlow::sem::createFromAst(objects);
+            qlow::sem::createFromAst(this->ast);
     }
     catch(SemanticError& se) {
         se.print(logger);
@@ -196,17 +167,49 @@ int Driver::run(void)
 }
 
 
-std::vector<std::unique_ptr<qlow::ast::AstObject>> Driver::parseFile(FILE* file)
+bool Driver::parseStage(void)
 {
-    ::qlow_parser_in = file;
-    if (!::qlow_parser_in)
-        throw "Could not run parser: Invalid file";
-    
-    ::qlow_parser_parse();
-    
-    auto retval = std::move(*parsedClasses);
-    parsedClasses.reset();
-    return retval;
+    using std::literals;
+    this->ast = std::make_unique<ast::Ast>();
+    bool errorOccurred = false;
+
+    for (auto& filename : options.infiles) {
+        std::FILE* file = std::fopen(filename.c_str(), "r");
+
+        if (!file) {
+            reportError("could not open file "s + filename + ".");
+            continue;
+        }
+
+        try {
+            // parse file content and add parsed objects to global ast
+            this->ast->merge(parseFile(file, filename));
+        }
+        catch (const CompileError& ce) {
+            ce.print(logger);
+            errorOccurred = true;
+        }
+        catch (const char* errMsg) {
+            reportError(errMsg);
+            errorOccurred = true;
+        }
+        catch (...) {
+            reportError("an unknown error occurred.");
+            errorOccurred = true;
+        }
+        
+        if (file)
+            std::fclose(file);
+    }
+    return errorOccurred;
+}
+
+
+qlow::ast::Ast Driver::parseFile(FILE* file,
+        const std::string& filename)
+{
+    ast::Parser parser(file, filename);
+    return parser.parse();
 }
 
 

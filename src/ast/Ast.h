@@ -102,6 +102,8 @@ class qlow::ast::Ast
 public:
     inline const OwningList<AstObject>& getObjects(void) const  { return objects; }
     inline       OwningList<AstObject>& getObjects(void)        { return objects; }
+
+    void merge(Ast&& other);
 };
 
 

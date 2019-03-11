@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include "Parser.h"
 
 namespace qlow
 {
@@ -14,8 +15,8 @@ namespace qlow
     class Driver;
     
     
-    namespace ast
-    {
+    namespace ast {
+        struct Ast;
         struct AstObject;
     }
 }
@@ -37,16 +38,18 @@ struct qlow::Options
 class qlow::Driver
 {
     Options options;
+    std::unique_ptr<qlow::ast::Ast> ast = nullptr;
 public:
     Driver(void) = delete;
     Driver(int argc, char** argv);
     
     int run(void);
+
+    bool parseStage(void);
     
-    /// \brief runs the parser over a given stream
-    /// \warning Don't call concurrently. Not (yet) supported!
-    std::vector<std::unique_ptr<qlow::ast::AstObject>> parseFile(FILE* file);
+    qlow::ast::Ast parseFile(FILE* file, const std::string& filename);
 };
 
 
 #endif // QLOW_DRIVER_H
+
