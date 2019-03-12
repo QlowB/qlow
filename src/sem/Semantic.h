@@ -9,6 +9,7 @@
 #include "Scope.h"
 
 #include "Type.h"
+#include "Context.h"
 
 #include <llvm/IR/Value.h>
 #include <llvm/IR/IRBuilder.h>
@@ -75,19 +76,25 @@ struct qlow::sem::Class : public SemanticObject
     SymbolTable<Field> fields;
     SymbolTable<Method> methods;
     ClassScope scope;
+    TypeId classType;
 
     /// \brief generated during llvm code generation, not availab
     llvm::Type* llvmType;
 
-    inline Class(qlow::ast::Class* astNode, GlobalScope& globalScope) :
+    inline Class(Context& context, qlow::ast::Class* astNode,
+            GlobalScope& globalScope) :
+        SemanticObject{ context },
         astNode{ astNode },
         name{ astNode->name },
         scope{ globalScope, this },
+        classType{ context.addType(Type::createClassType(context, this)) },
         llvmType{ nullptr }
     {
     }
 
-    inline Class(const std::string& nativeName, GlobalScope& globalScope) :
+    inline Class(Context& context, const std::string& nativeName,
+            GlobalScope& globalScope) :
+        SemanticObject{ context },
         astNode{ nullptr },
         name{ nativeName },
         scope{ globalScope, this },
@@ -110,7 +117,8 @@ struct qlow::sem::Variable : public SemanticObject
     llvm::Value* allocaInst;
     
     Variable(void) = default;
-    inline Variable(TypeId type, const std::string& name) :
+    inline Variable(Context& context, TypeId type, const std::string& name) :
+        SemanticObject{ context },
         type{ type },
         name{ name },
         allocaInst { nullptr }
@@ -130,7 +138,7 @@ struct qlow::sem::Field : public Variable
 
 struct qlow::sem::Method : public SemanticObject
 {
-    Class* containingType;
+    Class* containingClass;
     TypeId returnType;
     std::vector<Variable*> arguments;
     std::string name;
@@ -142,25 +150,28 @@ struct qlow::sem::Method : public SemanticObject
 
     llvm::Function* llvmNode;
 
-    inline Method(Scope& parentScope, TypeId returnType) :
-        containingType{ nullptr },
+    inline Method(Context& context, Scope& parentScope,
+            TypeId returnType) :
+        SemanticObject{ context },
+        containingClass{ nullptr },
         returnType{ returnType },
-        scope{ parentScope, this },
         thisExpression{ nullptr },
-        body{ nullptr }
+        body{ nullptr },
+        scope{ parentScope, this }
     {
     }
     
+    /*
     inline Method(ast::MethodDefinition* astNode, Scope& parentScope) :
         containingType{ nullptr },
-        returnType{ Type{ parentScope.returnType.getContext() }},
+        returnType{ parentScope.getReturnableType()},
         astNode{ astNode },
         name{ astNode->name },
         scope{ parentScope, this },
         thisExpression{ nullptr },
         body{ nullptr }
     {
-    }
+    }*/
     
     void generateThisExpression(void);
     
@@ -172,7 +183,13 @@ struct qlow::sem::ThisExpression : public Variable
 {
     Method* method;
     inline ThisExpression(Method* method) :
-        Variable{ method->containingType.toPointer(), "this" },
+        Variable{
+            method->context,
+            method->context.addType(Type::createPointerType(method->context,
+                        method->context.addType(Type::createClassType(method->context,
+                            method->containingClass)))),
+            "this"
+        },
         method{ method }
     {
     }
@@ -183,6 +200,8 @@ struct qlow::sem::ThisExpression : public Variable
 
 struct qlow::sem::Statement : public SemanticObject, public Visitable<llvm::Value*, gen::FunctionGenerator, qlow::StatementVisitor>
 {
+    inline Statement(Context& context) :
+        SemanticObject{ context } {}
     virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) = 0;
 };
 
@@ -192,7 +211,8 @@ struct qlow::sem::DoEndBlock : public Statement
     LocalScope scope;
     OwningList<Statement> statements;
 
-    inline DoEndBlock(LocalScope& parentScope) :
+    inline DoEndBlock(Context& context, LocalScope& parentScope) :
+        Statement{ context },
         scope{ parentScope } {}
     
     virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) override;
@@ -207,6 +227,7 @@ struct qlow::sem::IfElseBlock : public Statement
     inline IfElseBlock(std::unique_ptr<Expression> condition,
                        std::unique_ptr<DoEndBlock> ifBlock,
                        std::unique_ptr<DoEndBlock> elseBlock) :
+        Statement{ ifBlock->context },
         condition{ std::move(condition) },
         ifBlock{ std::move(ifBlock) },
         elseBlock{ std::move(elseBlock) }
@@ -222,7 +243,8 @@ struct qlow::sem::WhileBlock : public Statement
     std::unique_ptr<Expression> condition;
     std::unique_ptr<DoEndBlock> body;
     inline WhileBlock(std::unique_ptr<Expression> condition,
-                       std::unique_ptr<DoEndBlock> body) :
+                      std::unique_ptr<DoEndBlock> body) :
+        Statement{ body->context },
         condition{ std::move(condition) },
         body{ std::move(body) }
     {
@@ -237,6 +259,9 @@ struct qlow::sem::AssignmentStatement : public Statement
     std::unique_ptr<Expression> target;
     std::unique_ptr<Expression> value;
 
+    inline AssignmentStatement(Context& context) :
+        Statement{ context } {}
+
     virtual std::string toString(void) const override;
     virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) override;
 };
@@ -245,6 +270,9 @@ struct qlow::sem::AssignmentStatement : public Statement
 struct qlow::sem::ReturnStatement : public Statement 
 {
     std::unique_ptr<Expression> value;
+
+    inline ReturnStatement(Context& context) :
+        Statement{ context } {}
 
     virtual std::string toString(void) const override;
     virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) override;
@@ -262,7 +290,8 @@ struct qlow::sem::Expression :
 {
     TypeId type;
     
-    inline Expression(TypeId type) :
+    inline Expression(Context& context, TypeId type) :
+        SemanticObject{ context },
         type{ type }
     {
     }
@@ -278,8 +307,8 @@ struct qlow::sem::Operation : public Expression
 {
     std::string opString;
     
-    inline Operation(TypeId type) :
-        Expression{ type }
+    inline Operation(Context& context, TypeId type) :
+        Expression{ context, type }
     {
     }
 };
@@ -290,7 +319,7 @@ struct qlow::sem::LocalVariableExpression : public Expression
     Variable* var;
     
     inline LocalVariableExpression(Variable* var) :
-        Expression{ var->type },
+        Expression{ var->context, var->type },
         var{ var }
     {
     }
@@ -308,7 +337,7 @@ struct qlow::sem::AddressExpression : public Expression
     std::unique_ptr<sem::Expression> target;
     
     inline AddressExpression(std::unique_ptr<sem::Expression> target) :
-        Expression{ target->type.toPointer() },
+        Expression{ target->context, context.getPointerTo(target->type) },
         target{ std::move(target) }
     {
     }
@@ -326,8 +355,9 @@ struct qlow::sem::BinaryOperation : public Operation
     /// method that is called to execute the operator
     sem::Method* operationMethod;
     
-    inline BinaryOperation(TypeId type, ast::BinaryOperation* astNode) :
-        Operation{ type },
+    inline BinaryOperation(Context& context,
+            TypeId type, ast::BinaryOperation* astNode) :
+        Operation{ context, type },
         astNode{ astNode }
     {
     }
@@ -348,7 +378,7 @@ struct qlow::sem::CastExpression : public Expression
     inline CastExpression(std::unique_ptr<Expression> expression,
                           TypeId type,
                           ast::CastExpression* astNode) :
-        Expression{ type },
+        Expression{ expression->context, type },
         expression{ std::move(expression) },
         targetType{ type },
         astNode{ astNode }
@@ -366,8 +396,8 @@ struct qlow::sem::NewArrayExpression : public Expression
     TypeId arrayType;
     std::unique_ptr<Expression> length;
     
-    inline NewArrayExpression(TypeId arrayType) :
-        Expression{ arrayType.toArray() },
+    inline NewArrayExpression(Context& context, TypeId arrayType) :
+        Expression{ context, context.getArrayOf(arrayType) },
         arrayType{ arrayType }
     {
     }
@@ -382,8 +412,8 @@ struct qlow::sem::UnaryOperation : public Operation
     qlow::ast::UnaryOperation::Side side;
     std::unique_ptr<Expression> arg;
     
-    inline UnaryOperation(TypeId type) :
-        Operation{ type }
+    inline UnaryOperation(Context& context, TypeId type) :
+        Operation{ context, type }
     {
     }
     
@@ -399,10 +429,10 @@ struct qlow::sem::MethodCallExpression : public Expression
     OwningList<Expression> arguments;
     
     inline MethodCallExpression(std::unique_ptr<Expression> target,
-                                 Method* callee) :
-        Expression{ callee->returnType },
-        target{ std::move(target) },
-        callee{ callee }
+                                Method* callee) :
+        Expression{ target->context, callee->returnType },
+        callee{ callee },
+        target{ std::move(target) }
     {
     }
     
@@ -420,9 +450,9 @@ struct qlow::sem::FieldAccessExpression : public Expression
     
     inline FieldAccessExpression(std::unique_ptr<Expression> target,
                                  Field* accessed ) :
-        Expression{ accessed->type },
-        target{ std::move(target) },
-        accessed{ accessed }
+        Expression{ target->context, accessed->type },
+        accessed{ accessed },
+        target{ std::move(target) }
     {
     }
     
@@ -439,8 +469,8 @@ struct qlow::sem::IntConst : public Expression
 {
     unsigned long long value;
 
-    inline IntConst(unsigned long long value) :
-        Expression{ std::make_shared<NativeType>(NativeType::INTEGER) },
+    inline IntConst(Context& context, unsigned long long value) :
+        Expression{ context.addType(/* integer */) },
         value{ value }
     {
     }
@@ -453,6 +483,7 @@ struct qlow::sem::FeatureCallStatement : public Statement
 {
     std::unique_ptr<MethodCallExpression> expr;
     inline FeatureCallStatement(std::unique_ptr<MethodCallExpression> expr) :
+        Statement{ expr->context },
         expr{ std::move(expr) } {}
 
     virtual std::string toString(void) const override;

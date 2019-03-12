@@ -55,7 +55,7 @@ public:
     virtual TypeId getType(const ast::Type& name) = 0;
     virtual TypeId getReturnableType(void) = 0;
     virtual Method* resolveMethod(const std::string& name,
-        const std::vector<std::shared_ptr<Type>> argumentTypes);
+        const std::vector<TypeId> argumentTypes);
 
     virtual std::string toString(void) = 0;
 };
@@ -72,8 +72,8 @@ public:
 public:
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::shared_ptr<Type> getType(const ast::Type& name);
-    virtual std::shared_ptr<Type> getReturnableType(void);
+    virtual TypeId getType(const ast::Type& name);
+    virtual TypeId getReturnableType(void);
 
     virtual std::string toString(void);
 };
@@ -85,7 +85,7 @@ class qlow::sem::NativeScope : public GlobalScope
 public:
     SymbolTable<std::shared_ptr<NativeType>> types;
 public:
-    virtual std::shared_ptr<Type> getType(const ast::Type& name);
+    virtual TypeId getType(const ast::Type& name);
 
     virtual std::string toString(void);
     
@@ -105,8 +105,8 @@ public:
     }
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::shared_ptr<Type> getType(const ast::Type& name);
-    virtual std::shared_ptr<Type> getReturnableType(void);
+    virtual TypeId getType(const ast::Type& name);
+    virtual TypeId getReturnableType(void);
     virtual std::string toString(void);
 };
 
@@ -115,7 +115,7 @@ class qlow::sem::LocalScope : public Scope
 {
     Scope& parentScope;
     SymbolTable<Variable> localVariables;
-    std::shared_ptr<Type> returnType;
+    TypeId returnType;
     Method* enclosingMethod;
 public:
     LocalScope(Scope& parentScope, Method* enclosingMethod);
@@ -126,8 +126,8 @@ public:
 
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::shared_ptr<Type> getType(const ast::Type& name);
-    virtual std::shared_ptr<Type> getReturnableType(void);
+    virtual TypeId getType(const ast::Type& name);
+    virtual TypeId getReturnableType(void);
     virtual std::string toString(void);
 };
 
@@ -144,8 +144,8 @@ public:
     
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual std::shared_ptr<Type> getType(const ast::Type& name);
-    virtual std::shared_ptr<Type> getReturnableType(void);
+    virtual TypeId getType(const ast::Type& name);
+    virtual TypeId getReturnableType(void);
     virtual std::string toString(void);
 };
 
@@ -162,7 +162,7 @@ public:
     
     
     virtual Method* getMethod(const std::string& name);
-    std::shared_ptr<Type> implementInlineOperation(const std::string&, llvm::Value* a);
+    TypeId implementInlineOperation(const std::string&, llvm::Value* a);
 };
 
 

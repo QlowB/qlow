@@ -6,6 +6,7 @@ using qlow::sem::TypeId;
 using qlow::sem::Type;
 
 
+/*
 TypeId TypeId::toPointer(void) const
 {
     return context.addType(Type::createPointerType(context, *this));
@@ -17,6 +18,7 @@ TypeId TypeId::toArray(void) const
     return context.addType(Type::createArrayType(context, *this));
 }
 
+*/
 
 Type::Kind Type::getKind(void) const
 {
@@ -60,6 +62,10 @@ bool Type::operator==(const Type& other) const
            this->type == other.type;
 }
 
+Type Type::createClassType(Context& c, Class* classType)
+{
+    return Type{ Union{ ClassType{ classType }}};
+}
 
 Type Type::createPointerType(Context& c, TypeId pointsTo)
 {

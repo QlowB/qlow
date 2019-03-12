@@ -10,16 +10,19 @@ namespace qlow::sem
     struct SemanticObject;
     class Type;
     
-    struct TypeId;
+    using TypeId = size_t;
 
     // forward declarations to other files
     struct Class;
-    struct Context;
+    class Context;
 }
 
 
 struct qlow::sem::SemanticObject
 {
+    Context& context;
+    inline SemanticObject(Context& context) :
+        context{ context } {}
     virtual ~SemanticObject(void);
     
     /**
@@ -29,6 +32,7 @@ struct qlow::sem::SemanticObject
 };
 
 
+/*
 class qlow::sem::TypeId
 {
     Context& context;
@@ -46,6 +50,7 @@ public:
     TypeId toPointer(void) const;
     TypeId toArray(void) const;
 };
+*/
 
 
 class qlow::sem::Type
@@ -93,6 +98,7 @@ public:
 
     bool operator == (const Type& other) const;
 
+    static Type createClassType(Context& c, Class* classType);
     static Type createPointerType(Context& c, TypeId pointsTo);
     static Type createArrayType(Context& c, TypeId pointsTo);
 };
@@ -162,24 +168,24 @@ public:
 
     virtual size_t hash(void) const;
     
-//    static std::shared_ptr<Type> VOID;
-//    static std::shared_ptr<Type> INTEGER;
-//    static std::shared_ptr<Type> BOOLEAN;
+//    static TypeId VOID;
+//    static TypeId INTEGER;
+//    static TypeId BOOLEAN;
 };
 
 
 class qlow::sem::PointerType : public Type
 {
-    std::shared_ptr<Type> derefType;
+    TypeId derefType;
     sem::TypeScope scope;
 public:
-    inline PointerType(std::shared_ptr<Type> derefType) :
+    inline PointerType(TypeId derefType) :
         derefType{ derefType },
         scope{ *this }
     {
     }
     
-    const std::shared_ptr<Type>& getDerefType(void) const { return derefType; }
+    const TypeId& getDerefType(void) const { return derefType; }
     
     inline bool isPointerType(void) const override { return true; }
     

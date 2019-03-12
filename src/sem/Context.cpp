@@ -30,3 +30,15 @@ std::optional<std::reference_wrapper<qlow::sem::Type>> Context::getType(TypeId t
     }
 }
 
+
+qlow::sem::TypeId Context::getPointerTo(TypeId id)
+{
+    return addType(Type::createPointerType(*this, id));
+}
+
+
+qlow::sem::TypeId Context::getArrayOf(TypeId id)
+{
+    return addType(Type::createArrayType(*this, id));
+}
+

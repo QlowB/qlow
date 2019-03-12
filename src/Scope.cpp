@@ -12,7 +12,7 @@ sem::Scope::~Scope(void)
 
 
 sem::Method* sem::Scope::resolveMethod(const std::string& name,
-    const std::vector<std::shared_ptr<Type>> argumentTypes)
+    const std::vector<TypeId> argumentTypes)
 {
     sem::Method* m = getMethod(name);
     if (!m)
@@ -166,13 +166,13 @@ std::string sem::ClassScope::toString(void)
 }
 
 
-std::shared_ptr<sem::Type> sem::ClassScope::getType(const ast::Type& name)
+sem::TypeId sem::ClassScope::getType(const ast::Type& name)
 {
     return parentScope.getType(name);
 }
 
 
-std::shared_ptr<sem::Type> sem::ClassScope::getReturnableType(void)
+sem::TypeId sem::ClassScope::getReturnableType(void)
 {
     return nullptr;
 }
