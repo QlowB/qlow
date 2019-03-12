@@ -12,8 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -g")
 
-find_package(BISON)
-find_package(FLEX)
+find_package(BISON 3.0.0 REQUIRED)
+find_package(FLEX 2.4.0 REQUIRED)
 find_package(LLVM REQUIRED CONFIG)
 
 if( NOT LLVM_FOUND )
