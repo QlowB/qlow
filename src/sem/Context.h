@@ -34,6 +34,9 @@ public:
     
     TypeId addType(Type&& type);
     std::optional<std::reference_wrapper<Type>> getType(TypeId tid);
+
+    TypeId getPointerTo(TypeId id);
+    TypeId getArrayOf(TypeId id);
 };
 
 #endif // QLOW_SEM_CONTEXT_H
