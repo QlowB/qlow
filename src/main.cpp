@@ -11,7 +11,6 @@
 
 int main(int argc, char** argv)
 {
-    std::cout << "Hi!";
     qlow::Driver driver(argc, argv);
     return driver.run();
 

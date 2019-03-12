@@ -87,7 +87,7 @@ struct qlow::sem::Class : public SemanticObject
         astNode{ astNode },
         name{ astNode->name },
         scope{ globalScope, this },
-        classType{ globalScope.getContext().addType(Type::createClassType(context, this)) },
+        classType{ globalScope.getContext().addType(Type::createClassType(globalScope.getContext(), this)) },
         llvmType{ nullptr }
     {
     }

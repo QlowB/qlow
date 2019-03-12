@@ -61,7 +61,7 @@ std::string Type::asString(void) const
 size_t Type::hash(void) const
 {
     // TODO implement
-    return 0;
+    return type.index() * 2345325 + std::hash<std::string>()(name);
 }
 
 

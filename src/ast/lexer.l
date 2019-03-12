@@ -49,8 +49,6 @@ extern "C" int qlow_parser_wrap(yyscan_t s);
     yylloc_param->last_column = yyg->yyextra_r;      \
     yylloc_param->filename = nullptr; \
   } while(0);
-#undef YY_USER_ACTION
-#define YY_USER_ACTION ;
 %}
 
 

@@ -27,6 +27,7 @@ namespace std
 class qlow::sem::Context
 {
 private:
+    std::string test = "ayayay";
     std::vector<Type> types;
     std::unordered_map<std::reference_wrapper<Type>, TypeId, std::hash<std::reference_wrapper<Type>>, std::equal_to<Type>> typesMap;
     

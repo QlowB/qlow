@@ -62,7 +62,7 @@ private:
 #ifdef DEBUGGING
     LogLevel logLevel = LogLevel::DEBUG;
 #else
-    LogLevel logLevel = LogLevel::INFO;
+    LogLevel logLevel = LogLevel::DEBUG;
 #endif
 
     static Logger instance;

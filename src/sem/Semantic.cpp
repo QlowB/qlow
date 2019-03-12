@@ -19,7 +19,7 @@ namespace sem
 std::pair<std::unique_ptr<Context>, std::unique_ptr<GlobalScope>>
     createFromAst(const qlow::ast::Ast& ast)
 {
-    std::unique_ptr<Context> context;
+    std::unique_ptr<Context> context = std::make_unique<Context>();
     Logger& logger = Logger::getInstance();
     auto& objects = ast.getObjects();
 
