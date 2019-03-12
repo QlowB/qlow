@@ -2,11 +2,30 @@
 
 #include "Context.h"
 
+using qlow::sem::TypeId;
 using qlow::sem::Type;
+
+
+TypeId TypeId::toPointer(void) const
+{
+    return context.addType(Type::createPointerType(context, *this));
+}
+
+
+TypeId TypeId::toArray(void) const
+{
+    return context.addType(Type::createArrayType(context, *this));
+}
+
 
 Type::Kind Type::getKind(void) const
 {
-    return static_cast<Kind>(type.index());
+    switch(type.index()) {
+        case 0: return Kind::NATIVE;
+        case 1: return Kind::CLASS;
+        case 2: return Kind::POINTER;
+        case 3: return Kind::ARRAY;
+    }
 }
 
 
@@ -38,12 +57,20 @@ std::string Type::asString(void) const
 bool Type::operator==(const Type& other) const
 {
     return this->name == other.name &&
-           this->kind == other.kind &&
            this->type == other.type;
 }
 
 
+Type Type::createPointerType(Context& c, TypeId pointsTo)
+{
+    return Type{ Union{ PointerType{ pointsTo }}};
+}
 
+
+Type Type::createArrayType(Context& c, TypeId pointsTo)
+{
+    return Type{ Union{ ArrayType{ pointsTo }}};
+}
 
 
 

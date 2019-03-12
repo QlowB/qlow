@@ -23,8 +23,8 @@ namespace qlow
 
 struct qlow::sem::NativeMethod : public sem::Method
 {
-    inline NativeMethod(std::shared_ptr<Type> returnType) :
-        Method{ NativeScope::getInstance(), std::move(returnType) }
+    inline NativeMethod(TypeId returnType) :
+        Method{ NativeScope::getInstance(), returnType }
     {
     }
     
@@ -37,10 +37,10 @@ struct qlow::sem::UnaryNativeMethod : public sem::NativeMethod
 {
     std::function<llvm::Value*(llvm::IRBuilder<>&, llvm::Value*)> generator;
     
-    inline UnaryNativeMethod(std::shared_ptr<Type> returnType,
+    inline UnaryNativeMethod(TypeId returnType,
         const std::function
         <llvm::Value*(llvm::IRBuilder<>&, llvm::Value*)>& generator) :
-        NativeMethod{ std::move(returnType) },
+        NativeMethod{ returnType },
         generator{ generator }
     {
     }
@@ -58,13 +58,13 @@ struct qlow::sem::BinaryNativeMethod : public sem::NativeMethod
     Func generator;
     Variable argument;
     
-    inline BinaryNativeMethod(std::shared_ptr<Type> returnType,
-                              std::shared_ptr<Type> argumentType,
+    inline BinaryNativeMethod(TypeId returnType,
+                              TypeId argumentType,
         
         Func&& generator) :
-        NativeMethod{ std::move(returnType) },
+        NativeMethod{ returnType },
         generator{ generator },
-        argument{ std::move(argumentType), "arg" }
+        argument{ argumentType, "arg" }
     {
         Method::arguments = { &argument };
     }

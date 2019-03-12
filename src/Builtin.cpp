@@ -13,7 +13,7 @@ sem::NativeScope qlow::sem::generateNativeScope(void)
     
     NativeScope scope;
     
-    std::map<std::string, NativeType::Type> natives = {
+    /*std::map<std::string, NativeType::Type> natives = {
         { "Boolean",    NativeType::BOOLEAN },
         { "Char",       NativeType::CHAR },
         { "String",     NativeType::STRING },
@@ -109,7 +109,7 @@ sem::NativeScope qlow::sem::generateNativeScope(void)
         
         scope.types.insert({ name, std::make_unique
             <std::shared_ptr<NativeType>>(std::move(native)) });
-    }
+    }*/
     
     return scope;
 }

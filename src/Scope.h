@@ -52,8 +52,8 @@ public:
     virtual ~Scope(void);
     virtual Variable* getVariable(const std::string& name) = 0;
     virtual Method* getMethod(const std::string& name) = 0;
-    virtual std::shared_ptr<Type> getType(const ast::Type& name) = 0;
-    virtual std::shared_ptr<Type> getReturnableType(void) = 0;
+    virtual TypeId getType(const ast::Type& name) = 0;
+    virtual TypeId getReturnableType(void) = 0;
     virtual Method* resolveMethod(const std::string& name,
         const std::vector<std::shared_ptr<Type>> argumentTypes);
 

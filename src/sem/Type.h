@@ -3,6 +3,7 @@
 
 #include <variant>
 #include <string>
+#include <climits>
 
 namespace qlow::sem
 {
@@ -36,8 +37,14 @@ public:
     inline TypeId(Context& context, size_t id) :
         context{ context }, id{ id } {}
 
+    inline TypeId(Context& context) :
+        context{ context }, id{ std::numeric_limits<size_t>::max() } {}
+
     inline Context& getContext(void) const { return context; }
     inline size_t getId(void) const { return id; }
+
+    TypeId toPointer(void) const;
+    TypeId toArray(void) const;
 };
 
 
@@ -73,13 +80,21 @@ private:
         TypeId targetType;
     };
 
-    std::variant<NativeType, ClassType, PointerType, ArrayType> type;
+    using Union = std::variant<NativeType, ClassType, PointerType, ArrayType>;
+    Union type;
+
+    inline Type(Union type) :
+        type{ type } {}
+
 public:
     Kind getKind(void) const;
     std::string asString(void) const;
     size_t hash(void) const;
 
     bool operator == (const Type& other) const;
+
+    static Type createPointerType(Context& c, TypeId pointsTo);
+    static Type createArrayType(Context& c, TypeId pointsTo);
 };
 
  
