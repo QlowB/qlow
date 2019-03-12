@@ -26,7 +26,7 @@ namespace qlow
 namespace gen
 {
 
-std::unique_ptr<llvm::Module> generateModule(const sem::Semantic& semantic)
+std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& semantic)
 {
     using llvm::Module;
     using llvm::Function;
@@ -47,21 +47,23 @@ std::unique_ptr<llvm::Module> generateModule(const sem::Semantic& semantic)
 
     // create llvm structs
     // TODO implement detection of circles
-    for (auto& [name, cl] : semantic.getClasses()) {
+    for (const auto& [name, cl] : semantic.getClasses()) {
         llvm::StructType* st;
         std::vector<llvm::Type*> fields;
 #ifdef DEBUGGING
         printf("creating llvm struct for %s\n", name.c_str());
 #endif
         int llvmStructIndex = 0;
-        for (auto& [name, field] : cl->fields) {
+        
+        // TODO: rewrite
+        /*for (auto& [name, field] : cl->fields) {
             field->llvmStructIndex = llvmStructIndex;
             fields.push_back(field->type->getLlvmType(context));
             if (fields[fields.size() - 1] == nullptr)
                 throw "internal error: possible circular dependency";
             
             llvmStructIndex++;
-        }
+        }*/
         st = llvm::StructType::create(context, fields, name);
         cl->llvmType = st;
     }
@@ -80,8 +82,8 @@ std::unique_ptr<llvm::Module> generateModule(const sem::Semantic& semantic)
     auto verifyStream = llvm::raw_os_ostream(logger.debug());
     
     // create all llvm functions
-    for (auto& [name, cl] : objects.classes) {
-        for (auto& [name, method] : cl->methods) {
+    for (const auto& [name, cl] : semantic.getClasses()) {
+        for (const auto& [name, method] : cl->methods) {
             Function* func = generateFunction(module.get(), method.get());
             for (auto a : as) {
                 func->addFnAttr(a);
@@ -90,7 +92,7 @@ std::unique_ptr<llvm::Module> generateModule(const sem::Semantic& semantic)
         }
     }
     
-    for (auto& [name, method] : objects.functions) {
+    for (const auto& [name, method] : semantic.getMethods()) {
         Function* func = generateFunction(module.get(), method.get());
         for (auto a : as) {
             func->addFnAttr(a);
@@ -98,8 +100,8 @@ std::unique_ptr<llvm::Module> generateModule(const sem::Semantic& semantic)
         functions.push_back(func);
     }
 
-    for (auto& [name, cl] : objects.classes){
-        for (auto& [name, method] : cl->methods) {
+    for (const auto& [name, cl] : semantic.getClasses()){
+        for (const auto& [name, method] : cl->methods) {
             if (!method->body)
                 continue;
             
@@ -116,7 +118,7 @@ std::unique_ptr<llvm::Module> generateModule(const sem::Semantic& semantic)
 #endif
         }
     }
-    for (auto& [name, method] : objects.functions) {
+    for (const auto& [name, method] : semantic.getMethods()) {
         if (!method->body)
             continue;
         
@@ -145,19 +147,22 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
     
     Type* returnType;
     if (method->returnType)
-        returnType = method->returnType->getLlvmType(context);
+        // TODO rewrite
+        ;// returnType = method->returnType->getLlvmType(context);
     else
         returnType = llvm::Type::getVoidTy(context);
     
     std::vector<Type*> argumentTypes;
     if (method->thisExpression != nullptr) {
-        Type* enclosingType = method->thisExpression->type->getLlvmType(context);
-        argumentTypes.push_back(enclosingType);
+        // TODO rewrite
+        //Type* enclosingType = method->thisExpression->type->getLlvmType(context);
+        //argumentTypes.push_back(enclosingType);
     }
     
     for (auto& arg : method->arguments) {
-        Type* argumentType = arg->type->getLlvmType(context);
-        argumentTypes.push_back(argumentType);
+        // TODO rewrite
+        //Type* argumentType = arg->type->getLlvmType(context);
+        //argumentTypes.push_back(argumentType);
     }
     
     FunctionType* funcType = FunctionType::get(
@@ -260,6 +265,7 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
     raw_fd_ostream dest(filename, errorCode, llvm::sys::fs::F_None);
     targetMachine->addPassesToEmitFile(pm, dest,
 //        llvm::LLVMTargetMachine::CGFT_ObjectFile,
+        &dest,
         llvm::TargetMachine::CGFT_ObjectFile);
 
     pm.run(*module);
@@ -302,11 +308,12 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     for (auto& [name, var] : method.body->scope.getLocals()) {
         if (var.get() == nullptr)
             throw "wtf null variable";
-        if (var->type == nullptr)
+        if (var->type == sem::NO_TYPE)
             throw "wtf null type";
         
-        llvm::AllocaInst* v = builder.CreateAlloca(var->type->getLlvmType(context));
-        var->allocaInst = v;
+        // TODO rewrite
+        //llvm::AllocaInst* v = builder.CreateAlloca(var->type->getLlvmType(context));
+        //var->allocaInst = v;
     }
     
     for (auto& statement : method.body->statements) {
@@ -324,7 +331,8 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     //Value* val = llvm::ConstantFP::get(context, llvm::APFloat(5.0));
     
     builder.SetInsertPoint(getCurrentBlock());
-    if (method.returnType->equals(sem::NativeType(sem::NativeType::Type::VOID))) {
+    //if (method.returnType->equals(sem::NativeType(sem::NativeType::Type::VOID))) {
+    if (method.returnType == sem::NO_TYPE) {
         if (!getCurrentBlock()->getTerminator())
             builder.CreateRetVoid();
     }

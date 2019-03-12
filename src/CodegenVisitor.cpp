@@ -31,7 +31,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::UnaryOperation& unop, llvm::IR
     auto value = unop.arg->accept(*this, builder);
     auto& type = unop.arg->type;
     
-    if (type->equals(sem::NativeType(sem::NativeType::Type::VOID)))
+    if (type == sem::NO_TYPE)//(type->equals(sem::NativeType(sem::NativeType::Type::VOID)))
         throw "invalid type to negate";
 
     /*
@@ -74,12 +74,14 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::
     }
     
     Value* implicitelyCastedRight = right;
-    if (!leftType->equals(*rightType))
-        implicitelyCastedRight = dynamic_cast<sem::NativeType*>(leftType.get())->generateImplicitCast(right);
+    // TODO rewritten types
+    /*if (leftType != rightType))
+        implicitelyCastedRight = dynamic_cast<sem::NativeType*>(leftType.get())->generateImplicitCast(right);*/
     
+    /*
     if (dynamic_cast<sem::NativeType*>(leftType.get())->isIntegerType()) {
         // TODO allow integer operations
-    }
+    }*/
     
    /* 
     // TODO insert type checks
@@ -110,11 +112,11 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::
 
 llvm::Value* ExpressionCodegenVisitor::visit(sem::CastExpression& cast, llvm::IRBuilder<>& builder)
 {
-    return builder.CreateCast(
+    /*return builder.CreateCast(
         llvm::Instruction::CastOps::SExt,
         cast.expression->accept(*this, builder),
-        cast.targetType->getLlvmType(builder.getContext())
-    );
+        context.getType(cast.targetType).value().getLlvmType(builder.getContext())
+    );*/
 }
 
 
@@ -127,7 +129,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::NewArrayExpression& naexpr, ll
 
 llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, llvm::IRBuilder<>& builder)
 {
-    using llvm::Value;
+    /*using llvm::Value;
     if (call.arguments.size() != call.callee->arguments.size()) {
         throw "wrong number of arguments";
     }
@@ -158,13 +160,13 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, ll
     }
     //auto returnType = call.callee->returnType;
     llvm::CallInst* callInst = builder.CreateCall(call.callee->llvmNode, arguments);
-    return callInst;
+    return callInst;*/
 }
 
 
 llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access, llvm::IRBuilder<>& builder)
 {
-    using llvm::Value;
+    /*using llvm::Value;
     using llvm::Type;
     
     Type* type = access.target->type->getLlvmType(builder.getContext());
@@ -190,7 +192,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access,
     //                               llvm::ConstantInt::get(builder.getContext(),
     //                               llvm::APInt(32, 0, false)), 0);
     return llvm::ConstantInt::get(builder.getContext(),
-                                   llvm::APInt(32, 0, false));
+                                   llvm::APInt(32, 0, false));*/
 }
 
 
@@ -273,7 +275,7 @@ llvm::Value* LValueVisitor::visit(sem::FieldAccessExpression& access, llvm::IRBu
     using llvm::Value;
     using llvm::Type;
     
-    Type* type = access.target->type->getLlvmType(builder.getContext());
+    /*Type* type = access.target->type->getLlvmType(builder.getContext());
     
     if (type == nullptr)
         throw "no access type";
@@ -289,7 +291,7 @@ llvm::Value* LValueVisitor::visit(sem::FieldAccessExpression& access, llvm::IRBu
         llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false))
     };
     Value* ptr = builder.CreateGEP(type, target, indexList);
-    return ptr;
+    return ptr;*/
 }
 
 
@@ -453,9 +455,9 @@ llvm::Value* StatementVisitor::visit(sem::FeatureCallStatement& fc, gen::Functio
 llvm::Value* CastGenerator::generateCast(llvm::Value* toCast,
                                           llvm::IRBuilder<>& b)
 {
-    return b.CreateCast(
+    /*return b.CreateCast(
         llvm::Instruction::CastOps::BitCast, toCast,
-        cast.to->getLlvmType(b.getContext()));
+        cast.to->getLlvmType(b.getContext()));*/
 }
 
 

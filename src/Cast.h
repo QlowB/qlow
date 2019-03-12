@@ -2,6 +2,7 @@
 #define QLOW_SEM_CAST_H
 
 #include <memory>
+#include "Type.h"
 
 namespace qlow
 {
@@ -18,18 +19,18 @@ namespace qlow
 class qlow::sem::Cast
 {
 public:
-    std::weak_ptr<Type> to;
+    TypeId to;
     
     bool isExplicit;
     
-    inline Cast(std::weak_ptr<Type> to) :
-        to{ std::move(to) },
+    inline Cast(TypeId to) :
+        to{ to },
         isExplicit{ true }
     {
     }
     
-    inline Cast(std::weak_ptr<Type> to, bool isExplicit) :
-        to{ std::move(to) },
+    inline Cast(TypeId to, bool isExplicit) :
+        to{ to },
         isExplicit{ isExplicit }
     {
     }

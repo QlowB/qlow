@@ -16,10 +16,10 @@ namespace qlow
 namespace sem
 {
 
-std::unique_ptr<GlobalScope>
+std::pair<std::unique_ptr<Context>, std::unique_ptr<GlobalScope>>
     createFromAst(const qlow::ast::Ast& ast)
 {
-    
+    std::unique_ptr<Context> context;
     Logger& logger = Logger::getInstance();
     auto& objects = ast.getObjects();
 
@@ -28,7 +28,7 @@ std::unique_ptr<GlobalScope>
 #endif
 
     // create classes
-    std::unique_ptr<sem::GlobalScope> globalScope = std::make_unique<sem::GlobalScope>();
+    std::unique_ptr<sem::GlobalScope> globalScope = std::make_unique<sem::GlobalScope>(*context);
     for (auto& astObject : objects) {
         if (auto* cls = dynamic_cast<ast::Class*>(astObject.get()); cls) {
             globalScope->classes[cls->name] = std::make_unique<sem::Class>(cls, *globalScope);
@@ -91,7 +91,7 @@ std::unique_ptr<GlobalScope>
     for (auto& [name, semClass] : globalScope->classes) {
         for (auto& [name, method] : semClass->methods) {
             if (method->astNode->body) { // if not declaration
-                method->containingType = semClass.get();
+                method->containingClass = semClass.get();
                 method->generateThisExpression();
                 method->body = unique_dynamic_cast<sem::DoEndBlock>(method->astNode->body->accept(av, method->scope));
             }
@@ -107,7 +107,7 @@ std::unique_ptr<GlobalScope>
     printf("created all method bodies\n");
 #endif
     
-    return globalScope;
+    return std::make_pair(std::move(context), std::move(globalScope));
 }
 
 }
@@ -240,14 +240,16 @@ std::string BinaryOperation::toString(void) const
 
 std::string CastExpression::toString(void) const
 {
+    // TODO remove optional unwrapping
     return "CastExpression[" + expression->toString() + " to " +
-        targetType->toString() + "]";
+        context.getType(targetType).value().get().asString() + "]";
 }
 
 
 std::string NewArrayExpression::toString(void) const
 {
-    return "NewArrayExpression[" + arrayType->toString() + "; " +
+    // TODO remove optional unwrapping
+    return "NewArrayExpression[" + context.getType(arrayType).value().get().asString() + "; " +
         length->toString() + "]";
 }
 

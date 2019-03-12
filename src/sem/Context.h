@@ -17,7 +17,7 @@ namespace qlow::sem
 namespace std
 {
     template<>
-    struct std::hash<std::reference_wrapper<qlow::sem::Type>>
+    struct hash<std::reference_wrapper<qlow::sem::Type>>
     {
         size_t operator() (const std::reference_wrapper<qlow::sem::Type>& t) const;
     };
@@ -27,8 +27,8 @@ namespace std
 class qlow::sem::Context
 {
 private:
-    std::vector<std::unique_ptr<Type>> types;
-    std::unordered_map<std::reference_wrapper<Type>, TypeId> typesMap;
+    std::vector<Type> types;
+    std::unordered_map<std::reference_wrapper<Type>, TypeId, std::hash<std::reference_wrapper<Type>>, std::equal_to<Type>> typesMap;
     
 public:
     

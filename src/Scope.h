@@ -30,7 +30,6 @@ namespace qlow
         struct Class;
         struct Method;
         struct Variable;
-        class Cast;
 
         class Scope;
         class GlobalScope;
@@ -48,7 +47,12 @@ namespace qlow
 
 class qlow::sem::Scope
 {
+protected:
+    Context& context;
 public:
+    inline Scope(Context& context) :
+        context{ context } {}
+
     virtual ~Scope(void);
     virtual Variable* getVariable(const std::string& name) = 0;
     virtual Method* getMethod(const std::string& name) = 0;
@@ -58,6 +62,8 @@ public:
         const std::vector<TypeId> argumentTypes);
 
     virtual std::string toString(void) = 0;
+
+    inline Context& getContext(void) const { return context; }
 };
 
 
@@ -66,14 +72,20 @@ class qlow::sem::GlobalScope : public Scope
 public:
     SymbolTable<Class> classes;
     SymbolTable<Method> functions;
-    OwningList<Cast> casts;
+    //OwningList<Cast> casts;
 
     Context typeContext;
 public:
+    inline GlobalScope(Context& context) :
+        Scope{ context } {}
+
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
     virtual TypeId getType(const ast::Type& name);
     virtual TypeId getReturnableType(void);
+
+    inline const SymbolTable<Class>& getClasses(void) const { return classes; }
+    inline const SymbolTable<Method>& getMethods(void) const { return functions; }
 
     virtual std::string toString(void);
 };
@@ -83,8 +95,11 @@ class qlow::sem::NativeScope : public GlobalScope
 {
     static NativeScope instance;
 public:
-    SymbolTable<std::shared_ptr<NativeType>> types;
+    std::unordered_map<std::string, TypeId> types;
 public:
+    inline NativeScope(Context& context) :
+        GlobalScope{ context } {}
+
     virtual TypeId getType(const ast::Type& name);
 
     virtual std::string toString(void);
@@ -100,6 +115,7 @@ class qlow::sem::ClassScope : public Scope
     Class* classRef;
 public:
     inline ClassScope(Scope& parentScope, Class* classRef) :
+        Scope{ parentScope.getContext() },
         parentScope{ parentScope }, classRef{ classRef }
     {
     }
@@ -135,9 +151,10 @@ public:
 class qlow::sem::TypeScope : public Scope
 {
 protected:
-    Type& type;
+    TypeId type;
 public:
-    inline TypeScope(Type& type) :
+    inline TypeScope(Context& context, TypeId type) :
+        Scope{ context },
         type{ type }
     {
     }
@@ -152,10 +169,10 @@ public:
 
 class qlow::sem::NativeTypeScope : public TypeScope
 {
-    NativeType& nativeType;
+    TypeId nativeType;
 public:
-    inline NativeTypeScope(NativeType& type) :
-        TypeScope{ (Type&) type },
+    inline NativeTypeScope(Context& context, TypeId type) :
+        TypeScope{ context, type },
         nativeType{ type }
     {
     }

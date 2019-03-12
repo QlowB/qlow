@@ -39,8 +39,9 @@ struct qlow::Options
 class qlow::Driver
 {
     Options options;
-    std::unique_ptr<qlow::ast::Ast> ast = nullptr;
-    std::unique_ptr<qlow::sem::GlobalScope> semClasses = nullptr;
+    std::unique_ptr<ast::Ast> ast = nullptr;
+    std::unique_ptr<sem::Context> context = nullptr;
+    std::unique_ptr<sem::GlobalScope> semClasses = nullptr;
 public:
     Driver(void) = delete;
     Driver(int argc, char** argv);

@@ -197,7 +197,7 @@ bool Driver::semanticStage(void)
     bool errorOccurred = false;
 
     try {
-        this->semClasses = qlow::sem::createFromAst(*this->ast);
+        std::tie(this->context, this->semClasses) = qlow::sem::createFromAst(*this->ast);
     }
     catch(SemanticError& se) {
         se.print(logger);

@@ -36,19 +36,20 @@ std::string Type::asString(void) const
     return std::visit(
         [&] (const auto& t) -> std::string {
             using T = std::decay_t<decltype(t)>;
-            if constexpr (std::is_same<T, NativeType>) {
+            if constexpr (std::is_same<T, NativeType>::value) {
                 return this->name;
             }
-            else if constexpr (std::is_same<T, ClassType>) {
+            else if constexpr (std::is_same<T, ClassType>::value) {
                 return this->name;
             }
-            else if constexpr (std::is_same<T, PointerType>) {
-                auto& context = t.targetType.getContext();
-                return context.getType(t.targetType) + "*";
+            else if constexpr (std::is_same<T, PointerType>::value) {
+                // TODO rewrite
+                //return context.getType(t.targetType) + "*";
+                return "*";
             }
-            else if constexpr (std::is_same<T, ArrayType>) {
-                auto& context = t.targetType.getContext();
-                return "[" + context.getType(t.targetType) + "]";
+            else if constexpr (std::is_same<T, ArrayType>::value) {
+                //return "[" + context.getType(t.targetType) + "]";
+                return "[]";
             }
         }
         ,
@@ -56,16 +57,50 @@ std::string Type::asString(void) const
     );
 }
 
+
+size_t Type::hash(void) const
+{
+    // TODO implement
+    return 0;
+}
+
+
 bool Type::operator==(const Type& other) const
 {
     return this->name == other.name &&
            this->type == other.type;
 }
 
+
+qlow::sem::Class* Type::getClass(void) const
+{
+    try {
+        return std::get<ClassType>(type).classType;
+    }
+    catch(std::bad_variant_access& bva) {
+        return nullptr;
+    }
+}
+
+
+llvm::Type* Type::getLLVMType(llvm::LLVMContext* context)
+{
+    // TODO implement
+    return nullptr;
+}
+
+
+Type Type::createNativeType(Context& c, std::string name)
+{
+    return Type{ Union{ NativeType{} }, std::move(name) };
+}
+
+
 Type Type::createClassType(Context& c, Class* classType)
 {
     return Type{ Union{ ClassType{ classType }}};
 }
+
 
 Type Type::createPointerType(Context& c, TypeId pointsTo)
 {

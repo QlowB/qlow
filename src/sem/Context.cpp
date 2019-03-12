@@ -10,11 +10,11 @@ size_t std::hash<std::reference_wrapper<qlow::sem::Type>>::operator() (const std
 
 
 qlow::sem::TypeId Context::addType(Type&& type) {
-    if (typesMap.contains(type)) {
+    if (typesMap.find(type) != typesMap.end()) {
         return typesMap[type];
     }
     else {
-        types.emplace_back(type);
+        types.push_back(std::move(type));
         return types.size() - 1;
     }
 }
@@ -23,7 +23,7 @@ qlow::sem::TypeId Context::addType(Type&& type) {
 std::optional<std::reference_wrapper<qlow::sem::Type>> Context::getType(TypeId tid)
 {
     if (tid >= 0 && tid <= types.size()) {
-        return std::make_optional<std::reference_wrapper<qlow::sem::Type>>(*types[tid]);
+        return std::make_optional<std::reference_wrapper<qlow::sem::Type>>(types[tid]);
     }
     else {
         return std::nullopt;

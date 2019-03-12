@@ -5,13 +5,13 @@
 using namespace qlow;
 
 
-sem::NativeScope qlow::sem::generateNativeScope(void)
+sem::NativeScope qlow::sem::generateNativeScope(Context& context)
 {
     using sem::Class;
     using sem::NativeType;
     using sem::NativeScope;
     
-    NativeScope scope;
+    NativeScope scope{ context };
     
     /*std::map<std::string, NativeType::Type> natives = {
         { "Boolean",    NativeType::BOOLEAN },

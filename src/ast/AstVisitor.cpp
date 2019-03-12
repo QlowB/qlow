@@ -27,7 +27,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureDeclara
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclaration& ast, sem::Scope& scope)
 {
-    auto f = std::make_unique<sem::Field>();
+    auto f = std::make_unique<sem::Field>(scope.getContext());
     f->name = ast.name;
     auto type = scope.getType(*ast.type);
     if (type) {
@@ -78,7 +78,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefiniti
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::VariableDeclaration& ast, sem::Scope& scope)
 {
-    auto v = std::make_unique<sem::Variable>();
+    auto v = std::make_unique<sem::Variable>(scope.getContext());
     v->name = ast.name;
     auto type = scope.getType(*ast.type);
     if (type) {
@@ -117,7 +117,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
                 throw SemanticError(SemanticError::UNKNOWN_TYPE,
                                     nvs->type->asString(),
                                     nvs->type->pos);
-            auto var = std::make_unique<sem::Variable>(std::move(type), nvs->name);
+            auto var = std::make_unique<sem::Variable>(scope.getContext(), std::move(type), nvs->name);
             body->scope.putVariable(nvs->name, std::move(var));
             continue;
         }
@@ -192,9 +192,10 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
     sem::Method* method;
     sem::Variable* var;
     
+    // TODO rewrite types
     if (target) {
-        method = target->type->getScope().getMethod(ast.name);
-        var = target->type->getScope().getVariable(ast.name);
+        //method = target->type->getScope().getMethod(ast.name);
+        //var = target->type->getScope().getVariable(ast.name);
     }
     else {
         method = scope.getMethod(ast.name);
@@ -217,11 +218,12 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
                 auto argument = arg->accept(*this, scope);
                 if (sem::Expression* expr =
                         dynamic_cast<sem::Expression*>(argument.get()); expr) {
-                    if (!expr->type->equals(*argTypeShouldHave))
+                    if (expr->type != argTypeShouldHave)
                         throw SemanticError(SemanticError::TYPE_MISMATCH,
-                            "argument passed to function has wrong type: '" +
-                            expr->type->asString() + "' instead of '" +
-                            argTypeShouldHave->asString() + "'",
+                            "argument passed to function has wrong type",
+                            // TODO rewrite types
+                            //expr->type->asString() + "' instead of '" +
+                            //argTypeShouldHave->asString() + "'",
                             arg->pos
                         );
                     fce->arguments.push_back(
@@ -276,21 +278,23 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::AssignmentStatement& ast, sem::Scope& scope)
 {
-    auto as = std::make_unique<sem::AssignmentStatement>();
+    auto as = std::make_unique<sem::AssignmentStatement>(scope.getContext());
     
 //    as->value = unique_dynamic_cast<sem::Expression>(visit(*ast.expr, classes));
 //    as->target = unique_dynamic_cast<sem::Expression>(visit(*ast.target, classes));
     as->value = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
     as->target = unique_dynamic_cast<sem::Expression>(ast.target->accept(*this, scope));
     
-    if (as->target->type->equals(*as->value->type)) {
+    if (as->target->type == as->value->type) {
         return as;
     }
     else {
         throw SemanticError(
             SemanticError::TYPE_MISMATCH,
-            "Can't assign expression of type '" + as->value->type->asString() +
-            "' to value of type '" + as->target->type->asString() + "'.",
+            "Can't assign expression of type to type.",
+            // TODO rewrite
+            //"Can't assign expression of type '" + as->value->type->asString() +
+            //"' to value of type '" + as->target->type->asString() + "'.",
             ast.pos
         );
     }
@@ -301,9 +305,9 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::ReturnStatemen
 {
     auto shouldReturn = scope.getReturnableType();
     
-    if (shouldReturn == nullptr) {
+    if (shouldReturn == sem::NO_TYPE) {
         if (ast.expr == nullptr)
-            return std::make_unique<sem::ReturnStatement>();
+            return std::make_unique<sem::ReturnStatement>(scope.getContext());
         else
             throw SemanticError(
                 SemanticError::INVALID_RETURN_TYPE,
@@ -321,16 +325,18 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::ReturnStatemen
     
     auto returnValue = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
     
-    if (!shouldReturn->equals(*returnValue->type)) {
+    if (shouldReturn != returnValue->type) {
         throw SemanticError(
             SemanticError::INVALID_RETURN_TYPE,
-            "return value must be of type '" + shouldReturn->asString() + "' (not '" +
-            returnValue->type->asString() + "')",
+            //TODO rewrite
+            "wrong return value",
+            //"return value must be of type '" + shouldReturn->asString() + "' (not '" +
+            //returnValue->type->asString() + "')",
             ast.expr->pos
         );
     }
     
-    auto as = std::make_unique<sem::ReturnStatement>();
+    auto as = std::make_unique<sem::ReturnStatement>(scope.getContext());
     as->value = std::move(returnValue);
     return as;
 }
@@ -349,7 +355,9 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(
     auto& targetType = target->type;
     
     if (!target->isLValue()) {
-        throw NotLValue(targetType->asString(), ast.pos);
+        // TODO rewrite
+        //throw NotLValue(targetType->asString(), ast.pos);
+        throw NotLValue("type", ast.pos);
     }
     
     return std::make_unique<sem::AddressExpression>(std::move(target));
@@ -358,14 +366,14 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::IntConst& ast, sem::Scope& scope)
 {
-    return std::make_unique<sem::IntConst>(ast.value);
+    return std::make_unique<sem::IntConst>(scope.getContext(), ast.value);
 }
 
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::UnaryOperation& ast, sem::Scope& scope)
 {
     auto argument = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
-    auto ret = std::make_unique<sem::UnaryOperation>(argument->type);
+    auto ret = std::make_unique<sem::UnaryOperation>(scope.getContext(), argument->type);
             // TODO not a feasible assumption
     ret->opString = ast.opString;
     ret->side = ast.side;
@@ -379,6 +387,8 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
     auto leftEval = unique_dynamic_cast<sem::Expression>(ast.left->accept(*this, scope));
     auto rightEval = unique_dynamic_cast<sem::Expression>(ast.right->accept(*this, scope));
     
+    throw "TODO implement";
+    /*
     sem::Method* operationMethod = leftEval->type->getScope().resolveMethod(
         ast.opString, { rightEval->type }
     );
@@ -398,13 +408,13 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
     ret->opString = ast.opString;
     ret->left = std::move(leftEval);
     ret->right = std::move(rightEval);
-    return ret;
+    return ret;*/
 }
 
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::NewArrayExpression& ast, sem::Scope& scope)
 {
-    auto ret = std::make_unique<sem::NewArrayExpression>(scope.getType(*ast.type));
+    auto ret = std::make_unique<sem::NewArrayExpression>(scope.getContext(), scope.getType(*ast.type));
     return ret;
 }
 

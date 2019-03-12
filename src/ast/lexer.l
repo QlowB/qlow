@@ -33,29 +33,24 @@
 
 
 #define yylval qlow_parser_lval
+#define YY_EXTRA_TYPE size_t
 #define SET_TOKEN(t) (yylval_param->token = t)
 #define SET_STRING (yylval_param->string = new std::string(yytext, yyleng))
 
-/*extern "C" int yywrap(yyscan_t s)
-{
-    return 1; /* do not continue on EOF */
-/*}*/
+extern "C" int qlow_parser_wrap(yyscan_t s);
 
-
-size_t offset;
-extern QLOW_PARSER_LTYPE qlow_parser_lloc;
-extern const char* qlow_parser_filename;
-
+// TODO rewrite
 #define YY_USER_ACTION                          \
   do {                                          \
-    qlow_parser_lloc.first_line = yylineno;     \
-    qlow_parser_lloc.first_column = offset;     \
-    offset += yyleng;                           \
-    qlow_parser_lloc.last_line = yylineno;      \
-    qlow_parser_lloc.last_column = offset;      \
-    qlow_parser_lloc.filename = qlow_parser_filename; \
+    yylloc_param->first_line = yylineno;     \
+    yylloc_param->first_column = yyg->yyextra_r;     \
+    yyg->yyextra_r += yyleng;                           \
+    yylloc_param->last_line = yylineno;      \
+    yylloc_param->last_column = yyg->yyextra_r;      \
+    yylloc_param->filename = nullptr; \
   } while(0);
-
+#undef YY_USER_ACTION
+#define YY_USER_ACTION ;
 %}
 
 
@@ -75,15 +70,15 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 
 <COMMENT>"/*"           commentDepth++;
 <COMMENT>"*/"           if ((--commentDepth) == 0) { BEGIN(INITIAL); };
-<COMMENT>\n             offset = 0;
+<COMMENT>\n             yyg->yyextra_r = 0;
 <COMMENT>.              ; // inside comment, ignore everything
 
-<LINE_COMMENT>\n        offset = 0; yy_pop_state(yyscanner); //yy_push_state(INITIAL);
+<LINE_COMMENT>\n        yyg->yyextra_r = 0; yy_pop_state(yyscanner); //yy_push_state(INITIAL);
 <LINE_COMMENT>.         ; // inside comment, ignore everything
 
 <STRING>"\""            yy_pop_state(yyscanner);
 <STRING>[^\"^\n]*          printf("%s\n", std::string(yytext, yyleng).c_str());
-<STRING>\n              offset = 0; SET_STRING; return UNEXPECTED_SYMBOL; 
+<STRING>\n              yyg->yyextra_r = 0; SET_STRING; return UNEXPECTED_SYMBOL; 
 
 "/*"                    yy_push_state(COMMENT, yyscanner); commentDepth = 1;
 "//"                    yy_push_state(LINE_COMMENT, yyscanner);
@@ -91,8 +86,8 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 
 
 [\t ]                   ; // Space or tab ignored
-<METHOD>\n              offset = 0; return SET_TOKEN(NEW_LINE);
-\n                      offset = 0; //return SET_TOKEN(NEW_LINE);
+<METHOD>\n              yyg->yyextra_r = 0; return SET_TOKEN(NEW_LINE);
+\n                      yyg->yyextra_r = 0; //return SET_TOKEN(NEW_LINE);
 
 "class"                 return SET_TOKEN(CLASS);
 "do"                    yy_push_state(METHOD, yyscanner); return SET_TOKEN(DO);

@@ -5,12 +5,19 @@
 #include <string>
 #include <climits>
 
+namespace llvm {
+    class Value;
+    class Type;
+    class LLVMContext;
+}
+
 namespace qlow::sem
 {
     struct SemanticObject;
     class Type;
     
     using TypeId = size_t;
+    const TypeId NO_TYPE = std::numeric_limits<TypeId>::max();
 
     // forward declarations to other files
     struct Class;
@@ -68,21 +75,25 @@ private:
 
     struct NativeType
     {
+        inline bool operator==(const NativeType& other) const { return true; }
     };
 
     struct ClassType
     {
         Class* classType;
+        inline bool operator==(const ClassType& other) const { return classType == other.classType; }
     };
 
     struct PointerType
     {
         TypeId targetType;
+        inline bool operator==(const PointerType& other) const { return targetType == other.targetType; }
     };
 
     struct ArrayType 
     {
         TypeId targetType;
+        inline bool operator==(const ArrayType& other) const { return targetType == other.targetType; }
     };
 
     using Union = std::variant<NativeType, ClassType, PointerType, ArrayType>;
@@ -91,6 +102,9 @@ private:
     inline Type(Union type) :
         type{ type } {}
 
+    inline Type(Union type, std::string name) :
+        name{ std::move(name) }, type{ type } {}
+
 public:
     Kind getKind(void) const;
     std::string asString(void) const;
@@ -98,6 +112,11 @@ public:
 
     bool operator == (const Type& other) const;
 
+    Class* getClass(void) const;
+
+    llvm::Type* getLLVMType(llvm::LLVMContext* context);
+
+    static Type createNativeType(Context& c, std::string name);
     static Type createClassType(Context& c, Class* classType);
     static Type createPointerType(Context& c, TypeId pointsTo);
     static Type createArrayType(Context& c, TypeId pointsTo);
@@ -162,7 +181,7 @@ public:
     virtual std::string asString(void) const = 0;
     virtual Scope& getScope(void) = 0;
     
-    virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const = 0;
+    virtual y = 0;
     
     virtual bool equals(const Type& other) const;
 

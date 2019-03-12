@@ -61,6 +61,12 @@ int qlow_parser_error(qlow::CodePosition* loc, yyscan_t scan,
 }
 
 
+extern "C" int qlow_parser_wrap(yyscan_t s)
+{
+    return 1; /* do not continue on EOF */
+}
+
+
 # define YYLLOC_DEFAULT(Cur, Rhs, N)                      \
 do                                                        \
   if (N)                                                  \
@@ -188,7 +194,7 @@ while (0)
 %destructor { } <token>
 //%destructor { if ($$) delete $$ } <op>
 //%destructor { } <topLevel> // don't delete everything ;)
-%destructor { if ($$) delete $$; } <*>
+//%destructor { if ($$) delete $$; } <*>
 
 %left ASSIGN
 %left CUSTOM_OPERATOR

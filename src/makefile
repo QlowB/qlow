@@ -8,7 +8,7 @@ LLVMCONFIG := llvm-config
 INCLUDEDIRS := -I$(shell $(LLVMCONFIG) --includedir) -I.. -Isem/ -Iast/ -I.
 CXXFLAGS := -std=c++17 $(INCLUDEDIRS) -w # -Wall -Wextra
 
-ifdef STATIC
+ifndef STATIC
 LDFLAGS := $(shell $(LLVMCONFIG) --link-static --ldflags --system-libs --libs all) -static -dead-strip -s
 else
 LDFLAGS := $(shell $(LLVMCONFIG) --ldflags --system-libs --libs all)
@@ -38,7 +38,7 @@ debug: all
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-ast/syntax.o: ast/syntax.cpp
+ast/syntax.o: ast/syntax.cpp ast/lexer.cpp
 	$(CXX) -c -o $@ $< $(CXXFLAGS) -fno-strict-aliasing
 
 %.o: %.cpp

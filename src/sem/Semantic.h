@@ -19,7 +19,7 @@ namespace qlow
 {
     namespace sem
     {
-        std::unique_ptr<GlobalScope>
+        std::pair<std::unique_ptr<Context>, std::unique_ptr<GlobalScope>>
             createFromAst(const qlow::ast::Ast& ast);
 
         struct Class;
@@ -81,20 +81,20 @@ struct qlow::sem::Class : public SemanticObject
     /// \brief generated during llvm code generation, not availab
     llvm::Type* llvmType;
 
-    inline Class(Context& context, qlow::ast::Class* astNode,
+    inline Class(qlow::ast::Class* astNode,
             GlobalScope& globalScope) :
-        SemanticObject{ context },
+        SemanticObject{ globalScope.getContext() },
         astNode{ astNode },
         name{ astNode->name },
         scope{ globalScope, this },
-        classType{ context.addType(Type::createClassType(context, this)) },
+        classType{ globalScope.getContext().addType(Type::createClassType(context, this)) },
         llvmType{ nullptr }
     {
     }
 
-    inline Class(Context& context, const std::string& nativeName,
+    inline Class(const std::string& nativeName,
             GlobalScope& globalScope) :
-        SemanticObject{ context },
+        SemanticObject{ globalScope.getContext() },
         astNode{ nullptr },
         name{ nativeName },
         scope{ globalScope, this },
@@ -116,7 +116,8 @@ struct qlow::sem::Variable : public SemanticObject
     /// instance of this variable. If it is a parameter, the parameter value
     llvm::Value* allocaInst;
     
-    Variable(void) = default;
+    inline Variable(Context& context) :
+        SemanticObject{ context } {}
     inline Variable(Context& context, TypeId type, const std::string& name) :
         SemanticObject{ context },
         type{ type },
@@ -131,6 +132,9 @@ struct qlow::sem::Variable : public SemanticObject
 
 struct qlow::sem::Field : public Variable
 {
+    inline Field(Context& context) :
+        Variable{ context } {}
+
     int llvmStructIndex;
     virtual std::string toString(void) const override;
 };
@@ -150,9 +154,9 @@ struct qlow::sem::Method : public SemanticObject
 
     llvm::Function* llvmNode;
 
-    inline Method(Context& context, Scope& parentScope,
+    inline Method(Scope& parentScope,
             TypeId returnType) :
-        SemanticObject{ context },
+        SemanticObject{ parentScope.getContext() },
         containingClass{ nullptr },
         returnType{ returnType },
         thisExpression{ nullptr },
@@ -161,9 +165,10 @@ struct qlow::sem::Method : public SemanticObject
     {
     }
     
-    /*
+    
     inline Method(ast::MethodDefinition* astNode, Scope& parentScope) :
-        containingType{ nullptr },
+        SemanticObject{ parentScope.getContext() },
+        containingClass{ nullptr },
         returnType{ parentScope.getReturnableType()},
         astNode{ astNode },
         name{ astNode->name },
@@ -171,7 +176,7 @@ struct qlow::sem::Method : public SemanticObject
         thisExpression{ nullptr },
         body{ nullptr }
     {
-    }*/
+    }
     
     void generateThisExpression(void);
     
@@ -211,8 +216,8 @@ struct qlow::sem::DoEndBlock : public Statement
     LocalScope scope;
     OwningList<Statement> statements;
 
-    inline DoEndBlock(Context& context, LocalScope& parentScope) :
-        Statement{ context },
+    inline DoEndBlock(LocalScope& parentScope) :
+        Statement{ parentScope.getContext() },
         scope{ parentScope } {}
     
     virtual llvm::Value* accept(qlow::StatementVisitor&, gen::FunctionGenerator&) override;
@@ -470,7 +475,7 @@ struct qlow::sem::IntConst : public Expression
     unsigned long long value;
 
     inline IntConst(Context& context, unsigned long long value) :
-        Expression{ context.addType(/* integer */) },
+        Expression{ context, context.addType(Type::createNativeType(context, "integer")) },
         value{ value }
     {
     }
