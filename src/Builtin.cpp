@@ -8,10 +8,20 @@ using namespace qlow;
 sem::NativeScope qlow::sem::generateNativeScope(Context& context)
 {
     using sem::Class;
-    using sem::NativeType;
     using sem::NativeScope;
     
     NativeScope scope{ context };
+
+    std::map<std::string, Type::Native> natives = {
+        { "Void",       Type::Native::VOID },
+        { "Boolean",    Type::Native::BOOLEAN },
+        { "Integer",    Type::Native::INTEGER },
+    };
+
+    for (auto [name, type] : natives) {
+        TypeId id = context.addType(Type::createNativeType(context, name, type));
+        scope.addNativeType(name, type, id);
+    }
     
     /*std::map<std::string, NativeType::Type> natives = {
         { "Boolean",    NativeType::BOOLEAN },
@@ -114,7 +124,7 @@ sem::NativeScope qlow::sem::generateNativeScope(Context& context)
     return scope;
 }
 
-
+/*
 llvm::Value* qlow::sem::UnaryNativeMethod::generateCode(llvm::IRBuilder<>& builder,
     std::vector<llvm::Value*> arguments)
 {
@@ -132,7 +142,7 @@ llvm::Value* qlow::sem::BinaryNativeMethod::generateCode(llvm::IRBuilder<>& buil
     return generator(builder, arguments[0], arguments[1]);
 }
 
-
+*/
 
 
 

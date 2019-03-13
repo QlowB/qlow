@@ -170,11 +170,11 @@ struct qlow::sem::Method : public SemanticObject
         SemanticObject{ parentScope.getContext() },
         containingClass{ nullptr },
         returnType{ parentScope.getReturnableType()},
-        astNode{ astNode },
         name{ astNode->name },
-        scope{ parentScope, this },
+        astNode{ astNode },
         thisExpression{ nullptr },
-        body{ nullptr }
+        body{ nullptr },
+        scope{ parentScope, this }
     {
     }
     
@@ -332,7 +332,7 @@ struct qlow::sem::LocalVariableExpression : public Expression
     inline virtual bool isLValue(void) const override { return true; }
 
     virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
-    virtual llvm::Value* accept(LValueVisitor& visitor, llvm::IRBuilder<>& arg2);
+    virtual llvm::Value* accept(LValueVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     virtual std::string toString(void) const override;
 };
 
@@ -475,7 +475,7 @@ struct qlow::sem::IntConst : public Expression
     unsigned long long value;
 
     inline IntConst(Context& context, unsigned long long value) :
-        Expression{ context, context.addType(Type::createNativeType(context, "integer")) },
+        Expression{ context, context.getNativeTypeId(Type::Native::INTEGER) },
         value{ value }
     {
     }

@@ -62,6 +62,7 @@ public:
 
 class qlow::sem::Type
 {
+    friend class Context;
 public:
     enum class Kind
     {
@@ -70,12 +71,21 @@ public:
         POINTER,
         ARRAY
     };
+
+    enum class Native
+    {
+        VOID,
+        BOOLEAN,
+        INTEGER,
+    };
+
 private:
     std::string name;
 
     struct NativeType
     {
-        inline bool operator==(const NativeType& other) const { return true; }
+        Native type;
+        inline bool operator==(const NativeType& other) const { return type == other.type; }
     };
 
     struct ClassType
@@ -116,7 +126,7 @@ public:
 
     llvm::Type* getLLVMType(llvm::LLVMContext* context);
 
-    static Type createNativeType(Context& c, std::string name);
+    static Type createNativeType(Context& c, std::string name, Native type);
     static Type createClassType(Context& c, Class* classType);
     static Type createPointerType(Context& c, TypeId pointsTo);
     static Type createArrayType(Context& c, TypeId pointsTo);

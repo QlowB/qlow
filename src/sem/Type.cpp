@@ -1,6 +1,7 @@
 #include "Type.h"
 
 #include "Context.h"
+#include "ErrorReporting.h"
 
 using qlow::sem::TypeId;
 using qlow::sem::Type;
@@ -28,6 +29,8 @@ Type::Kind Type::getKind(void) const
         case 2: return Kind::POINTER;
         case 3: return Kind::ARRAY;
     }
+    // should never arrive here
+    throw InternalError(InternalError::INVALID_TYPE);
 }
 
 
@@ -90,9 +93,9 @@ llvm::Type* Type::getLLVMType(llvm::LLVMContext* context)
 }
 
 
-Type Type::createNativeType(Context& c, std::string name)
+Type Type::createNativeType(Context& c, std::string name, Native type)
 {
-    return Type{ Union{ NativeType{} }, std::move(name) };
+    return Type{ Union{ NativeType{ type } }, std::move(name) };
 }
 
 

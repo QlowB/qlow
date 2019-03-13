@@ -33,6 +33,7 @@ using YYSTYPE = QLOW_PARSER_STYPE;
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
 #endif
+//#define qlow_parser_lex(a,b,c)  (({ auto v = qlow_parser_lex(a, b, c); v; }))
 }
 
 %{
@@ -75,7 +76,7 @@ do                                                        \
       (Cur).first_column = YYRHSLOC(Rhs, 1).first_column; \
       (Cur).last_line    = YYRHSLOC(Rhs, N).last_line;    \
       (Cur).last_column  = YYRHSLOC(Rhs, N).last_column;  \
-      (Cur).filename     = YYRHSLOC(Rhs, 1).filename;     \
+      (Cur).filename     = parser.getFilename().c_str();  \
     }                                                     \
   else                                                    \
     {                                                     \
@@ -83,7 +84,7 @@ do                                                        \
         YYRHSLOC(Rhs, 0).last_line;                       \
       (Cur).first_column = (Cur).last_column =            \
         YYRHSLOC(Rhs, 0).last_column;                     \
-      (Cur).filename = YYRHSLOC(Rhs, 0).filename;         \
+      (Cur).filename = parser.getFilename().c_str();      \
     }                                                     \
 while (0)
 %}
@@ -107,10 +108,11 @@ while (0)
 {
     // NOTE: the filename only lives as long as the parser.
     // Do not use after deletion of the parser.
-    @$.filename = parser.getFilename().c_str();
+    const auto* filename = parser.getFilename().c_str();
+    @$.filename = filename;
+    qlow_parser_set_extra(parser.getFilename(), scanner);
 };
 
-//%define api.location.type {qlow::CodePosition}
 
 %union {
     qlow::ast::Ast* topLevel;

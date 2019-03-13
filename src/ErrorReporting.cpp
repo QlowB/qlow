@@ -4,13 +4,14 @@
 #include <fstream>
 #include <sstream>
 
+using qlow::InternalError;
 using qlow::CompileError;
 using qlow::SyntaxError;
 using qlow::SemanticError;
 
 namespace qlow
 {
-    void reportError(const CompileError& ce)
+    void reportError(const CompileError& ce) noexcept
     {
         Printer& printer = Printer::getInstance();
         
@@ -18,21 +19,15 @@ namespace qlow
     }
     
     
-    void reportError(const std::string& msg)
+    void reportError(const std::string& msg) noexcept
     {
         Printer& printer = Printer::getInstance();
         
         printError(printer, msg);
-        
-        printer <<
-            "\n"
-            "This kind of error isn't supposed to happen.\n\n"
-            "Please submit a bug report to nicolas.winkler@gmx.ch\n"
-        ;
     }
 
 
-    void printError(Printer& printer, const std::string& msg)
+    void printError(Printer& printer, const std::string& msg) noexcept
     {
         printer.bold();
         printer.foreground(Printer::RED, true);
@@ -42,7 +37,7 @@ namespace qlow
     }
 
 
-    void printError(Printer& printer, const std::string& msg, const CodePosition& cp)
+    void printError(Printer& printer, const std::string& msg, const CodePosition& cp) noexcept
     {
         printer.bold();
         printer << cp.getReportFormat() << ": "; //cp.filename << ":" << cp.first_line << ":" << cp.first_column << ": ";
@@ -54,16 +49,35 @@ namespace qlow
 }
 
 
-std::string qlow::CodePosition::getReportFormat(void) const
+std::string qlow::CodePosition::getReportFormat(void) const noexcept
 {
     std::ostringstream s;
-    if (filename == nullptr) {
-        s << first_line << ":" << first_column;
-    }
-    else {
-        s << filename << ":" << first_line << ":" << first_column;
-    }
+    s << filename << ":" << first_line << ":" << first_column;
     return s.str();
+}
+
+
+void InternalError::print(Printer& printer) const noexcept
+{
+    printError(printer, getMessage());
+    printer <<
+        "\n"
+        "This kind of error isn't supposed to happen.\n\n"
+        "Please submit a bug report to nicolas.winkler@gmx.ch\n"
+    ;
+}
+
+
+const std::string& InternalError::getMessage(void) const noexcept
+{
+    static std::map<ErrorCode, std::string> errors = {
+        {ErrorCode::OUT_OF_MEMORY, "out of memory"},
+        {ErrorCode::PARSER_INIT_FAILED, "parser initialization failed"},
+        {ErrorCode::PARSER_DEST_FAILED, "parser destruction failed"},
+        {ErrorCode::PARSER_FAILED, "parser failed"},
+        {ErrorCode::PARSER_FAILED, "invalid type encountered"},
+    };
+    return errors.at(errorCode);
 }
 
 
@@ -73,7 +87,7 @@ CompileError::~CompileError(void)
 
 
 // TODO rewrite more compact and more readable
-void CompileError::underlineError(Printer& printer) const
+void CompileError::underlineError(Printer& printer) const noexcept
 {
     std::ifstream file(where.filename);
     
@@ -155,7 +169,7 @@ void CompileError::underlineError(Printer& printer) const
 }
 
 
-void SyntaxError::print(Printer& printer) const
+void SyntaxError::print(Printer& printer) const noexcept
 {
     using namespace std::literals;
     if (message == "")
@@ -166,7 +180,7 @@ void SyntaxError::print(Printer& printer) const
 }
 
 
-void SemanticError::print(Printer& printer) const
+void SemanticError::print(Printer& printer) const noexcept
 {
     std::string errMsg = getMessage();
     printError(printer, errMsg + (errMsg != "" ?  ": " : "") + message, where);
@@ -174,7 +188,7 @@ void SemanticError::print(Printer& printer) const
 }
 
 
-std::string SemanticError::getMessage(void) const
+std::string SemanticError::getMessage(void) const noexcept
 {
     static const std::map<ErrorCode, std::string> error = {
         {UNKNOWN_TYPE, "unknown type"},

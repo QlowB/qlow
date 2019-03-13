@@ -7,9 +7,21 @@ qlow::ast::Ast Parser::parse(void)
 {
     qlow::ast::Ast result;
     yyscan_t scanner;
-    qlow_parser_lex_init(&scanner);
+    int lexInit = qlow_parser_lex_init(&scanner);
+
+    if (lexInit != 0)
+        throw qlow::InternalError(InternalError::PARSER_INIT_FAILED);
+
     qlow_parser_set_in(this->stream, scanner);
     auto error = qlow_parser_parse(scanner, result, *this);
-    qlow_parser_lex_destroy(scanner);
+
+    if (error != 0)
+        throw qlow::InternalError(InternalError::PARSER_FAILED);
+
+    int lexDest = qlow_parser_lex_destroy(scanner);
+
+    if (lexDest != 0)
+        throw qlow::InternalError(InternalError::PARSER_DEST_FAILED);
+
     return result;
 }

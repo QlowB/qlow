@@ -8,17 +8,18 @@ namespace qlow
 {
     struct CodePosition;
     
+    class InternalError;
+
     class CompileError;
-    
     class SyntaxError;
     
     class SemanticError;
     class NotLValue;
     
-    void reportError(const CompileError& ce);
-    void reportError(const std::string& message);
-    void printError(Printer& printer, const std::string& message);
-    void printError(Printer& printer, const std::string& message, const CodePosition& where);
+    void reportError(const CompileError& ce) noexcept;
+    void reportError(const std::string& message) noexcept;
+    void printError(Printer& printer, const std::string& message) noexcept;
+    void printError(Printer& printer, const std::string& message, const CodePosition& where) noexcept;
 }
 
 
@@ -27,7 +28,7 @@ namespace qlow
  */
 struct qlow::CodePosition
 {
-    const char* filename = "";
+    std::string filename = "";
     int first_line;
     int last_line;
     int first_column;
@@ -35,7 +36,32 @@ struct qlow::CodePosition
     
     inline bool isMultiline(void) const { return first_line != last_line; }
 
-    std::string getReportFormat(void) const;
+    std::string getReportFormat(void) const noexcept;
+};
+
+
+class qlow::InternalError
+{
+public:
+    enum ErrorCode
+    {
+        OUT_OF_MEMORY,
+        /// initialization of the flex lexer failed
+        PARSER_INIT_FAILED,
+        /// destruction of the flex lexer failed
+        PARSER_DEST_FAILED,
+        /// bison routine returned error value
+        PARSER_FAILED,
+        /// tried to determine the kind of an invalid type
+        INVALID_TYPE
+    };
+private:
+    ErrorCode errorCode;
+public:
+    InternalError(ErrorCode ec) :
+        errorCode{ ec } {}
+    void print(Printer& printer = Printer::getInstance()) const noexcept;
+    const std::string& getMessage(void) const noexcept;
 };
 
 
@@ -50,9 +76,9 @@ public:
     }
     
     virtual ~CompileError(void);
-    virtual void print(Printer& printer = Printer::getInstance()) const = 0;
+    virtual void print(Printer& printer = Printer::getInstance()) const noexcept = 0;
     
-    void underlineError(Printer& printer = Printer::getInstance()) const;
+    void underlineError(Printer& printer = Printer::getInstance()) const noexcept;
 };
 
 
@@ -71,7 +97,7 @@ public:
     {
     }
     
-    virtual void print(Printer&) const override;
+    virtual void print(Printer&) const noexcept override;
 };
 
 
@@ -109,8 +135,8 @@ public:
     {
     }
 
-    virtual void print(Printer& p = Printer::getInstance()) const override;
-    virtual std::string getMessage(void) const;
+    virtual void print(Printer& p = Printer::getInstance()) const noexcept override;
+    virtual std::string getMessage(void) const noexcept;
 };
 
 
@@ -118,13 +144,13 @@ class qlow::NotLValue : public SemanticError
 {
     std::string type;
 public:
-    inline NotLValue(const std::string& type, const CodePosition& where) :
+    inline NotLValue(const std::string& type, const CodePosition& where) noexcept :
         SemanticError{ where },
         type{ type }
     {
     }
     
-    inline virtual std::string getMessage(void) const override
+    inline virtual std::string getMessage(void) const noexcept override
     {
         return "Can't take address of non-lvalue value of type '" +
             type + "'";

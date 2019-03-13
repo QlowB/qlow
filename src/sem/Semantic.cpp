@@ -70,14 +70,14 @@ std::pair<std::unique_ptr<Context>, std::unique_ptr<GlobalScope>>
     }
     
     for (auto& [name, method] : globalScope->functions) {
-        auto returnType = globalScope->getType(*method->astNode->type);
-        if (returnType) {
+        auto returnType = globalScope->getType(method->astNode->type.get());
+        if (returnType != NO_TYPE) {
             method->returnType = returnType;
         }
         else {
             SemanticError se(SemanticError::UNKNOWN_TYPE,
-                             method->astNode->type->asString(),
-                             method->astNode->type->pos);
+                            method->astNode->type->asString(),
+                            method->astNode->type->pos);
         }
         
         // otherwise add to the methods list

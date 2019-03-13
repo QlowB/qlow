@@ -9,6 +9,7 @@
 #include <llvm/IR/Value.h>
 
 #include "Util.h"
+#include "Type.h"
 #include "Context.h"
 
 namespace qlow
@@ -40,8 +41,9 @@ namespace qlow
         class NativeTypeScope;
         
         class Type;
-        class NativeType;
     }
+    
+    class Context;
 }
 
 
@@ -56,7 +58,7 @@ public:
     virtual ~Scope(void);
     virtual Variable* getVariable(const std::string& name) = 0;
     virtual Method* getMethod(const std::string& name) = 0;
-    virtual TypeId getType(const ast::Type& name) = 0;
+    virtual TypeId getType(const ast::Type* name) = 0;
     virtual TypeId getReturnableType(void) = 0;
     virtual Method* resolveMethod(const std::string& name,
         const std::vector<TypeId> argumentTypes);
@@ -73,15 +75,13 @@ public:
     SymbolTable<Class> classes;
     SymbolTable<Method> functions;
     //OwningList<Cast> casts;
-
-    Context typeContext;
 public:
     inline GlobalScope(Context& context) :
         Scope{ context } {}
 
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual TypeId getType(const ast::Type& name);
+    virtual TypeId getType(const ast::Type* name);
     virtual TypeId getReturnableType(void);
 
     inline const SymbolTable<Class>& getClasses(void) const { return classes; }
@@ -93,18 +93,18 @@ public:
 
 class qlow::sem::NativeScope : public GlobalScope
 {
-    static NativeScope instance;
-public:
+protected:
     std::unordered_map<std::string, TypeId> types;
+    std::map<Type::Native, TypeId> typesByNative;
 public:
     inline NativeScope(Context& context) :
         GlobalScope{ context } {}
 
-    virtual TypeId getType(const ast::Type& name);
+    virtual TypeId getType(const ast::Type* name);
+    virtual TypeId getType(Type::Native nt);
+    virtual void addNativeType(std::string name, Type::Native nt, TypeId id);
 
     virtual std::string toString(void);
-    
-    static NativeScope& getInstance(void);
 };
 
 
@@ -121,7 +121,7 @@ public:
     }
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual TypeId getType(const ast::Type& name);
+    virtual TypeId getType(const ast::Type* name);
     virtual TypeId getReturnableType(void);
     virtual std::string toString(void);
 };
@@ -142,7 +142,7 @@ public:
 
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual TypeId getType(const ast::Type& name);
+    virtual TypeId getType(const ast::Type* name);
     virtual TypeId getReturnableType(void);
     virtual std::string toString(void);
 };
@@ -161,7 +161,7 @@ public:
     
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
-    virtual TypeId getType(const ast::Type& name);
+    virtual TypeId getType(const ast::Type* name);
     virtual TypeId getReturnableType(void);
     virtual std::string toString(void);
 };

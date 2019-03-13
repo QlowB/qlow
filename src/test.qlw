@@ -6,7 +6,6 @@ fast_fibonacci(i: Integer): Integer do
     count := i
     a := 0
     b := 1
-    //b := a <=> b
     while count != 0 do
         temp := a
         a := a + b
@@ -19,6 +18,7 @@ end
 //extern do_shit
 
 
+/*
 bignumbers do
     a: Int128
     b: Int128
@@ -27,6 +27,7 @@ bignumbers do
     b := a + c as Int128
     //c := b as Int64
 end
+*/
 
 main: Integer do
     value: Integer

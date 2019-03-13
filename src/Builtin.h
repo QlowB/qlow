@@ -23,8 +23,8 @@ namespace qlow
 
 struct qlow::sem::NativeMethod : public sem::Method
 {
-    inline NativeMethod(Context& context, TypeId returnType) :
-        Method{ NativeScope::getInstance(), returnType }
+    inline NativeMethod(NativeScope& scope, TypeId returnType) :
+        Method{ scope, returnType }
     {
     }
     
@@ -37,11 +37,11 @@ struct qlow::sem::UnaryNativeMethod : public sem::NativeMethod
 {
     std::function<llvm::Value*(llvm::IRBuilder<>&, llvm::Value*)> generator;
     
-    inline UnaryNativeMethod(Context& context,
+    inline UnaryNativeMethod(NativeScope& scope,
                              TypeId returnType,
                              const std::function
                              <llvm::Value*(llvm::IRBuilder<>&, llvm::Value*)>& generator) :
-        NativeMethod{ context, returnType },
+        NativeMethod{ scope, returnType },
         generator{ generator }
     {
     }
@@ -59,12 +59,11 @@ struct qlow::sem::BinaryNativeMethod : public sem::NativeMethod
     Func generator;
     Variable argument;
     
-    inline BinaryNativeMethod(Context& context,
+    inline BinaryNativeMethod(NativeScope& scope,
                               TypeId returnType,
                               TypeId argumentType,
-        
-        Func&& generator) :
-        NativeMethod{ context, returnType },
+                              Func&& generator) :
+        NativeMethod{ scope, returnType },
         generator{ generator },
         argument{ context, argumentType, "arg" }
     {

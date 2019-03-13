@@ -43,6 +43,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::UnaryOperation& unop, llvm::IR
         default:
             throw "operator not supported";
     }*/
+    return nullptr;
 }
 
 
@@ -59,10 +60,11 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::
     sem::Method* operation = binop.operationMethod;
     
     if (operation != nullptr) {
-        if (sem::NativeMethod* nm = dynamic_cast<sem::NativeMethod*>(operation); nm) {
+        // TODO rewrite
+        /*if (sem::NativeMethod* nm = dynamic_cast<sem::NativeMethod*>(operation); nm) {
             return nm->generateCode(builder, {left, right});
         }
-        else
+        else*/
             throw "only native operations supported at the moment";
     }
     else {
@@ -117,6 +119,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::CastExpression& cast, llvm::IR
         cast.expression->accept(*this, builder),
         context.getType(cast.targetType).value().getLlvmType(builder.getContext())
     );*/
+    return nullptr;
 }
 
 
@@ -124,6 +127,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::NewArrayExpression& naexpr, ll
 {
     using llvm::Value;
     // TODO implement
+    return nullptr;
 }
 
 
@@ -161,6 +165,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, ll
     //auto returnType = call.callee->returnType;
     llvm::CallInst* callInst = builder.CreateCall(call.callee->llvmNode, arguments);
     return callInst;*/
+    return nullptr;
 }
 
 
@@ -193,6 +198,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access,
     //                               llvm::APInt(32, 0, false)), 0);
     return llvm::ConstantInt::get(builder.getContext(),
                                    llvm::APInt(32, 0, false));*/
+                                   return nullptr;
 }
 
 
@@ -292,6 +298,7 @@ llvm::Value* LValueVisitor::visit(sem::FieldAccessExpression& access, llvm::IRBu
     };
     Value* ptr = builder.CreateGEP(type, target, indexList);
     return ptr;*/
+    return nullptr;
 }
 
 
@@ -339,6 +346,7 @@ llvm::Value* StatementVisitor::visit(sem::IfElseBlock& ifElseBlock,
     fg.popBlock();
     fg.popBlock();
     fg.pushBlock(merge);
+    return nullptr;
 }
 
 
@@ -464,6 +472,7 @@ llvm::Value* CastGenerator::generateCast(llvm::Value* toCast,
     /*return b.CreateCast(
         llvm::Instruction::CastOps::BitCast, toCast,
         cast.to->getLlvmType(b.getContext()));*/
+    return nullptr;
 }
 
 

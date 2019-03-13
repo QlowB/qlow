@@ -29,8 +29,8 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
 {
     auto f = std::make_unique<sem::Field>(scope.getContext());
     f->name = ast.name;
-    auto type = scope.getType(*ast.type);
-    if (type) {
+    auto type = scope.getType(ast.type.get());
+    if (type != sem::NO_TYPE) {
         f->type = type;
     }
     else {
@@ -45,8 +45,8 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefinition& ast, sem::Scope& scope)
 {
-    auto returnType = scope.getType(*ast.type);
-    if (!returnType) {
+    auto returnType = scope.getType(ast.type.get());
+    if (returnType == sem::NO_TYPE) {
         throw SemanticError(SemanticError::UNKNOWN_TYPE,
             ast.type->asString(),
             ast.type->pos
@@ -80,9 +80,9 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::VariableDeclar
 {
     auto v = std::make_unique<sem::Variable>(scope.getContext());
     v->name = ast.name;
-    auto type = scope.getType(*ast.type);
-    if (type) {
-        v->type = std::move(type);
+    auto type = scope.getType(ast.type.get());
+    if (type != sem::NO_TYPE) {
+        v->type = type;
     }
     else {
         throw SemanticError(SemanticError::UNKNOWN_TYPE,
@@ -111,9 +111,9 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
     for (auto& statement : ast.statements) {
         
         if (ast::LocalVariableStatement* nvs = dynamic_cast<ast::LocalVariableStatement*>(statement.get()); nvs) {
-            auto type = body->scope.getType(*nvs->type);
+            auto type = body->scope.getType(nvs->type.get());
 
-            if (!type)
+            if (type == sem::NO_TYPE)
                 throw SemanticError(SemanticError::UNKNOWN_TYPE,
                                     nvs->type->asString(),
                                     nvs->type->pos);
@@ -414,7 +414,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::NewArrayExpression& ast, sem::Scope& scope)
 {
-    auto ret = std::make_unique<sem::NewArrayExpression>(scope.getContext(), scope.getType(*ast.type));
+    auto ret = std::make_unique<sem::NewArrayExpression>(scope.getContext(), scope.getType(ast.type.get()));
     return ret;
 }
 
@@ -422,8 +422,8 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::NewArrayExpres
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::CastExpression& ast, sem::Scope& scope)
 {
     auto expr = unique_dynamic_cast<sem::Expression>(ast.expression->accept(*this, scope));
-    auto type = scope.getType(*ast.targetType);
+    auto type = scope.getType(ast.targetType.get());
     return std::make_unique<sem::CastExpression>(
-        std::move(expr), std::move(type), &ast);
+        std::move(expr), type, &ast);
 }
 

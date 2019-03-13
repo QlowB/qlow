@@ -60,6 +60,11 @@ qlow::ast::IntConst::IntConst(std::string&& val, const qlow::CodePosition& p) :
 {
 }
 
+std::unique_ptr<qlow::sem::SemanticObject> qlow::ast::Type::accept(StructureVisitor&, sem::Scope&)
+{
+    return nullptr;
+}
+
 
 
 

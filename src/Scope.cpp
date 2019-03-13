@@ -3,6 +3,7 @@
 #include "Semantic.h"
 #include "Type.h"
 #include "Builtin.h"
+#include "Context.h"
 
 using namespace qlow;
 
@@ -22,7 +23,7 @@ sem::Method* sem::Scope::resolveMethod(const std::string& name,
         return nullptr;
     
     for (size_t i = 0; i < argumentTypes.size(); i++) {
-        if (!m->arguments[i]->type == argumentTypes[i])
+        if (m->arguments[i]->type != argumentTypes[i])
             return nullptr;
     }
     
@@ -45,22 +46,26 @@ sem::Method* sem::GlobalScope::getMethod(const std::string& name)
 }
 
 
-sem::TypeId sem::GlobalScope::getType(const ast::Type& name)
+sem::TypeId sem::GlobalScope::getType(const ast::Type* name)
 {
-    if (const auto* arr = dynamic_cast<const ast::ArrayType*>(&name); arr) {
-        return context.getArrayOf(getType(*arr->arrayType));
+    if (name == nullptr) {
+        return context.getVoidTypeId();
+    }
+
+    if (const auto* arr = dynamic_cast<const ast::ArrayType*>(name); arr) {
+        return context.getArrayOf(getType(arr->arrayType.get()));
     }
     
-    if (const auto* ptr = dynamic_cast<const ast::PointerType*>(&name)) {
-        return context.getPointerTo(getType(*ptr->derefType));
+    if (const auto* ptr = dynamic_cast<const ast::PointerType*>(name)) {
+        return context.getPointerTo(getType(ptr->derefType.get()));
     }
     
-    auto native = NativeScope::getInstance().getType(name);
+    auto native = context.getNativeScope().getType(name);
     if (native) {
         return native;
     }
     
-    const auto* classType = dynamic_cast<const ast::ClassType*>(&name);
+    const auto* classType = dynamic_cast<const ast::ClassType*>(name);
    
     if (!classType)
         throw "internal error, non class-type top-level type";
@@ -93,13 +98,13 @@ std::string sem::GlobalScope::toString(void)
 }
 
 
-sem::TypeId sem::NativeScope::getType(const ast::Type& name)
+sem::TypeId sem::NativeScope::getType(const ast::Type* name)
 {
-    if (const auto* arr = dynamic_cast<const ast::ArrayType*>(&name); arr) {
-        return context.getArrayOf(getType(*arr->arrayType));
+    if (const auto* arr = dynamic_cast<const ast::ArrayType*>(name); arr) {
+        return context.getArrayOf(getType(arr->arrayType.get()));
     }
     
-    const auto* classType = dynamic_cast<const ast::ClassType*>(&name);
+    const auto* classType = dynamic_cast<const ast::ClassType*>(name);
    
     if (!classType)
         return NO_TYPE;
@@ -113,12 +118,19 @@ sem::TypeId sem::NativeScope::getType(const ast::Type& name)
 }
 
 
-// TODO rewrite
-static sem::Context c;
-sem::NativeScope sem::NativeScope::instance = sem::generateNativeScope(c);
-sem::NativeScope& sem::NativeScope::getInstance(void)
+sem::TypeId sem::NativeScope::getType(Type::Native nt)
 {
-    return instance;
+    if (typesByNative.find(nt) == typesByNative.end())
+        return sem::NO_TYPE;
+    else
+        return typesByNative[nt];
+}
+
+
+void sem::NativeScope::addNativeType(std::string name, Type::Native nt, TypeId id)
+{
+    types.emplace(std::move(name), id);
+    typesByNative.emplace(nt, id);
 }
 
 
@@ -168,7 +180,7 @@ std::string sem::ClassScope::toString(void)
 }
 
 
-sem::TypeId sem::ClassScope::getType(const ast::Type& name)
+sem::TypeId sem::ClassScope::getType(const ast::Type* name)
 {
     return parentScope.getType(name);
 }
@@ -231,7 +243,7 @@ sem::Method* sem::LocalScope::getMethod(const std::string& name)
 }
 
 
-sem::TypeId sem::LocalScope::getType(const ast::Type& name)
+sem::TypeId sem::LocalScope::getType(const ast::Type* name)
 {
     return parentScope.getType(name);
 }
@@ -283,7 +295,7 @@ sem::Method* sem::TypeScope::getMethod(const std::string& name)
 }
 
 
-sem::TypeId sem::TypeScope::getType(const ast::Type& name)
+sem::TypeId sem::TypeScope::getType(const ast::Type* name)
 {
     return NO_TYPE;
 }

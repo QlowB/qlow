@@ -69,7 +69,7 @@ Driver::Driver(int argc, char** argv) :
 }
 
 
-int Driver::run(void)
+int Driver::run(void) try
 {
     Printer& printer = Printer::getInstance();
 #ifdef DEBUGGING
@@ -156,6 +156,10 @@ int Driver::run(void)
 #endif
     
     return 0;
+}
+catch (InternalError& e) {
+    e.print(Printer::getInstance());
+    return 1;
 }
 
 
