@@ -62,7 +62,7 @@ private:
 #ifdef DEBUGGING
     LogLevel logLevel = LogLevel::DEBUG;
 #else
-    LogLevel logLevel = LogLevel::DEBUG;
+    LogLevel logLevel = LogLevel::WARNING;
 #endif
 
     static Logger instance;
@@ -82,7 +82,7 @@ public:
 
     inline std::ostream& operator()(LogLevel ll)
     {
-        if (logLevel >= ll) {
+        if (logLevel <= ll) {
             return *this;
         }
         else {

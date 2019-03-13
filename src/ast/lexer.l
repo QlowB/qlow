@@ -40,14 +40,14 @@
 extern "C" int qlow_parser_wrap(yyscan_t s);
 
 // TODO rewrite
-#define YY_USER_ACTION                          \
-  do {                                          \
-    yylloc_param->first_line = yylineno;     \
-    yylloc_param->first_column = yyg->yyextra_r;     \
-    yyg->yyextra_r += yyleng;                           \
-    yylloc_param->last_line = yylineno;      \
-    yylloc_param->last_column = yyg->yyextra_r;      \
-    yylloc_param->filename = nullptr; \
+#define YY_USER_ACTION                                \
+  do {                                                \
+    yylloc_param->first_line = yylineno;              \
+    yylloc_param->first_column = yyg->yyextra_r;      \
+    yyg->yyextra_r += yyleng;                         \
+    yylloc_param->last_line = yylineno;               \
+    yylloc_param->last_column = yyg->yyextra_r;       \
+    yylloc_param->filename = nullptr;                 \
   } while(0);
 %}
 

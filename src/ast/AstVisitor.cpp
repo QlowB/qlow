@@ -387,7 +387,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
     auto leftEval = unique_dynamic_cast<sem::Expression>(ast.left->accept(*this, scope));
     auto rightEval = unique_dynamic_cast<sem::Expression>(ast.right->accept(*this, scope));
     
-    throw "TODO implement";
+    throw SemanticError(SemanticError::OPERATOR_NOT_FOUND, "TODO implement", ast.pos);
     /*
     sem::Method* operationMethod = leftEval->type->getScope().resolveMethod(
         ast.opString, { rightEval->type }
