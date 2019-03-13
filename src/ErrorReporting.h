@@ -1,7 +1,7 @@
 #ifndef QLOW_ERROR_REPORTING
 #define QLOW_ERROR_REPORTING
 
-#include "Logging.h"
+#include "Printer.h"
 
 
 namespace qlow
@@ -17,6 +17,8 @@ namespace qlow
     
     void reportError(const CompileError& ce);
     void reportError(const std::string& message);
+    void printError(Printer& printer, const std::string& message);
+    void printError(Printer& printer, const std::string& message, const CodePosition& where);
 }
 
 
@@ -46,9 +48,9 @@ public:
     }
     
     virtual ~CompileError(void);
-    virtual void print(Logger& logger) const = 0;
+    virtual void print(Printer& printer = Printer::getInstance()) const = 0;
     
-    void underlineError(Logger& logger) const;
+    void underlineError(Printer& printer = Printer::getInstance()) const;
 };
 
 
@@ -67,7 +69,7 @@ public:
     {
     }
     
-    virtual void print(Logger&) const override;
+    virtual void print(Printer&) const override;
 };
 
 
@@ -105,7 +107,7 @@ public:
     {
     }
 
-    virtual void print(Logger&) const override;
+    virtual void print(Printer& p = Printer::getInstance()) const override;
     virtual std::string getMessage(void) const;
 };
 

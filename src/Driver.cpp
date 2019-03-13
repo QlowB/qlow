@@ -5,7 +5,8 @@
 #include "Builtin.h"
 #include "CodeGeneration.h"
 
-#include "Logging.h"
+#include "Printer.h"
+#include "ErrorReporting.h"
 
 #include <cstdio>
 
@@ -70,27 +71,31 @@ Driver::Driver(int argc, char** argv) :
 
 int Driver::run(void)
 {
-    Logger& logger = Logger::getInstance();
+    Printer& printer = Printer::getInstance();
     
-    logger.debug() << "starting parser" << std::endl;
-    //logger.logError("driver not yet implemented", {options.emitAssembly ? "asm" : "noasm", 10, 11, 12, 13});
+#ifdef DEBUGGING
+    printer << "starting parser" << std::endl;
+#endif
+    //printer.logError("driver not yet implemented", {options.emitAssembly ? "asm" : "noasm", 10, 11, 12, 13});
     bool errorOccurred = parseStage();
     
     if (errorOccurred) {
-        logger << "Aborting due to syntax errors." << std::endl;
+        printer << "Aborting due to syntax errors." << std::endl;
         return 1;
     }
     
     errorOccurred = semanticStage();
     
     if (errorOccurred) {
-        logger << "Aborting due to semantic errors." << std::endl;
+        printer << "Aborting due to semantic errors." << std::endl;
         return 1;
     }
     
 
     for (auto& [a, b] : semClasses->classes) {
-        logger.debug() << a << ": " << b->toString() << std::endl;
+#ifdef DEBUGGING
+        printer << a << ": " << b->toString() << std::endl;
+#endif
     }
     
     
@@ -98,7 +103,7 @@ int Driver::run(void)
     /*auto main = semClasses->classes.find("Main");
     qlow::sem::Class* mainClass = nullptr;
     if (main == semClasses->classes.end()) {
-        logger.logError("No Main class found");
+        printer.logError("No Main class found");
         return 1;
     }
     else {
@@ -108,11 +113,13 @@ int Driver::run(void)
     auto* mainMethod = semClasses->getMethod("main");
     if (mainMethod == nullptr && false) {
         // TODO handle main ckeck well
-        logger.logError("no main method found");
+        qlow::printError(printer, "no main method found");
         return 1;
     }
     
-    logger.debug() << "starting code generation!" << std::endl;
+#ifdef DEBUGGING
+    printer << "starting code generation!" << std::endl;
+#endif
 
     std::unique_ptr<llvm::Module> mod = nullptr;
     
@@ -124,7 +131,7 @@ int Driver::run(void)
         return 1;
     }
     catch (SemanticError& err) {
-        err.print(logger);
+        err.print(printer);
         return 1;
     }
     catch (...) {
@@ -136,16 +143,18 @@ int Driver::run(void)
         qlow::gen::generateObjectFile(options.outfile, std::move(mod), options.optLevel);
     }
     catch (const char* msg) {
-        logger.logError(msg);
+        printError(printer, msg);
         return 1;
     }
     catch (...) {
-        logger.logError("unknown error during object file creation");
+        printError(printer, "unknown error during object file creation");
         reportError("unknown error during object file creation");
         return 1;
     }
     
-    logger.debug() << "object exported!" << std::endl;
+#ifdef DEBUGGING
+    printer << "object exported!" << std::endl;
+#endif
     
     return 0;
 }
@@ -154,7 +163,7 @@ int Driver::run(void)
 bool Driver::parseStage(void)
 {
     using namespace std::literals;
-    Logger& logger = Logger::getInstance();
+    Printer& printer = Printer::getInstance();
 
     this->ast = std::make_unique<ast::Ast>();
     bool errorOccurred = false;
@@ -172,7 +181,7 @@ bool Driver::parseStage(void)
             this->ast->merge(parseFile(file, filename));
         }
         catch (const CompileError& ce) {
-            ce.print(logger);
+            ce.print(printer);
             errorOccurred = true;
         }
         catch (const char* errMsg) {
@@ -193,14 +202,14 @@ bool Driver::parseStage(void)
 
 bool Driver::semanticStage(void)
 {
-    Logger& logger = Logger::getInstance();
+    Printer& printer = Printer::getInstance();
     bool errorOccurred = false;
 
     try {
         std::tie(this->context, this->semClasses) = qlow::sem::createFromAst(*this->ast);
     }
     catch(SemanticError& se) {
-        se.print(logger);
+        se.print(printer);
         errorOccurred = true;
     }
     catch(const char* err) {

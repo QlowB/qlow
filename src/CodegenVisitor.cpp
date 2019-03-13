@@ -139,7 +139,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, ll
     if (call.target != nullptr) {
         auto* target = call.target->accept(fg.lvalueVisitor, builder);
         
-        Logger::getInstance().debug() << "creating 'this' argument";
+        Printer::getInstance().debug() << "creating 'this' argument";
         if (llvm::LoadInst* li = llvm::dyn_cast<llvm::LoadInst>(target); li) {
             llvm::Value* ptr = builder.CreateLoad(call.target->type->getLlvmType(builder.getContext())->getPointerTo(), li, "ptrload");
             arguments.push_back(ptr);
@@ -380,7 +380,7 @@ llvm::Value* StatementVisitor::visit(sem::WhileBlock& whileBlock,
 llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
         qlow::gen::FunctionGenerator& fg)
 {
-    Logger& logger = Logger::getInstance();
+    Printer& printer = Printer::getInstance();
     llvm::IRBuilder<> builder(fg.getContext());
     builder.SetInsertPoint(fg.getCurrentBlock());
     
@@ -391,13 +391,17 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
     
     if (auto* targetVar =
         dynamic_cast<sem::LocalVariableExpression*>(assignment.target.get()); targetVar) {
-        logger.debug() << "assigning to LocalVariableExpression" << std::endl;
+#ifdef DEBUGGING
+        printer << "assigning to LocalVariableExpression" << std::endl;
+#endif
         builder.CreateStore(val, targetVar->var->allocaInst);
     }
     else if (auto* targetVar =
         dynamic_cast<sem::FieldAccessExpression*>(assignment.target.get()); targetVar) {
         
-        logger.debug() << "assigning to FieldAccessExpression" << std::endl;
+#ifdef DEBUGGING
+        printer << "assigning to FieldAccessExpression" << std::endl;
+#endif
         if (targetVar->target) {
             llvm::Value* target = targetVar->target->accept(fg.expressionVisitor, builder);
             
@@ -411,7 +415,9 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
         }
     }
     else {
-        logger.debug() << "assigning to instance of " << assignment.target->toString() << std::endl;
+#ifdef DEBUGGING
+        printer << "assigning to instance of " << assignment.target->toString() << std::endl;
+#endif
         throw "only local variables are assignable at the moment";
     }
     

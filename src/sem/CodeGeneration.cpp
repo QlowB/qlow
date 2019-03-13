@@ -37,7 +37,7 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& semantic)
     using llvm::Value;
     using llvm::IRBuilder;
     
-    Logger& logger = Logger::getInstance();
+    Printer& printer = Printer::getInstance();
     
 #ifdef DEBUGGING
         printf("creating llvm module\n"); 
@@ -79,7 +79,7 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& semantic)
     
     
     std::vector<llvm::Function*> functions;
-    auto verifyStream = llvm::raw_os_ostream(logger.debug());
+    auto verifyStream = llvm::raw_os_ostream(printer);
     
     // create all llvm functions
     for (const auto& [name, cl] : semantic.getClasses()) {
@@ -107,10 +107,12 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& semantic)
             
             FunctionGenerator fg(*method, module.get(), as);
             Function* f = fg.generate();
-            logger.debug() << "verifying function: " << method->name << std::endl;
+//            printer << "verifying function: " << method->name << std::endl;
             bool corrupt = llvm::verifyFunction(*f, &verifyStream);
             if (corrupt) {
+#ifdef DEBUGGING
                 module->print(verifyStream, nullptr);
+#endif
                 throw "corrupt llvm function";
             }
 #ifdef DEBUGGING
@@ -124,7 +126,7 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& semantic)
         
         FunctionGenerator fg(*method, module.get(), as);
         Function* f = fg.generate();
-        logger.debug() << "verifying function: " << method->name << std::endl;
+        //printer.debug() << "verifying function: " << method->name << std::endl;
         bool corrupt = llvm::verifyFunction(*f, &verifyStream);
         if (corrupt) {
             module->print(verifyStream, nullptr);
@@ -179,7 +181,9 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
     auto argIterator = func->arg_begin();
     if (method->thisExpression != nullptr) {
         method->thisExpression->allocaInst = &*argIterator;
-        Logger::getInstance().debug() << "allocaInst of this";
+#ifdef DEBUGGING
+        Printer::getInstance() << "allocaInst of this";
+#endif
         argIterator++;
     }
     
@@ -209,9 +213,11 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
     using llvm::TargetRegistry;
     using llvm::TargetOptions;
 
-    Logger& logger = Logger::getInstance();
-    logger.debug() << "verifying mod" << std::endl;
-    auto ostr = llvm::raw_os_ostream(logger.debug());
+    Printer& printer = Printer::getInstance();
+#ifdef DEBUGGING
+    printer << "verifying mod" << std::endl;
+#endif
+    auto ostr = llvm::raw_os_ostream(printer);
 #ifdef DEBUGGING
     module->print(ostr, nullptr);
 #endif
@@ -220,8 +226,6 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
     if (broken)
         throw "invalid llvm module";
     
-    logger.debug() << "mod verified" << std::endl;
-
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
     llvm::InitializeAllTargetMCs();
@@ -251,7 +255,9 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
     const Target* target = TargetRegistry::lookupTarget(targetTriple, error);
 
     if (!target) {
-        logger.debug() << "could not create target: " << error << std::endl;
+#ifdef DEBUGGING
+        printer << "could not create target: " << error << std::endl;
+#endif
         throw "internal error";
     }
 

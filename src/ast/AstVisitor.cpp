@@ -244,11 +244,11 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
             auto* thisExpr = scope.getVariable("this");
             if (!thisExpr)
                 throw "no this found";
-            Logger::getInstance().debug() << "feature call " << var->toString() << " is a field\n";
+            //Printer::getInstance().debug() << "feature call " << var->toString() << " is a field\n";
             return std::make_unique<sem::FieldAccessExpression>(std::make_unique<sem::LocalVariableExpression>(thisExpr), field);
         }
         else {
-            Logger::getInstance().debug() << "feature call " << var->toString() << " is not a field\n";
+            //Printer::getInstance().debug() << "feature call " << var->toString() << " is not a field\n";
             return std::make_unique<sem::LocalVariableExpression>(var);
         }
     }
@@ -393,7 +393,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
         ast.opString, { rightEval->type }
     );
     
-    Logger::getInstance().debug() << "looked for operation method for operator " <<
+    Printer::getInstance().debug() << "looked for operation method for operator " <<
     ast.opString << std::endl;
     if (!operationMethod) {
         throw SemanticError(SemanticError::OPERATOR_NOT_FOUND,

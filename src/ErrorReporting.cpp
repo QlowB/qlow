@@ -12,23 +12,44 @@ namespace qlow
 {
     void reportError(const CompileError& ce)
     {
-        Logger& logger = Logger::getInstance();
+        Printer& printer = Printer::getInstance();
         
-        ce.print(logger);
+        ce.print(printer);
     }
     
     
     void reportError(const std::string& msg)
     {
-        Logger& logger = Logger::getInstance();
+        Printer& printer = Printer::getInstance();
         
-        logger.logError(msg);
+        printError(printer, msg);
         
-        logger.info() <<
+        printer <<
             "\n"
             "This kind of error isn't supposed to happen.\n\n"
             "Please submit a bug report to nicolas.winkler@gmx.ch\n"
         ;
+    }
+
+
+    void printError(Printer& printer, const std::string& msg)
+    {
+        printer.bold();
+        printer.foreground(Printer::RED, true);
+        printer << "error: ";
+        printer.removeFormatting();
+        printer << msg << std::endl;
+    }
+
+
+    void printError(Printer& printer, const std::string& msg, const CodePosition& cp)
+    {
+        printer.bold();
+        printer << cp.filename << ":" << cp.first_line << ":" << cp.first_column << ": ";
+        printer.foreground(Printer::RED, true);
+        printer << "error: ";
+        printer.removeFormatting();
+        printer << msg << std::endl;
     }
 }
 
@@ -40,7 +61,7 @@ CompileError::~CompileError(void)
 
 
 // TODO rewrite more compact and more readable
-void CompileError::underlineError(Logger& logger) const
+void CompileError::underlineError(Printer& printer) const
 {
     std::ifstream file(where.filename);
     
@@ -48,7 +69,7 @@ void CompileError::underlineError(Logger& logger) const
         return;
     
     if (where.isMultiline()) {
-        size_t lineNr = 1;
+        int lineNr = 1;
         while (lineNr < where.first_line) {
             if (file.get() == '\n') {
                 lineNr++;
@@ -59,19 +80,19 @@ void CompileError::underlineError(Logger& logger) const
         
         int lineNrLength = std::to_string(lineNr).size();
         
-        logger.err() << "from here:" << std::endl;
-        logger.foreground(Logger::Color::YELLOW, true);
-        logger.err() << lineNr;
-        logger.removeFormatting();
-        logger.err() << ": " << line << std::endl;
-        for (size_t i = 0; i < where.first_column + lineNrLength + 2; i++) {
-            logger.err() << ' ';
+        printer << "from here:" << std::endl;
+        printer.foreground(Printer::Color::YELLOW, true);
+        printer << lineNr;
+        printer.removeFormatting();
+        printer << ": " << line << std::endl;
+        for (int i = 0; i < where.first_column + lineNrLength + 2; i++) {
+            printer << ' ';
         }
-        logger.foreground(Logger::Color::RED, true);
+        printer.foreground(Printer::Color::RED, true);
         for (size_t i = where.first_column; i < line.size(); i++) {
-            logger.err() << '^';
+            printer << '^';
         }
-        logger.removeFormatting();
+        printer.removeFormatting();
         
         lineNr++;
         while (lineNr < where.last_line) {
@@ -82,25 +103,25 @@ void CompileError::underlineError(Logger& logger) const
         
         std::getline(file, line);
         lineNrLength = std::to_string(lineNr).size();
-        logger.err() << std::endl << "to here:" << std::endl;
+        printer << std::endl << "to here:" << std::endl;
         
-        logger.foreground(Logger::Color::YELLOW, true);
-        logger.err() << lineNr;
-        logger.removeFormatting();
-        logger.err() << ": " << line << std::endl;
-        for (size_t i = 0; i < lineNrLength + 2; i++) {
-            logger.err() << ' ';
+        printer.foreground(Printer::Color::YELLOW, true);
+        printer << lineNr;
+        printer.removeFormatting();
+        printer << ": " << line << std::endl;
+        for (int i = 0; i < lineNrLength + 2; i++) {
+            printer << ' ';
         }
-        logger.foreground(Logger::Color::RED, true);
-        for (size_t i = 0; i < where.last_column; i++) {
-            logger.err() << '^';
+        printer.foreground(Printer::Color::RED, true);
+        for (int i = 0; i < where.last_column; i++) {
+            printer << '^';
         }
-        logger.removeFormatting();
-        logger.err() << std::endl;
+        printer.removeFormatting();
+        printer << std::endl;
         
     }
     else {
-        size_t lineNr = 1;
+        int lineNr = 1;
         while (lineNr < where.first_line) {
             if (file.get() == '\n') {
                 lineNr++;
@@ -108,42 +129,42 @@ void CompileError::underlineError(Logger& logger) const
         }
         std::string line;
         std::getline(file, line);
-        logger.err() << line << std::endl;
-        for (size_t i = 0; i < where.first_column; i++) {
-            logger.err() << ' ';
+        printer << line << std::endl;
+        for (int i = 0; i < where.first_column; i++) {
+            printer << ' ';
         }
-        logger.foreground(Logger::Color::RED, true);
-        for (size_t i = where.first_column; i < where.last_column; i++) {
-            logger.err() << '^';
+        printer.foreground(Printer::Color::RED, true);
+        for (int i = where.first_column; i < where.last_column; i++) {
+            printer << '^';
         }
-        logger.removeFormatting();
-        logger.err() << std::endl;
+        printer.removeFormatting();
+        printer << std::endl;
     }
 }
 
 
-void SyntaxError::print(Logger& logger) const
+void SyntaxError::print(Printer& printer) const
 {
     using namespace std::literals;
     if (message == "")
-        logger.logError("Syntax error", where);
+        printError(printer, "Syntax error", where);
     else
-        logger.logError("Syntax error: "s + message, where);
-    underlineError(logger);
+        printError(printer, "Syntax error: "s + message, where);
+    underlineError(printer);
 }
 
 
-void SemanticError::print(Logger& logger) const
+void SemanticError::print(Printer& printer) const
 {
     std::string errMsg = getMessage();
-    logger.logError(errMsg + (errMsg != "" ?  ": " : "") + message, where);
-    underlineError(logger);
+    printError(printer, errMsg + (errMsg != "" ?  ": " : "") + message, where);
+    underlineError(printer);
 }
 
 
 std::string SemanticError::getMessage(void) const
 {
-    static std::map<ErrorCode, std::string> error = {
+    static const std::map<ErrorCode, std::string> error = {
         {UNKNOWN_TYPE, "unknown type"},
         {FEATURE_NOT_FOUND, "method or variable not found"},
         {DUPLICATE_CLASS_DEFINITION, "duplicate class definition"},
@@ -152,7 +173,7 @@ std::string SemanticError::getMessage(void) const
         {OPERATOR_NOT_FOUND, ""},
         {WRONG_NUMBER_OF_ARGUMENTS, "wrong number of arguments passed"},
     };
-    return error[errorCode];
+    return error.at(errorCode);
 }
 
 
