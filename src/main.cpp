@@ -1,6 +1,7 @@
 #include <iostream>
 
-#include <unistd.h>
+#include <exception>
+#include <cstdlib>
 
 #include "Ast.h"
 #include "Semantic.h"
@@ -9,12 +10,23 @@
 
 #include "Driver.h"
 
-int main(int argc, char** argv)
+int main(int argc, char** argv) try
 {
+    std::set_terminate ([] () {
+        std::cerr << "terminated" << std::endl;
+        abort();
+    });
+
     qlow::Driver driver(argc, argv);
     return driver.run();
 
     return 0;
+}
+catch (float f) {
+    std::cerr << "uncaught float" << std::endl;
+}
+catch(...) {
+    std::cerr << "uncaught exception" << std::endl;
 }
 
 

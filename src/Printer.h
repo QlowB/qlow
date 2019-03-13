@@ -17,9 +17,17 @@ class qlow::Printer :
     bool isTty;
 
     static Printer instance;
-public:
+
     inline Printer(std::ostream& target, bool isTty) :
-        target{ target }, isTty{ isTty } {}
+        std::ostream{ static_cast<std::streambuf*> (this) },
+        target{ target },
+        isTty{ isTty } {}
+public:
+
+    Printer(const Printer&) = delete;
+    Printer(Printer&&) = delete;
+    Printer& operator=(const Printer&) = delete;
+    Printer& operator=(Printer&&) = delete;
 
     enum Color {
         BLACK = 0,
@@ -39,6 +47,7 @@ public:
 
     inline static Printer& getInstance(void) { return instance; }
 protected:
+    int sync(void) override;
     int overflow(int c) override;
 };
 

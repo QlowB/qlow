@@ -10,7 +10,7 @@ check_ipo_supported(RESULT ipo_supported)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -g")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -g -DDEBUGGING")
 
 find_package(BISON 3.0.0 REQUIRED)
 find_package(FLEX 2.4.0 REQUIRED)

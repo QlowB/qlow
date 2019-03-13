@@ -2,11 +2,11 @@
 
 #include <map>
 #include <fstream>
+#include <sstream>
 
 using qlow::CompileError;
 using qlow::SyntaxError;
 using qlow::SemanticError;
-
 
 namespace qlow
 {
@@ -45,7 +45,7 @@ namespace qlow
     void printError(Printer& printer, const std::string& msg, const CodePosition& cp)
     {
         printer.bold();
-        printer << cp.filename << ":" << cp.first_line << ":" << cp.first_column << ": ";
+        printer << cp.getReportFormat() << ": "; //cp.filename << ":" << cp.first_line << ":" << cp.first_column << ": ";
         printer.foreground(Printer::RED, true);
         printer << "error: ";
         printer.removeFormatting();
@@ -53,6 +53,18 @@ namespace qlow
     }
 }
 
+
+std::string qlow::CodePosition::getReportFormat(void) const
+{
+    std::ostringstream s;
+    if (filename == nullptr) {
+        s << first_line << ":" << first_column;
+    }
+    else {
+        s << filename << ":" << first_line << ":" << first_column;
+    }
+    return s.str();
+}
 
 
 CompileError::~CompileError(void)

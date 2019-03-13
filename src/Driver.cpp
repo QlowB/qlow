@@ -72,7 +72,6 @@ Driver::Driver(int argc, char** argv) :
 int Driver::run(void)
 {
     Printer& printer = Printer::getInstance();
-    
 #ifdef DEBUGGING
     printer << "starting parser" << std::endl;
 #endif

@@ -83,6 +83,7 @@ do                                                        \
         YYRHSLOC(Rhs, 0).last_line;                       \
       (Cur).first_column = (Cur).last_column =            \
         YYRHSLOC(Rhs, 0).last_column;                     \
+      (Cur).filename = YYRHSLOC(Rhs, 0).filename;         \
     }                                                     \
 while (0)
 %}

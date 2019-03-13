@@ -34,6 +34,8 @@ struct qlow::CodePosition
     int last_column;
     
     inline bool isMultiline(void) const { return first_line != last_line; }
+
+    std::string getReportFormat(void) const;
 };
 
 

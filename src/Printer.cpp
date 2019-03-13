@@ -1,6 +1,6 @@
 #include "Printer.h"
 
-#include "Ast.h"
+//#include "Ast.h"
 #include <cstdio>
 
 using qlow::Printer;
@@ -17,6 +17,7 @@ Printer Printer::instance(std::cout, isatty(fileno(stdout)));
 
 void Printer::foreground(Color color, bool bright)
 {
+    if (!isTty) return;
     using std::string;
     string cchar = string(1, '0' + color);
     string isbright = bright ? "9" : "3";
@@ -26,6 +27,7 @@ void Printer::foreground(Color color, bool bright)
 
 void Printer::background(Color color, bool bright)
 {
+    if (!isTty) return;
     using std::string;
     string cchar = string(1, '0' + color);
     string isbright = bright ? "10" : "4";
@@ -35,13 +37,21 @@ void Printer::background(Color color, bool bright)
 
 void Printer::bold(void)
 {
+    if (!isTty) return;
     target << "\033[1m";
 }
 
 
 void Printer::removeFormatting(void)
 {
+    if (!isTty) return;
     target << "\033[0m";
+}
+
+
+int Printer::sync(void)
+{
+    return target.eof() ? EOF : 0;
 }
 
 
