@@ -34,6 +34,7 @@
 #include "Parser.h"
 #include "syntax.hpp"
 
+#define register
 
 #define SET_TOKEN(t) (yylval_param->token = t)
 #define SET_STRING (yylval_param->string = new std::string(yytext, yyleng))
