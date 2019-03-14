@@ -9,8 +9,9 @@ check_ipo_supported(RESULT ipo_supported)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -g -DDEBUGGING -std=gnu++17")
+
 
 find_package(BISON 3.0.0 REQUIRED)
 find_package(FLEX 2.4.0 REQUIRED)
@@ -33,7 +34,16 @@ add_executable(${PROJECT_NAME} ${BISON_QlowParser_OUTPUTS} ${FLEX_QlowLexer_OUTP
 
 include_directories( ${LLVM_INCLUDE_DIRS} )
 link_directories( ${LLVM_LIBRARY_DIRS} )
-add_definitions(${LLVM_DEFINITIONS})
+add_definitions( ${LLVM_DEFINITIONS} )
+
+
+if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_CLANG )
+    target_compile_options(${PROJECT_NAME} PRIVATE "-Wall -Wextra -Wconversion -Wsign-conversion")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -g -DDEBUGGING -std=gnu++17")
+endif()
+if ( MSVC )
+    target_compile_options(${PROJECT_NAME} PRIVATE "/W4")
+endif()
 
 
 if(ipo_supported)
