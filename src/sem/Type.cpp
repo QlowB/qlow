@@ -1,5 +1,5 @@
 #include "Type.h"
-
+#include "Scope.h"
 #include "Context.h"
 #include "ErrorReporting.h"
 
@@ -20,6 +20,10 @@ TypeId TypeId::toArray(void) const
 }
 
 */
+
+Type::NativeType::~NativeType(void)
+{
+}
 
 Type::Kind Type::getKind(void) const
 {
@@ -77,12 +81,13 @@ bool Type::operator==(const Type& other) const
 
 qlow::sem::Class* Type::getClass(void) const
 {
-    try {
-        return std::get<ClassType>(type).classType;
-    }
-    catch(std::bad_variant_access& bva) {
-        return nullptr;
-    }
+    return std::get_if<ClassType>(&type).classType;
+}
+
+
+qlow::sem::NativeTypeScope* Type::getNativeTypeScope(void) const
+{
+    return std::get_if<NativeType>(&type).typeScope;
 }
 
 

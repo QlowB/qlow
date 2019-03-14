@@ -65,7 +65,14 @@ qlow::sem::TypeId Context::getNativeTypeId(Type::Native n)
 
 std::unique_ptr<qlow::sem::TypeScope> Context::getTypeScope(TypeId id)
 {
-    return std::make_unique<TypeScope>(*this, id);
+    if (auto type = getType(id)) {
+        if (type.getKind() == Type::Kind::NATIVE) {
+            return std::make_unique<NativeTypeScope>();
+        }
+        else {
+            return std::make_unique<TypeScope>(*this, id);
+        }
+    }
 }
 
 

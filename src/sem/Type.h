@@ -21,6 +21,8 @@ namespace qlow::sem
 
     // forward declarations to other files
     struct Class;
+    class NativeTypeScope;
+
     class Context;
 }
 
@@ -85,6 +87,8 @@ private:
     struct NativeType
     {
         Native type;
+        std::unique_ptr<NativeTypeScope> typeScope;
+        ~NativeType(void);
         inline bool operator==(const NativeType& other) const { return type == other.type; }
     };
 
@@ -110,10 +114,10 @@ private:
     Union type;
 
     inline Type(Union type) :
-        type{ type } {}
+        type{ std::move(type) } {}
 
     inline Type(Union type, std::string name) :
-        name{ std::move(name) }, type{ type } {}
+        name{ std::move(name) }, type{ std::move(type) } {}
 
 public:
     Kind getKind(void) const;
@@ -122,7 +126,17 @@ public:
 
     bool operator == (const Type& other) const;
 
+    /**
+     * @brief return the class of this type if it is a class type,
+     *        <code>nullptr</code> otherwise.
+     */
     Class* getClass(void) const;
+    
+    /**
+     * @brief returns the type scope of this type if the type
+     *        is native, <code>nullptr</code> otherwise.
+     */
+    NativeTypeScope* getNativeTypeScope(void) const;
 
     llvm::Type* getLLVMType(llvm::LLVMContext* context);
 
