@@ -41,6 +41,8 @@
 
 extern "C" int qlow_parser_wrap(yyscan_t s);
 
+#define YY_NO_UNISTD_H
+
 // TODO rewrite
 #define YY_USER_ACTION                                \
   do {                                                \
