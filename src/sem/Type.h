@@ -3,7 +3,7 @@
 
 #include <variant>
 #include <string>
-#include <climits>
+#include <limits>
 
 namespace llvm {
     class Value;

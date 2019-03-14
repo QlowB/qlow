@@ -108,7 +108,7 @@ sem::TypeId sem::NativeScope::getType(const ast::Type* name)
    
     if (!classType)
         return NO_TYPE;
-    
+
     
     auto t = types.find(classType->typeName);
     if (t != types.end())
