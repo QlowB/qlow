@@ -222,19 +222,19 @@ topLevel:
     |
     topLevel classDefinition {
         $$ = $1;
-        $$->getObjects().push_back(std::move(std::unique_ptr<qlow::ast::Class>($2)));
+        $$->getObjects().emplace_back($2);
         $2 = nullptr;
     }
     |
     topLevel methodDefinition {
         $$ = $1;
-        $$->getObjects().push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($2)));
+        $$->getObjects().emplace_back($2);
         $2 = nullptr;
     }
     |
     topLevel externMethodDeclaration {
         $$ = $1;
-        $$->getObjects().push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($2)));
+        $$->getObjects().emplace_back($2);
         $2 = nullptr;
     }
     |
@@ -242,7 +242,7 @@ topLevel:
         $$ = $1;
         reportError(qlow::SyntaxError(@2));
         yyerrok;
-        $$->getObjects().push_back(std::move(std::unique_ptr<qlow::ast::MethodDefinition>($3)));
+        $$->getObjects().emplace_back($3);
         $3 = nullptr;
     }
     |
@@ -250,7 +250,7 @@ topLevel:
         reportError(qlow::SyntaxError(@2));
         yyerrok;
         $$ = $1;
-        $$->getObjects().push_back(std::move(std::unique_ptr<qlow::ast::Class>($3)));
+        $$->getObjects().emplace_back($3);
         $3 = nullptr;
     };
 
@@ -296,7 +296,7 @@ featureList:
     |
     featureList featureDeclaration {
         $$ = $1;
-        $$->push_back(std::move(std::unique_ptr<FeatureDeclaration>($2)));
+        $$->emplace_back($2);
         $2 = nullptr;
     }
     |
@@ -304,7 +304,7 @@ featureList:
         $$ = $1;
         yyerrok;
         reportError(qlow::SyntaxError(@2));
-        $$->push_back(std::move(std::unique_ptr<FeatureDeclaration>($3)));
+        $$->emplace_back($3);
         $3 = nullptr;
     };
 
@@ -356,7 +356,7 @@ methodDefinition:
     }
     |
     IDENTIFIER doEndBlock {
-        $$ = new MethodDefinition(nullptr, *$1, std::move(std::unique_ptr<DoEndBlock>($2)), @$);
+        $$ = new MethodDefinition(nullptr, *$1, std::unique_ptr<DoEndBlock>($2), @$);
         delete $1; $1 = nullptr;
     }
     |
@@ -370,7 +370,7 @@ methodDefinition:
     }
     |
     IDENTIFIER ROUND_LEFT argumentList ROUND_RIGHT doEndBlock {
-        $$ = new MethodDefinition(nullptr, *$1, std::move(*$3), std::move(std::unique_ptr<DoEndBlock>($5)), @$);
+        $$ = new MethodDefinition(nullptr, *$1, std::move(*$3), std::unique_ptr<DoEndBlock>($5), @$);
         delete $1; delete $3; $1 = nullptr; $3 = nullptr;
     };
 

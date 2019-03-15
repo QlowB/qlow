@@ -41,6 +41,14 @@ public:
     TypeId addType(Type&& type);
     std::optional<std::reference_wrapper<Type>> getType(TypeId tid);
 
+    /**
+     * @brief get a string denoting the type
+     * 
+     * @return the name of the type if the given id is valid,
+     *         an empty string otherwise.
+     */
+    std::string getTypeString(TypeId tid);
+
     TypeId getPointerTo(TypeId id);
     TypeId getArrayOf(TypeId id);
 
@@ -48,7 +56,6 @@ public:
     TypeId getVoidTypeId(void);
     TypeId getNativeTypeId(Type::Native n);
 
-    std::unique_ptr<TypeScope> getTypeScope(TypeId);
     NativeScope& getNativeScope(void);
 };
 

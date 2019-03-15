@@ -1,6 +1,7 @@
 #include "Type.h"
-
+#include "Scope.h"
 #include "Context.h"
+#include "Semantic.h"
 #include "ErrorReporting.h"
 
 using qlow::sem::TypeId;
@@ -20,6 +21,39 @@ TypeId TypeId::toArray(void) const
 }
 
 */
+/*
+Type::NativeType::NativeType(void) = default;
+Type::NativeType::NativeType(NativeType&&) = default;
+
+Type::NativeType::NativeType(Native type) :
+    type{ type }, typeScope{ nullptr } {}
+
+Type::NativeType::~NativeType(void)
+{
+}
+*/
+
+Type::Type(Context& context, Union type) :
+    Type{ context, type, "" }
+{
+}
+
+
+Type::Type(Context& context, Union type, std::string name) :
+    name{ std::move(name) },
+    type{ std::move(type) }
+{
+    if (getKind() == Kind::NATIVE) {
+        typeScope = std::make_unique<NativeTypeScope>(context, *this);
+    }
+    else {
+        typeScope = std::make_unique<TypeScope>(context, *this);
+    }
+}
+
+
+Type::~Type(void) = default;
+
 
 Type::Kind Type::getKind(void) const
 {
@@ -77,12 +111,11 @@ bool Type::operator==(const Type& other) const
 
 qlow::sem::Class* Type::getClass(void) const
 {
-    try {
-        return std::get<ClassType>(type).classType;
-    }
-    catch(std::bad_variant_access& bva) {
+    const auto* classType = std::get_if<ClassType>(&type);
+    if (classType)
+        return classType->classType;
+    else
         return nullptr;
-    }
 }
 
 
@@ -95,25 +128,28 @@ llvm::Type* Type::getLLVMType(llvm::LLVMContext* context)
 
 Type Type::createNativeType(Context& c, std::string name, Native type)
 {
-    return Type{ Union{ NativeType{ type } }, std::move(name) };
+    return Type{ c, Union{ NativeType{ type } }, std::move(name) };
 }
 
 
 Type Type::createClassType(Context& c, Class* classType)
 {
-    return Type{ Union{ ClassType{ classType }}};
+    if (classType == nullptr) {
+        throw "invalid class type";
+    }
+    return Type{ c, Union{ ClassType{ classType }}};
 }
 
 
 Type Type::createPointerType(Context& c, TypeId pointsTo)
 {
-    return Type{ Union{ PointerType{ pointsTo }}};
+    return Type{ c, Union{ PointerType{ pointsTo }}};
 }
 
 
 Type Type::createArrayType(Context& c, TypeId pointsTo)
 {
-    return Type{ Union{ ArrayType{ pointsTo }}};
+    return Type{ c, Union{ ArrayType{ pointsTo }}};
 }
 
 

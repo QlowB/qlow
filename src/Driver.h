@@ -16,8 +16,9 @@ namespace qlow
     class Driver;
     
     
-    namespace ast {
-        struct Ast;
+    namespace ast
+    {
+        class Ast;
         struct AstObject;
     }
 }

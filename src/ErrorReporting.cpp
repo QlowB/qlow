@@ -203,3 +203,10 @@ std::string SemanticError::getMessage(void) const noexcept
 }
 
 
+SemanticError SemanticError::invalidReturnType(const std::string& should,
+    const std::string& is, const CodePosition& where)
+{
+    return SemanticError{ INVALID_RETURN_TYPE, "invalid return type: return type should be " +
+        should + ", but " + is + " is given.", where };
+}
+

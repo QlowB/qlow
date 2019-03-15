@@ -64,7 +64,7 @@ sem::TypeId sem::GlobalScope::getType(const ast::Type* name)
     if (native) {
         return native;
     }
-    
+
     const auto* classType = dynamic_cast<const ast::ClassType*>(name);
    
     if (!classType)
@@ -108,7 +108,7 @@ sem::TypeId sem::NativeScope::getType(const ast::Type* name)
    
     if (!classType)
         return NO_TYPE;
-    
+
     
     auto t = types.find(classType->typeName);
     if (t != types.end())
@@ -269,12 +269,10 @@ std::string sem::LocalScope::toString(void)
 
 sem::Variable* sem::TypeScope::getVariable(const std::string& name)
 {
-    if (auto ty = context.getType(type)) {
-        if (ty.value().get().getKind() == Type::Kind::CLASS) {
-            auto& fields = ty.value().get().getClass()->fields;
-            if (fields.find(name) != fields.end())
-                return fields[name].get();
-        }
+    if (type.getKind() == Type::Kind::CLASS) {
+        auto& fields = type.getClass()->fields;
+        if (fields.find(name) != fields.end())
+            return fields[name].get();
     }
     return nullptr;
 }
@@ -283,13 +281,11 @@ sem::Variable* sem::TypeScope::getVariable(const std::string& name)
 
 sem::Method* sem::TypeScope::getMethod(const std::string& name)
 {
-    if (auto ty = context.getType(type)) {
-        if (ty.value().get().getKind() == Type::Kind::CLASS) {
-            auto classRef = ty.value().get().getClass();
-            auto& methods = classRef->methods;
-            if (methods.find(name) != methods.end())
-                return methods[name].get();
-        }
+    if (type.getKind() == Type::Kind::CLASS) {
+        auto classRef = type.getClass();
+        auto& methods = classRef->methods;
+        if (methods.find(name) != methods.end())
+            return methods[name].get();
     }
     return nullptr;
 }
@@ -314,6 +310,12 @@ std::string sem::TypeScope::toString(void)
 }
 
 
+bool sem::TypeScope::isNativeTypeScope(void) const
+{
+    return false;
+}
+
+
 sem::Method* sem::NativeTypeScope::getMethod(const std::string& name)
 {
     /*auto m = nativeType.nativeMethods.find(name);
@@ -324,5 +326,9 @@ sem::Method* sem::NativeTypeScope::getMethod(const std::string& name)
 }
 
 
+bool sem::NativeTypeScope::isNativeTypeScope(void) const
+{
+    return true;
+}
 
 

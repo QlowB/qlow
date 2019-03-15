@@ -38,8 +38,10 @@ add_definitions( ${LLVM_DEFINITIONS} )
 
 
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_CLANG )
-    target_compile_options(${PROJECT_NAME} PRIVATE "-Wall -Wextra -Wconversion -Wsign-conversion")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}  -g -DDEBUGGING -std=gnu++17")
+    target_compile_options(${PROJECT_NAME} PRIVATE 
+        -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable
+    )
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -DDEBUGGING")
 endif()
 if ( MSVC )
     target_compile_options(${PROJECT_NAME} PRIVATE "/W4")

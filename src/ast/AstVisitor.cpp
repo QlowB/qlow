@@ -326,14 +326,9 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::ReturnStatemen
     auto returnValue = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
     
     if (shouldReturn != returnValue->type) {
-        throw SemanticError(
-            SemanticError::INVALID_RETURN_TYPE,
-            //TODO rewrite
-            "wrong return value",
-            //"return value must be of type '" + shouldReturn->asString() + "' (not '" +
-            //returnValue->type->asString() + "')",
-            ast.expr->pos
-        );
+        auto should = scope.getContext().getTypeString(shouldReturn);
+        auto is = scope.getContext().getTypeString(returnValue->type);
+        throw SemanticError::invalidReturnType(should, is, ast.expr->pos);
     }
     
     auto as = std::make_unique<sem::ReturnStatement>(scope.getContext());
@@ -352,12 +347,10 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(
     ast::AddressExpression& ast, sem::Scope& scope)
 {
     auto target = unique_dynamic_cast<sem::Expression>(ast.target->accept(*this, scope));
-    auto& targetType = target->type;
+    auto targetType = target->type;
     
     if (!target->isLValue()) {
-        // TODO rewrite
-        //throw NotLValue(targetType->asString(), ast.pos);
-        throw NotLValue("type", ast.pos);
+        throw NotLValue(scope.getContext().getTypeString(targetType), ast.pos);
     }
     
     return std::make_unique<sem::AddressExpression>(std::move(target));
