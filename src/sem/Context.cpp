@@ -22,7 +22,8 @@ qlow::sem::TypeId Context::addType(Type&& type) {
         return typesMap[type];
     }
     else {
-        types.push_back(std::move(type));
+        Type gogo = std::move(type);
+        types.push_back(std::move(gogo));
         return types.size() - 1;
     }
 }
@@ -36,6 +37,15 @@ std::optional<std::reference_wrapper<qlow::sem::Type>> Context::getType(TypeId t
     else {
         return std::nullopt;
     }
+}
+
+
+std::string Context::getTypeString(TypeId tid)
+{
+    if (auto type = getType(tid))
+        return type.value().get().asString();
+    else
+        return "";
 }
 
 
@@ -60,12 +70,6 @@ qlow::sem::TypeId Context::getVoidTypeId(void)
 qlow::sem::TypeId Context::getNativeTypeId(Type::Native n)
 {
     return nativeScope->getType(n);
-}
-
-
-std::unique_ptr<qlow::sem::TypeScope> Context::getTypeScope(TypeId id)
-{
-    return std::make_unique<TypeScope>(*this, id);
 }
 
 

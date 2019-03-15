@@ -41,7 +41,9 @@
 
 extern "C" int qlow_parser_wrap(yyscan_t s);
 
+#ifdef _WIN32
 #define YY_NO_UNISTD_H
+#endif
 
 // TODO rewrite
 #define YY_USER_ACTION                                \

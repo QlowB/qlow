@@ -151,9 +151,9 @@ public:
 class qlow::sem::TypeScope : public Scope
 {
 protected:
-    TypeId type;
+    Type& type;
 public:
-    inline TypeScope(Context& context, TypeId type) :
+    inline TypeScope(Context& context, Type& type) :
         Scope{ context },
         type{ type }
     {
@@ -164,21 +164,22 @@ public:
     virtual TypeId getType(const ast::Type* name);
     virtual TypeId getReturnableType(void);
     virtual std::string toString(void);
+
+    virtual bool isNativeTypeScope(void) const;
 };
 
 
 class qlow::sem::NativeTypeScope : public TypeScope
 {
-    TypeId nativeType;
 public:
-    inline NativeTypeScope(Context& context, TypeId type) :
-        TypeScope{ context, type },
-        nativeType{ type }
+    inline NativeTypeScope(Context& context, Type& type) :
+        TypeScope{ context, type }
     {
     }
     
-    
     virtual Method* getMethod(const std::string& name);
+    virtual bool isNativeTypeScope(void) const;
+
     TypeId implementInlineOperation(const std::string&, llvm::Value* a);
 };
 

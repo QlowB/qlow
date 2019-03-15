@@ -137,6 +137,8 @@ public:
 
     virtual void print(Printer& p = Printer::getInstance()) const noexcept override;
     virtual std::string getMessage(void) const noexcept;
+
+    static SemanticError invalidReturnType(const std::string& should, const std::string& is, const CodePosition& where);
 };
 
 

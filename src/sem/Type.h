@@ -2,6 +2,7 @@
 #define QLOW_SEM_TYPE_H
 
 #include <variant>
+#include <memory>
 #include <string>
 #include <limits>
 
@@ -21,6 +22,8 @@ namespace qlow::sem
 
     // forward declarations to other files
     struct Class;
+    class TypeScope;
+
     class Context;
 }
 
@@ -81,6 +84,7 @@ public:
 
 private:
     std::string name;
+    std::unique_ptr<TypeScope> typeScope;
 
     struct NativeType
     {
@@ -109,20 +113,35 @@ private:
     using Union = std::variant<NativeType, ClassType, PointerType, ArrayType>;
     Union type;
 
-    inline Type(Union type) :
-        type{ type } {}
-
-    inline Type(Union type, std::string name) :
-        name{ std::move(name) }, type{ type } {}
+    inline Type(Context& context, Union type);
+    inline Type(Context& context, Union type, std::string name);
 
 public:
+    ~Type(void);
+    Type(const Type& other) = delete;
+    Type(Type&& other) = default;
+    void operator = (const Type& other) = delete;
+    Type& operator = (Type&& other) = default;
+
     Kind getKind(void) const;
     std::string asString(void) const;
     size_t hash(void) const;
 
     bool operator == (const Type& other) const;
 
+    /**
+     * @brief return the class of this type if it is a class type,
+     *        <code>nullptr</code> otherwise.
+     * @post ensures that if <code>this->getKind() == Kind::CLASS</code>,
+     *       it will not return a <code>nullptr</code>
+     */
     Class* getClass(void) const;
+    
+    /**
+     * @brief returns the type scope of this type if the type
+     *        is native, <code>nullptr</code> otherwise.
+     */
+    const TypeScope& getTypeScope(void) const;
 
     llvm::Type* getLLVMType(llvm::LLVMContext* context);
 
