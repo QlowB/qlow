@@ -72,6 +72,11 @@ Driver::Driver(int argc, char** argv) :
 int Driver::run(void) try
 {
     Printer& printer = Printer::getInstance();
+    if (options.infiles.empty()) {
+        qlow::printError(ErrorCode::NO_INFILES, printer);   
+        return 1;     
+    }
+
 #ifdef DEBUGGING
     printer << "starting parser" << std::endl;
 #endif

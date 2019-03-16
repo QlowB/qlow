@@ -190,8 +190,7 @@ struct qlow::sem::ThisExpression : public Variable
     inline ThisExpression(Method* method) :
         Variable{
             method->context,
-            method->context.createPointerType(method->context.createClassType(
-                            method->containingClass)),
+            method->context.createClassType(method->containingClass),
             "this"
         },
         method{ method }

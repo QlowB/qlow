@@ -6,6 +6,12 @@
 
 namespace qlow
 {
+    enum class ErrorCode
+    {
+        /// no files were given to process
+        NO_INFILES,
+    };
+
     struct CodePosition;
     
     class InternalError;
@@ -20,7 +26,10 @@ namespace qlow
     void reportError(const std::string& message) noexcept;
     void printError(Printer& printer, const std::string& message) noexcept;
     void printError(Printer& printer, const std::string& message, const CodePosition& where) noexcept;
+
+    void printError(ErrorCode ec, Printer& printer) noexcept;
 }
+
 
 
 /*!

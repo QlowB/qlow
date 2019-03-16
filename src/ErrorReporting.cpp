@@ -46,6 +46,17 @@ namespace qlow
         printer.removeFormatting();
         printer << msg << std::endl;
     }
+
+
+    void printError(ErrorCode ec, Printer& printer) noexcept
+    {
+        static const std::map<ErrorCode, std::string> error = {
+            { ErrorCode::NO_INFILES, "no files were provided" },
+        };
+
+        if (error.find(ec) != error.end())
+            printError(printer, error.at(ec));
+    }
 }
 
 

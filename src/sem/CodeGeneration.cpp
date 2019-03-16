@@ -273,7 +273,7 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
 #endif
     targetMachine->addPassesToEmitFile(pm, dest,
 //        llvm::LLVMTargetMachine::CGFT_ObjectFile,
-//        nullptr,
+        nullptr,
         llvm::TargetMachine::CGFT_ObjectFile);
 
     pm.run(*module);
