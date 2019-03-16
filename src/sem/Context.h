@@ -6,6 +6,9 @@
 #include <vector>
 #include <optional>
 
+#include <llvm/IR/Type.h>
+#include <llvm/IR/LLVMContext.h>
+
 #include "Type.h"
 
 namespace qlow::sem
@@ -30,16 +33,16 @@ namespace std
 class qlow::sem::Context
 {
 private:
-    std::vector<Type> types;
+    std::vector<std::pair<Type, llvm::Type*>> types;
     std::unordered_map<std::reference_wrapper<Type>, TypeId, std::hash<std::reference_wrapper<Type>>, std::equal_to<Type>> typesMap;
-    
-    std::unique_ptr<NativeScope> nativeScope;
 
+    std::unique_ptr<NativeScope> nativeScope;
 public:
     Context(void);
     
     TypeId addType(Type&& type);
-    std::optional<std::reference_wrapper<Type>> getType(TypeId tid);
+    Type& getType(TypeId tid);
+    std::optional<std::reference_wrapper<Type>> getMaybeType(TypeId tid);
 
     /**
      * @brief get a string denoting the type
@@ -49,14 +52,16 @@ public:
      */
     std::string getTypeString(TypeId tid);
 
-    TypeId getPointerTo(TypeId id);
-    TypeId getArrayOf(TypeId id);
-
-
     TypeId getVoidTypeId(void);
     TypeId getNativeTypeId(Type::Native n);
-
     NativeScope& getNativeScope(void);
+
+    TypeId createNativeType(std::string name, Type::Native type);
+    TypeId createClassType(Class* classType);
+    TypeId createPointerType(TypeId pointsTo);
+    TypeId createArrayType(TypeId pointsTo);
+
+    llvm::Type* getLlvmType(TypeId id, llvm::LLVMContext& llvmCtxt);
 };
 
 #endif // QLOW_SEM_CONTEXT_H

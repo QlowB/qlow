@@ -1,6 +1,7 @@
 #include "Builtin.h"
 #include "Scope.h"
 #include "Type.h"
+#include "Context.h"
 
 using namespace qlow;
 
@@ -19,7 +20,7 @@ sem::NativeScope qlow::sem::generateNativeScope(Context& context)
     };
 
     for (auto [name, type] : natives) {
-        TypeId id = context.addType(Type::createNativeType(context, name, type));
+        TypeId id = context.createNativeType(name, type);
         scope.addNativeType(name, type, id);
     }
     
@@ -124,7 +125,96 @@ sem::NativeScope qlow::sem::generateNativeScope(Context& context)
     return scope;
 }
 
-/*
+
+void qlow::sem::fillNativeScope(NativeScope& scope)
+{
+    Context& context = scope.getContext();
+
+    TypeId integer = context.getNativeTypeId(Type::Native::INTEGER);
+    context.getType(integer).setTypeScope(
+        std::make_unique<NativeTypeScope>(generateNativeTypeScope(context, Type::Native::INTEGER))
+    );
+}
+
+
+sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, Type::Native native)
+{
+    NativeTypeScope scope{ context, context.getNativeTypeId(native) };
+
+
+    scope.nativeMethods.insert(
+        { "+",
+            std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
+                context.getNativeTypeId(Type::Native::INTEGER),
+                context.getNativeTypeId(native),
+                [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                    return builder.CreateAdd(a, b);
+                }
+            )
+        }
+    );
+    scope.nativeMethods.insert(
+        { "-",
+            std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
+                context.getNativeTypeId(Type::Native::INTEGER),
+                context.getNativeTypeId(native),
+                [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                    return builder.CreateSub(a, b);
+                }
+            )
+        }
+    );
+    scope.nativeMethods.insert(
+        { "*",
+            std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
+                context.getNativeTypeId(Type::Native::INTEGER),
+                context.getNativeTypeId(native),
+                [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                    return builder.CreateMul(a, b);
+                }
+            )
+        }
+    );
+    scope.nativeMethods.insert(
+        { "/",
+            std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
+                context.getNativeTypeId(Type::Native::INTEGER),
+                context.getNativeTypeId(native),
+                [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                    return builder.CreateSDiv(a, b);
+                }
+            )
+        }
+    );
+
+
+    scope.nativeMethods.insert(
+        { "==",
+            std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
+                context.getNativeTypeId(Type::Native::BOOLEAN),
+                context.getNativeTypeId(native),
+                [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                    return builder.CreateICmpEQ(a, b);
+                }
+            )
+        }
+    );
+    scope.nativeMethods.insert(
+        { "!=",
+            std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
+                context.getNativeTypeId(Type::Native::BOOLEAN),
+                context.getNativeTypeId(native),
+                [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                    return builder.CreateICmpNE(a, b);
+                }
+            )
+        }
+    );
+
+    return scope;
+}
+
+
 llvm::Value* qlow::sem::UnaryNativeMethod::generateCode(llvm::IRBuilder<>& builder,
     std::vector<llvm::Value*> arguments)
 {
@@ -142,7 +232,6 @@ llvm::Value* qlow::sem::BinaryNativeMethod::generateCode(llvm::IRBuilder<>& buil
     return generator(builder, arguments[0], arguments[1]);
 }
 
-*/
 
 
 

@@ -36,31 +36,11 @@ struct qlow::sem::SemanticObject
     virtual ~SemanticObject(void);
     
     /**
-     * \brief converts the object to a readable string for debugging purposes. 
+     * @brief converts the object to a readable string for debugging purposes. 
      */
     virtual std::string toString(void) const;
 };
 
-
-/*
-class qlow::sem::TypeId
-{
-    Context& context;
-    size_t id;
-public:
-    inline TypeId(Context& context, size_t id) :
-        context{ context }, id{ id } {}
-
-    inline TypeId(Context& context) :
-        context{ context }, id{ std::numeric_limits<size_t>::max() } {}
-
-    inline Context& getContext(void) const { return context; }
-    inline size_t getId(void) const { return id; }
-
-    TypeId toPointer(void) const;
-    TypeId toArray(void) const;
-};
-*/
 
 
 class qlow::sem::Type
@@ -83,9 +63,6 @@ public:
     };
 
 private:
-    std::string name;
-    std::unique_ptr<TypeScope> typeScope;
-
     struct NativeType
     {
         Native type;
@@ -111,10 +88,13 @@ private:
     };
 
     using Union = std::variant<NativeType, ClassType, PointerType, ArrayType>;
+
+    std::string name;
+    std::unique_ptr<TypeScope> typeScope;
     Union type;
 
-    inline Type(Context& context, Union type);
-    inline Type(Context& context, Union type, std::string name);
+    Type(Context& context, Union type, TypeId id);
+    Type(Context& context, Union type, std::string name, TypeId id);
 
 public:
     ~Type(void);
@@ -138,198 +118,16 @@ public:
     Class* getClass(void) const;
     
     /**
-     * @brief returns the type scope of this type if the type
-     *        is native, <code>nullptr</code> otherwise.
+     * @brief returns the type scope of this type
      */
-    const TypeScope& getTypeScope(void) const;
-
-    llvm::Type* getLLVMType(llvm::LLVMContext* context);
-
-    static Type createNativeType(Context& c, std::string name, Native type);
-    static Type createClassType(Context& c, Class* classType);
-    static Type createPointerType(Context& c, TypeId pointsTo);
-    static Type createArrayType(Context& c, TypeId pointsTo);
+    inline TypeScope& getTypeScope(void) const { return *typeScope; }
+    
+    /**
+     * @brief sets the type scope of this type
+     */
+    void setTypeScope(std::unique_ptr<TypeScope> scope);
 };
 
- 
-#if 0
-#include "Scope.h"
-
-#include <memory>
-#include <string>
-
-namespace llvm {
-    class Value;
-    class Type;
-    class LLVMContext;
-}
-
-namespace qlow
-{
-    namespace sem
-    {
-        // forward declarations
-        struct Class;
-        
-        class Scope;
-        
-        struct NativeMethod;
-    }
-
-
-    namespace sem
-    {
-        struct SemanticObject;
-        
-        class Type;
-        
-        class PointerType;
-        class ClassType;
-        class ArrayType;
-        class NativeType;
-    }
-}
-
-class qlow::sem::Type : public SemanticObject
-{
-public:
-    virtual ~Type(void);
-
-    /// \returns false by default
-    virtual inline bool isPointerType(void) const { return false; }
-    
-    /// \returns false by default
-    virtual inline bool isClassType(void) const { return false; }
-    
-    /// \returns false by default
-    virtual inline bool isNativeType(void) const { return false; }
-    
-    /// \returns false by default
-    virtual inline bool isArrayType(void) const { return false; }
-
-    virtual std::string asString(void) const = 0;
-    virtual Scope& getScope(void) = 0;
-    
-    virtual y = 0;
-    
-    virtual bool equals(const Type& other) const;
-
-    virtual size_t hash(void) const;
-    
-//    static TypeId VOID;
-//    static TypeId INTEGER;
-//    static TypeId BOOLEAN;
-};
-
-
-class qlow::sem::PointerType : public Type
-{
-    TypeId derefType;
-    sem::TypeScope scope;
-public:
-    inline PointerType(TypeId derefType) :
-        derefType{ derefType },
-        scope{ *this }
-    {
-    }
-    
-    const TypeId& getDerefType(void) const { return derefType; }
-    
-    inline bool isPointerType(void) const override { return true; }
-    
-    virtual std::string asString(void) const override;
-    virtual Scope& getScope(void) override;
-    
-    virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
-    
-    virtual bool equals(const Type& other) const override;
-};
-
-
-class qlow::sem::ClassType : public Type
-{
-    sem::Class* classType;
-    sem::TypeScope scope;
-public:
-    inline ClassType(sem::Class* classType) :
-        classType{ classType },
-        scope{ *this }
-    {
-    }
-    
-    inline bool isClassType(void) const override { return true; }
-    
-    std::string asString(void) const override;
-    Scope& getScope(void) override;
-    
-    virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
-    inline sem::Class* getClassType(void) { return classType; }
-    virtual bool equals(const Type& other) const override;
-};
-
-
-class qlow::sem::ArrayType : public Type
-{
-    std::shared_ptr<sem::Type> arrayType;
-    TypeScope scope;
-public:
-    
-    inline ArrayType(std::shared_ptr<sem::Type> arrayType) :
-        arrayType{ std::move(arrayType) },
-        scope{ *this }
-    {
-    }
-    
-    inline bool isArrayType(void) const override { return true; }
-    
-    std::string asString(void) const override;
-    Scope& getScope(void) override;
-    
-    virtual llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
-    inline std::shared_ptr<sem::Type> getArrayType(void) { return arrayType; }
-    virtual bool equals(const Type& other) const override;
-};
-
-
-class qlow::sem::NativeType : public Type
-{
-    NativeTypeScope scope;
-public:
-    enum Type {
-        VOID,
-        INTEGER,
-        BOOLEAN,
-        CHAR,
-        STRING,
-        INT8, INT16, INT32, INT64, INT128,
-        UINT8, UINT16, UINT32, UINT64, UINT128,
-        FLOAT32, FLOAT64, FLOAT128,
-    };
-    
-    Type type;
-    
-    SymbolTable<NativeMethod> nativeMethods;
-    
-    inline NativeType(Type type) :
-        scope{ *this },
-        type{ type }
-    {
-    }
-    
-    inline bool isNativeType(void) const override { return true; }
-    
-    std::string asString(void) const override;
-    Scope& getScope(void) override;
-    
-    bool isIntegerType(void) const;
-    
-    llvm::Type* getLlvmType(llvm::LLVMContext& context) const override;
-    virtual bool equals(const sem::Type& other) const override;
-    
-    /// cast an llvm::Value from another native type to this one
-    llvm::Value* generateImplicitCast(llvm::Value* value);
-};
-
-#endif
 
 #endif // QLOW_SEM_TYPE_H
+

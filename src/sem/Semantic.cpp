@@ -114,17 +114,6 @@ std::pair<std::unique_ptr<Context>, std::unique_ptr<GlobalScope>>
 }
 
 
-SemanticObject::~SemanticObject(void)
-{
-}
-
-
-std::string SemanticObject::toString(void) const
-{
-    return "SemanticObject [" + util::toString(this) + "]";
-}
-
-
 std::string Class::toString(void) const
 {
     std::string val = "Class[";
@@ -242,14 +231,14 @@ std::string CastExpression::toString(void) const
 {
     // TODO remove optional unwrapping
     return "CastExpression[" + expression->toString() + " to " +
-        context.getType(targetType).value().get().asString() + "]";
+        context.getType(targetType).asString() + "]";
 }
 
 
 std::string NewArrayExpression::toString(void) const
 {
     // TODO remove optional unwrapping
-    return "NewArrayExpression[" + context.getType(arrayType).value().get().asString() + "; " +
+    return "NewArrayExpression[" + context.getType(arrayType).asString() + "; " +
         length->toString() + "]";
 }
 

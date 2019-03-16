@@ -4,6 +4,7 @@
 
 #include "Semantic.h"
 #include "Scope.h"
+#include "Type.h"
 
 #include <llvm/IR/Value.h>
 #include <llvm/IR/IRBuilder.h>
@@ -12,7 +13,12 @@ namespace qlow
 {
     namespace sem
     {
+        class Context;
+        
         NativeScope generateNativeScope(Context& context);
+        void fillNativeScope(NativeScope& scope);
+
+        NativeTypeScope generateNativeTypeScope(Context& context, Type::Native native);
         
         struct NativeMethod;
         struct UnaryNativeMethod;

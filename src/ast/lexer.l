@@ -45,7 +45,6 @@ extern "C" int qlow_parser_wrap(yyscan_t s);
 #define YY_NO_UNISTD_H
 #endif
 
-// TODO rewrite
 #define YY_USER_ACTION                                \
   do {                                                \
     yylloc_param->first_line = yylineno;              \

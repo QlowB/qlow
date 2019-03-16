@@ -142,6 +142,7 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& semantic)
 
 llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
 {
+    sem::Context& semCtxt = method->context;
     using llvm::Function;
     using llvm::Argument;
     using llvm::Type;
@@ -149,22 +150,19 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
     
     Type* returnType;
     if (method->returnType)
-        // TODO rewrite
-        ;// returnType = method->returnType->getLlvmType(context);
+        returnType = semCtxt.getLlvmType(method->returnType, context);
     else
         returnType = llvm::Type::getVoidTy(context);
     
     std::vector<Type*> argumentTypes;
     if (method->thisExpression != nullptr) {
-        // TODO rewrite
-        //Type* enclosingType = method->thisExpression->type->getLlvmType(context);
-        //argumentTypes.push_back(enclosingType);
+        Type* enclosingType = semCtxt.getLlvmType(method->thisExpression->type, context);
+        argumentTypes.push_back(enclosingType);
     }
     
     for (auto& arg : method->arguments) {
-        // TODO rewrite
-        //Type* argumentType = arg->type->getLlvmType(context);
-        //argumentTypes.push_back(argumentType);
+        Type* argumentType = semCtxt.getLlvmType(arg->type, context);
+        argumentTypes.push_back(argumentType);
     }
     
     FunctionType* funcType = FunctionType::get(
@@ -295,6 +293,8 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     using llvm::BasicBlock;
     using llvm::Value;
     using llvm::IRBuilder;
+
+    sem::Context& semCtxt = this->method.context;
     
 #ifdef DEBUGGING
     printf("generate function %s\n", method.name.c_str()); 
@@ -318,9 +318,9 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
         if (var->type == sem::NO_TYPE)
             throw "wtf null type";
         
-        // TODO rewrite
-        //llvm::AllocaInst* v = builder.CreateAlloca(var->type->getLlvmType(context));
-        //var->allocaInst = v;
+
+        llvm::AllocaInst* v = builder.CreateAlloca(semCtxt.getLlvmType(var->type, context));
+        var->allocaInst = v;
     }
     
     for (auto& statement : method.body->statements) {

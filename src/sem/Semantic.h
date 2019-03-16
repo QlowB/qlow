@@ -87,7 +87,7 @@ struct qlow::sem::Class : public SemanticObject
         astNode{ astNode },
         name{ astNode->name },
         scope{ globalScope, this },
-        classType{ globalScope.getContext().addType(Type::createClassType(globalScope.getContext(), this)) },
+        classType{ globalScope.getContext().createClassType(this) },
         llvmType{ nullptr }
     {
     }
@@ -190,9 +190,8 @@ struct qlow::sem::ThisExpression : public Variable
     inline ThisExpression(Method* method) :
         Variable{
             method->context,
-            method->context.addType(Type::createPointerType(method->context,
-                        method->context.addType(Type::createClassType(method->context,
-                            method->containingClass)))),
+            method->context.createPointerType(method->context.createClassType(
+                            method->containingClass)),
             "this"
         },
         method{ method }
@@ -342,7 +341,7 @@ struct qlow::sem::AddressExpression : public Expression
     std::unique_ptr<sem::Expression> target;
     
     inline AddressExpression(std::unique_ptr<sem::Expression> target) :
-        Expression{ target->context, context.getPointerTo(target->type) },
+        Expression{ target->context, context.createPointerType(target->type) },
         target{ std::move(target) }
     {
     }
@@ -402,7 +401,7 @@ struct qlow::sem::NewArrayExpression : public Expression
     std::unique_ptr<Expression> length;
     
     inline NewArrayExpression(Context& context, TypeId arrayType) :
-        Expression{ context, context.getArrayOf(arrayType) },
+        Expression{ context, context.createArrayType(arrayType) },
         arrayType{ arrayType }
     {
     }

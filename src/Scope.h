@@ -41,9 +41,8 @@ namespace qlow
         class NativeTypeScope;
         
         class Type;
+        struct NativeMethod;
     }
-    
-    class Context;
 }
 
 
@@ -55,6 +54,9 @@ public:
     inline Scope(Context& context) :
         context{ context } {}
 
+    Scope(Scope&&) = default;
+    Scope& operator=(Scope&&) = default;
+
     virtual ~Scope(void);
     virtual Variable* getVariable(const std::string& name) = 0;
     virtual Method* getMethod(const std::string& name) = 0;
@@ -65,7 +67,7 @@ public:
 
     virtual std::string toString(void) = 0;
 
-    inline Context& getContext(void) const { return context; }
+    inline Context& getContext(void) { return context; }
 };
 
 
@@ -151,13 +153,16 @@ public:
 class qlow::sem::TypeScope : public Scope
 {
 protected:
-    Type& type;
+    TypeId type;
 public:
-    inline TypeScope(Context& context, Type& type) :
+    inline TypeScope(Context& context, TypeId type) :
         Scope{ context },
         type{ type }
     {
     }
+
+    TypeScope(TypeScope&&) = default;
+    TypeScope& operator=(TypeScope&&) = default;
     
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);
@@ -172,10 +177,16 @@ public:
 class qlow::sem::NativeTypeScope : public TypeScope
 {
 public:
-    inline NativeTypeScope(Context& context, Type& type) :
+    SymbolTable<NativeMethod> nativeMethods;
+    inline NativeTypeScope(Context& context, TypeId type) :
         TypeScope{ context, type }
     {
     }
+
+    NativeTypeScope(NativeTypeScope&&);
+    //NativeTypeScope& operator=(NativeTypeScope&&);
+
+    ~NativeTypeScope(void);
     
     virtual Method* getMethod(const std::string& name);
     virtual bool isNativeTypeScope(void) const;

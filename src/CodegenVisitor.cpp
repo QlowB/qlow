@@ -61,15 +61,17 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::
     
     if (operation != nullptr) {
         // TODO rewrite
-        /*if (sem::NativeMethod* nm = dynamic_cast<sem::NativeMethod*>(operation); nm) {
+        if (sem::NativeMethod* nm = dynamic_cast<sem::NativeMethod*>(operation); nm) {
             return nm->generateCode(builder, {left, right});
         }
-        else*/
+        else
             throw "only native operations supported at the moment";
     }
     else {
         throw "internal error: operation method null";
     }
+
+    // unreachable
         
     if (left == nullptr) {
         printf("WOW: %s\n", binop.left->toString().c_str());
@@ -77,8 +79,8 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::
     
     Value* implicitelyCastedRight = right;
     // TODO rewritten types
-    /*if (leftType != rightType))
-        implicitelyCastedRight = dynamic_cast<sem::NativeType*>(leftType.get())->generateImplicitCast(right);*/
+    //if (leftType != rightType))
+    //    implicitelyCastedRight = dynamic_cast<sem::NativeType*>(leftType.get())->generateImplicitCast(right);
     
     /*
     if (dynamic_cast<sem::NativeType*>(leftType.get())->isIntegerType()) {

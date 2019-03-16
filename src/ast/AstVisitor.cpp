@@ -1,6 +1,7 @@
 #include "AstVisitor.h"
 #include "Ast.h"
 #include "ErrorReporting.h"
+#include "Context.h"
 
 #include <typeinfo>
 
@@ -192,10 +193,11 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
     sem::Method* method;
     sem::Variable* var;
     
-    // TODO rewrite types
     if (target) {
-        //method = target->type->getScope().getMethod(ast.name);
-        //var = target->type->getScope().getVariable(ast.name);
+        auto& targetType = scope.getContext().getType(target->type);
+        auto& typeScope = targetType.getTypeScope();
+        method = typeScope.getMethod(ast.name);
+        var = typeScope.getVariable(ast.name);
     }
     else {
         method = scope.getMethod(ast.name);
@@ -244,11 +246,9 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
             auto* thisExpr = scope.getVariable("this");
             if (!thisExpr)
                 throw "no this found";
-            //Printer::getInstance().debug() << "feature call " << var->toString() << " is a field\n";
             return std::make_unique<sem::FieldAccessExpression>(std::make_unique<sem::LocalVariableExpression>(thisExpr), field);
         }
         else {
-            //Printer::getInstance().debug() << "feature call " << var->toString() << " is not a field\n";
             return std::make_unique<sem::LocalVariableExpression>(var);
         }
     }
@@ -377,31 +377,38 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::UnaryOperation
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperation& ast, sem::Scope& scope)
 {
+    sem::Context& context = scope.getContext();
+
     auto leftEval = unique_dynamic_cast<sem::Expression>(ast.left->accept(*this, scope));
     auto rightEval = unique_dynamic_cast<sem::Expression>(ast.right->accept(*this, scope));
+
+    auto& leftType = context.getType(leftEval->type);
+    auto& rightType = context.getType(rightEval->type);
     
-    throw SemanticError(SemanticError::OPERATOR_NOT_FOUND, "TODO implement", ast.pos);
-    /*
-    sem::Method* operationMethod = leftEval->type->getScope().resolveMethod(
+    auto& scop =  leftType.getTypeScope();
+    sem::Method* operationMethod = scop.resolveMethod(
         ast.opString, { rightEval->type }
     );
     
-    Printer::getInstance().debug() << "looked for operation method for operator " <<
-    ast.opString << std::endl;
+#ifdef DEBUGGING
+    Printer::getInstance() << "looked for operation method for operator " <<
+        ast.opString << std::endl;
+#endif
+
     if (!operationMethod) {
         throw SemanticError(SemanticError::OPERATOR_NOT_FOUND,
             "operator " + ast.opString + " not found for types '" +
-            leftEval->type->asString() + "' and '" + rightEval->type->asString() + "'",
+            leftType.asString() + "' and '" + rightType.asString() + "'",
             ast.opPos);
     }
     
-    auto ret = std::make_unique<sem::BinaryOperation>(leftEval->type, &ast);
+    auto ret = std::make_unique<sem::BinaryOperation>(context, leftEval->type, &ast);
     
     ret->operationMethod = operationMethod;
     ret->opString = ast.opString;
     ret->left = std::move(leftEval);
     ret->right = std::move(rightEval);
-    return ret;*/
+    return ret;
 }
 
 
