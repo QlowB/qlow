@@ -5,6 +5,7 @@
 
 #include "Ast.h"
 #include "Semantic.h"
+#include "ErrorReporting.h"
 #include "Builtin.h"
 #include "CodeGeneration.h"
 
@@ -13,8 +14,8 @@
 int main(int argc, char** argv) try
 {
     std::set_terminate ([] () {
-        std::cerr << "terminated" << std::endl;
-        abort();
+        qlow::printError(qlow::Printer::getInstance(), "severe internal compiler error");
+        exit(1);
     });
 
     qlow::Driver driver(argc, argv);

@@ -64,7 +64,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefiniti
                 unique_dynamic_cast<sem::Variable>(std::move(var));
             variable->isParameter = true;
             m->arguments.push_back(variable.get());
-            std::string varname = variable->name;
+            std::string& varname = variable->name;
             m->scope.putVariable(varname, std::move(variable));
         }
         else {
@@ -118,7 +118,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
                 throw SemanticError(SemanticError::UNKNOWN_TYPE,
                                     nvs->type->asString(),
                                     nvs->type->pos);
-            auto var = std::make_unique<sem::Variable>(scope.getContext(), std::move(type), nvs->name);
+            auto var = std::make_unique<sem::Variable>(scope.getContext(), type, nvs->name);
             body->scope.putVariable(nvs->name, std::move(var));
             continue;
         }
@@ -384,12 +384,12 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
 
     auto& leftType = context.getType(leftEval->type);
     auto& rightType = context.getType(rightEval->type);
-    
+
     auto& scop =  leftType.getTypeScope();
     sem::Method* operationMethod = scop.resolveMethod(
         ast.opString, { rightEval->type }
     );
-    
+
 #ifdef DEBUGGING
     Printer::getInstance() << "looked for operation method for operator " <<
         ast.opString << std::endl;

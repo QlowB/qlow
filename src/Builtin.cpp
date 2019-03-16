@@ -237,9 +237,9 @@ llvm::Value* qlow::sem::BinaryNativeMethod::generateCode(llvm::IRBuilder<>& buil
     Printer& p = Printer::getInstance();
     llvm::raw_os_ostream pp(p);
     p << "creating native binop with llvm-types ";
-    arguments[0]->getType()->print(pp); pp.flush();
+    arguments[0]->getType()->print(pp, true); pp.flush();
     p << ", ";
-    arguments[1]->getType()->print(pp); pp.flush();
+    arguments[1]->getType()->print(pp, true); pp.flush();
     p << std::endl;
 #endif
     return generator(builder, arguments[0], arguments[1]);

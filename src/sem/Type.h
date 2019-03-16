@@ -89,7 +89,6 @@ private:
 
     using Union = std::variant<NativeType, ClassType, PointerType, ArrayType>;
 
-    std::string name;
     std::unique_ptr<TypeScope> typeScope;
     Union type;
 
@@ -104,6 +103,8 @@ public:
     Type& operator = (Type&& other) = default;
 
     Kind getKind(void) const;
+    Native getNativeKind(void) const;
+
     std::string asString(void) const;
     size_t hash(void) const;
 

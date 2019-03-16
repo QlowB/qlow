@@ -146,6 +146,9 @@ struct qlow::ast::Type : public AstObject
 };
 
 
+///
+/// \brief represents a type identified by a single identifier
+///
 struct qlow::ast::ClassType : public ast::Type
 {
     std::string typeName;

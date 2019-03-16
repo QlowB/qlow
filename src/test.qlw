@@ -15,7 +15,7 @@ fast_fibonacci(i: Integer): Integer do
     return a
 end
 
-//extern do_shit
+extern printint(x: Integer)
 
 
 /*
@@ -30,9 +30,13 @@ end
 */
 
 main: Integer do
-    value: Integer
-    value := 42
-    return value
+    count: Integer
+    count := 0
+    while count != 20 do
+        printint(fast_fibonacci(count))
+        count := count + 1
+    end
+    return 0
     //do_shit
 end
 

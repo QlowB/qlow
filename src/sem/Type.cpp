@@ -24,7 +24,6 @@ Type::Type(Context& context, Union type, TypeId id) :
 
 
 Type::Type(Context& context, Union type, std::string name, TypeId id) :
-    name{ std::move(name) },
     type{ std::move(type) }
 {
     if (getKind() == Kind::NATIVE) {
@@ -52,25 +51,29 @@ Type::Kind Type::getKind(void) const
 }
 
 
+Type::Native Type::getNativeKind(void) const
+{
+    return std::get<NativeType>(this->type).type;
+}
+
+
 std::string Type::asString(void) const
 {
+    using namespace std::literals;
     return std::visit(
         [&] (const auto& t) -> std::string {
             using T = std::decay_t<decltype(t)>;
             if constexpr (std::is_same<T, NativeType>::value) {
-                return this->name;
+                return "native";
             }
             else if constexpr (std::is_same<T, ClassType>::value) {
-                return this->name;
+                return this->getClass()->name;
             }
             else if constexpr (std::is_same<T, PointerType>::value) {
-                // TODO rewrite
-                //return context.getType(t.targetType) + "*";
-                return "*";
+                return this->typeScope->getContext().getType(t.targetType).asString() + "*";
             }
             else if constexpr (std::is_same<T, ArrayType>::value) {
-                //return "[" + context.getType(t.targetType) + "]";
-                return "[]";
+                return "["s + this->typeScope->getContext().getType(t.targetType).asString() + "]";
             }
         }
         ,
@@ -81,14 +84,34 @@ std::string Type::asString(void) const
 
 size_t Type::hash(void) const
 {
-    // TODO implement
-    return type.index() * 2345325 + std::hash<std::string>()(name);
+    auto value1 = std::visit(
+        [&] (const auto& t) -> size_t {
+            using T = std::decay_t<decltype(t)>;
+            if constexpr (std::is_same<T, NativeType>::value) {
+                return static_cast<size_t>(t.type) * 2345279;
+            }
+            else if constexpr (std::is_same<T, ClassType>::value) {
+                return reinterpret_cast<size_t>(t.classType) * 1;
+            }
+            else if constexpr (std::is_same<T, PointerType>::value) {
+                return t.targetType * 143115587;
+            }
+            else if constexpr (std::is_same<T, ArrayType>::value) {
+                //return "[" + context.getType(t.targetType) + "]";
+                return t.targetType * 2342345;
+            }
+        },
+        type
+    );
+    auto h = type.index() * 11111111111111111 + value1;
+    Printer::getInstance() << h << std::endl;
+    return h;
 }
 
 
 bool Type::operator==(const Type& other) const
 {
-    return this->name == other.name &&
+    return //this->name == other.name &&
            this->type == other.type;
 }
 

@@ -114,16 +114,47 @@ llvm::Type* Context::getLlvmType(TypeId id, llvm::LLVMContext& llvmCtxt)
     // TODO at the moment, all types are integers --> fix that
     if (id < types.size()) {
         auto& llt = types[id].second;
-        if (llt == nullptr) {
-            if (id == 0)
-                llt = llvm::Type::getInt1Ty(llvmCtxt);
-            else
-                llt = llvm::Type::getInt64Ty(llvmCtxt);
-        }
         return llt;
     }
     else {
         return nullptr;
+    }
+}
+
+
+void Context::createLlvmTypes(llvm::LLVMContext& llvmCtxt)
+{
+    for (auto& [type, llvmType] : types) {
+        if (type.getKind() != Type::Kind::NATIVE) {
+            llvmType = llvm::StructType::create(llvmCtxt);
+        }
+    }
+    for (auto& [type, llvmType] : types) {
+        if (type.getKind() == Type::Kind::NATIVE) {
+            switch (type.getNativeKind()) {
+            case Type::Native::BOOLEAN:
+                llvmType = llvm::Type::getInt1Ty(llvmCtxt);
+                break;
+            case Type::Native::INTEGER:
+                llvmType = llvm::Type::getInt64Ty(llvmCtxt);
+                break;
+            case Type::Native::VOID:
+                llvmType = llvm::Type::getVoidTy(llvmCtxt);
+                break;
+            }
+        }
+    }
+    for (auto& [type, llvmType] : types) {
+        if (type.getKind() == Type::Kind::CLASS) {
+            std::vector<llvm::Type*> structTypes;
+
+            for (auto& [name, field] : type.getClass()->fields) {
+                structTypes.push_back(types[field->type].second);
+                field->llvmStructIndex = structTypes.size() - 1;
+            }
+
+            llvm::dyn_cast<llvm::StructType>(llvmType)->setBody(llvm::ArrayRef(structTypes));
+        }
     }
 }
 

@@ -26,7 +26,7 @@ namespace qlow
 namespace gen
 {
 
-std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& semantic)
+std::unique_ptr<llvm::Module> generateModule(sem::GlobalScope& semantic)
 {
     using llvm::Module;
     using llvm::Function;
@@ -47,6 +47,7 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& semantic)
 
     // create llvm structs
     // TODO implement detection of circles
+    /*
     for (const auto& [name, cl] : semantic.getClasses()) {
         llvm::StructType* st;
         std::vector<llvm::Type*> fields;
@@ -63,10 +64,11 @@ std::unique_ptr<llvm::Module> generateModule(const sem::GlobalScope& semantic)
                 throw "internal error: possible circular dependency";
             
             llvmStructIndex++;
-        }*/
+        }*//*
         st = llvm::StructType::create(context, fields, name);
         cl->llvmType = st;
-    }
+    }*/
+    semantic.getContext().createLlvmTypes(context);
     
     llvm::AttrBuilder ab;
     ab.addAttribute(llvm::Attribute::AttrKind::NoInline);
@@ -261,16 +263,17 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
 
     TargetOptions targetOptions;
     auto relocModel = llvm::Optional<llvm::Reloc::Model>(llvm::Reloc::Model::PIC_);
-    std::unique_ptr<TargetMachine> targetMachine(
-        target->createTargetMachine(targetTriple, cpu,
-            features, targetOptions, relocModel));
+    TargetMachine* targetMachine = target->createTargetMachine(targetTriple, cpu,
+            features, targetOptions, relocModel);
 
     std::error_code errorCode;
     raw_fd_ostream dest(filename, errorCode, llvm::sys::fs::F_None);
+#ifdef DEBUGGING
     printer << "adding passes" << std::endl;
+#endif
     targetMachine->addPassesToEmitFile(pm, dest,
 //        llvm::LLVMTargetMachine::CGFT_ObjectFile,
-        nullptr,
+//        nullptr,
         llvm::TargetMachine::CGFT_ObjectFile);
 
     pm.run(*module);

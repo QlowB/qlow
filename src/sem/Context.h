@@ -62,6 +62,8 @@ public:
     TypeId createArrayType(TypeId pointsTo);
 
     llvm::Type* getLlvmType(TypeId id, llvm::LLVMContext& llvmCtxt);
+
+    void createLlvmTypes(llvm::LLVMContext& llvmCtxt);
 };
 
 #endif // QLOW_SEM_CONTEXT_H

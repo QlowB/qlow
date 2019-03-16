@@ -16,7 +16,8 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::LocalVariableExpression& lve, 
 {
     assert(lve.var->allocaInst != nullptr);
     if (llvm::dyn_cast<llvm::AllocaInst>(lve.var->allocaInst)) {
-        llvm::Value* val = builder.CreateLoad(lve.var->allocaInst);
+        llvm::Type* returnType = lve.context.getLlvmType(lve.type, builder.getContext());
+        llvm::Value* val = builder.CreateLoad(returnType, lve.var->allocaInst);
         return val;
     }
     else {
@@ -135,7 +136,10 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::NewArrayExpression& naexpr, ll
 
 llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, llvm::IRBuilder<>& builder)
 {
-    /*using llvm::Value;
+    using llvm::Value;
+
+    sem::Context& semCtxt = call.context;
+
     if (call.arguments.size() != call.callee->arguments.size()) {
         throw "wrong number of arguments";
     }
@@ -144,10 +148,12 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, ll
     
     if (call.target != nullptr) {
         auto* target = call.target->accept(fg.lvalueVisitor, builder);
-        
-        Printer::getInstance().debug() << "creating 'this' argument";
+
+#ifdef DEBUGGING
+        Printer::getInstance() << "creating 'this' argument";
+#endif
         if (llvm::LoadInst* li = llvm::dyn_cast<llvm::LoadInst>(target); li) {
-            llvm::Value* ptr = builder.CreateLoad(call.target->type->getLlvmType(builder.getContext())->getPointerTo(), li, "ptrload");
+            llvm::Value* ptr = builder.CreateLoad(semCtxt.getLlvmType(call.target->type, builder.getContext())->getPointerTo(), li, "ptrload");
             arguments.push_back(ptr);
         } else
             arguments.push_back(target);
@@ -158,7 +164,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, ll
         auto& arg = call.arguments[i];
         auto value = arg->accept(*this, builder);
         
-        if (!arg->type->equals(*call.callee->arguments[i]->type.get())) {
+        if (arg->type != call.callee->arguments[i]->type) {
             throw "argument type mismatch";
         }
         
@@ -166,8 +172,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, ll
     }
     //auto returnType = call.callee->returnType;
     llvm::CallInst* callInst = builder.CreateCall(call.callee->llvmNode, arguments);
-    return callInst;*/
-    return nullptr;
+    return callInst;
 }
 
 

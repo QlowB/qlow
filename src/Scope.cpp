@@ -61,7 +61,7 @@ sem::TypeId sem::GlobalScope::getType(const ast::Type* name)
     }
     
     auto native = context.getNativeScope().getType(name);
-    if (native) {
+    if (native != sem::NO_TYPE) {
         return native;
     }
 

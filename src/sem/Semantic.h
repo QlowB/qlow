@@ -434,7 +434,7 @@ struct qlow::sem::MethodCallExpression : public Expression
     
     inline MethodCallExpression(std::unique_ptr<Expression> target,
                                 Method* callee) :
-        Expression{ target->context, callee->returnType },
+        Expression{ callee->context, callee->returnType },
         callee{ callee },
         target{ std::move(target) }
     {
