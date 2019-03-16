@@ -222,7 +222,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::AddressExpression& node, llvm:
 llvm::Value* ExpressionCodegenVisitor::visit(sem::IntConst& node, llvm::IRBuilder<>& builder)
 {
     return llvm::ConstantInt::get(builder.getContext(),
-        llvm::APInt(32, std::to_string(node.value), 10));
+        llvm::APInt(64, std::to_string(node.value), 10));
 }
 
 

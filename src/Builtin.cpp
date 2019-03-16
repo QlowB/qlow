@@ -3,6 +3,10 @@
 #include "Type.h"
 #include "Context.h"
 
+#ifdef DEBUGGING
+#include <llvm/Support/raw_os_ostream.h>
+#endif
+
 using namespace qlow;
 
 
@@ -229,6 +233,15 @@ llvm::Value* qlow::sem::BinaryNativeMethod::generateCode(llvm::IRBuilder<>& buil
 {
     if (arguments.size() != 2)
         throw "invalid binary operation";
+#ifdef DEBUGGING
+    Printer& p = Printer::getInstance();
+    llvm::raw_os_ostream pp(p);
+    p << "creating native binop with llvm-types ";
+    arguments[0]->getType()->print(pp); pp.flush();
+    p << ", ";
+    arguments[1]->getType()->print(pp); pp.flush();
+    p << std::endl;
+#endif
     return generator(builder, arguments[0], arguments[1]);
 }
 

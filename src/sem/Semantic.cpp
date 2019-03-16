@@ -107,7 +107,7 @@ std::pair<std::unique_ptr<Context>, std::unique_ptr<GlobalScope>>
     printf("created all method bodies\n");
 #endif
     
-    return std::make_pair(std::move(context), std::move(globalScope));
+    return { std::move(context), std::move(globalScope) };
 }
 
 }
