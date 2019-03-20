@@ -27,6 +27,16 @@ namespace std
     {
         size_t operator() (const std::reference_wrapper<qlow::sem::Type>& t) const;
     };
+
+
+    template<>
+    struct equal_to<std::reference_wrapper<qlow::sem::Type>>
+    {
+        inline bool operator() (const std::reference_wrapper<qlow::sem::Type>& a, const std::reference_wrapper<qlow::sem::Type>& b) const
+        {
+            return a.get() == b.get();
+        }
+    };
 }
 
 
@@ -34,7 +44,7 @@ class qlow::sem::Context
 {
 private:
     std::vector<std::pair<Type, llvm::Type*>> types;
-    std::unordered_map<std::reference_wrapper<Type>, TypeId, std::hash<std::reference_wrapper<Type>>, std::equal_to<Type>> typesMap;
+    std::unordered_map<std::reference_wrapper<Type>, TypeId> typesMap;
 
     std::unique_ptr<NativeScope> nativeScope;
 public:

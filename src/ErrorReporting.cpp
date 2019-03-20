@@ -81,6 +81,8 @@ void InternalError::print(Printer& printer) const noexcept
 
 const std::string& InternalError::getMessage(void) const noexcept
 {
+    using namespace std::literals;
+
     static std::map<ErrorCode, std::string> errors = {
         {ErrorCode::OUT_OF_MEMORY, "out of memory"},
         {ErrorCode::PARSER_INIT_FAILED, "parser initialization failed"},
@@ -88,7 +90,13 @@ const std::string& InternalError::getMessage(void) const noexcept
         {ErrorCode::PARSER_FAILED, "parser failed"},
         {ErrorCode::PARSER_FAILED, "invalid type encountered"},
     };
-    return errors.at(errorCode);
+
+    if (errors.find(errorCode) != errors.end())
+        return errors.at(errorCode);
+    else {
+        static std::string msg = "error message not found"s;
+        return msg;
+    }
 }
 
 
@@ -201,7 +209,8 @@ void SemanticError::print(Printer& printer) const noexcept
 
 std::string SemanticError::getMessage(void) const noexcept
 {
-    static const std::map<ErrorCode, std::string> error = {
+    using namespace std::literals;
+    static const std::map<ErrorCode, std::string> errors = {
         {UNKNOWN_TYPE, "unknown type"},
         {FEATURE_NOT_FOUND, "method or variable not found"},
         {DUPLICATE_CLASS_DEFINITION, "duplicate class definition"},
@@ -209,15 +218,19 @@ std::string SemanticError::getMessage(void) const noexcept
         {DUPLICATE_METHOD_DEFINITION, "duplicate method definition"},
         {OPERATOR_NOT_FOUND, ""},
         {WRONG_NUMBER_OF_ARGUMENTS, "wrong number of arguments passed"},
+        {INVALID_RETURN_TYPE, "invalid return type"},
     };
-    return error.at(errorCode);
+    if (errors.find(errorCode) != errors.end())
+        return errors.at(errorCode);
+    else
+        return "error message not found"s;
 }
 
 
 SemanticError SemanticError::invalidReturnType(const std::string& should,
     const std::string& is, const CodePosition& where)
 {
-    return SemanticError{ INVALID_RETURN_TYPE, "invalid return type: return type should be " +
+    return SemanticError{ INVALID_RETURN_TYPE, "return type should be " +
         should + ", but " + is + " is given.", where };
 }
 

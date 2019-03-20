@@ -106,9 +106,11 @@ public:
     Native getNativeKind(void) const;
 
     std::string asString(void) const;
+    std::string asIdentifier(void) const;
     size_t hash(void) const;
 
     bool operator == (const Type& other) const;
+    inline bool operator != (const Type& other) const { return !this->operator==(other); }
 
     /**
      * @brief return the class of this type if it is a class type,

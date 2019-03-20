@@ -8,6 +8,7 @@
 #include <stack>
 
 #include <llvm/IR/Module.h>
+#include <llvm/IR/IRBuilder.h>
 
 namespace qlow
 {
@@ -34,13 +35,15 @@ public:
     StatementVisitor statementVisitor;
     ExpressionCodegenVisitor expressionVisitor;
     LValueVisitor lvalueVisitor;
+    llvm::IRBuilder<> builder;
 
     inline FunctionGenerator(const sem::Method& m, llvm::Module* module,
         llvm::AttributeSet& attributes) :
         method{ m },
         module{ module },
         attributes{ attributes },
-        expressionVisitor{ *this }
+        expressionVisitor{ *this },
+        builder{ module->getContext() }
     {
     }
 

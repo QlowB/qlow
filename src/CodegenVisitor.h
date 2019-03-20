@@ -73,7 +73,7 @@ public:
 class qlow::LValueVisitor :
     public Visitor<
         llvm::Value*,
-        llvm::IRBuilder<>,
+        qlow::gen::FunctionGenerator,
 
         sem::Expression,
         sem::LocalVariableExpression,
@@ -81,9 +81,9 @@ class qlow::LValueVisitor :
     >
 {
 public:
-    llvm::Value* visit(sem::Expression& node, llvm::IRBuilder<>&) override;
-    llvm::Value* visit(sem::LocalVariableExpression& node, llvm::IRBuilder<>&) override;
-    llvm::Value* visit(sem::FieldAccessExpression& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::Expression& node, qlow::gen::FunctionGenerator& fg) override;
+    llvm::Value* visit(sem::LocalVariableExpression& node, qlow::gen::FunctionGenerator& fg) override;
+    llvm::Value* visit(sem::FieldAccessExpression& node, qlow::gen::FunctionGenerator& fg) override;
 };
 
 

@@ -184,9 +184,9 @@ ACCEPT_DEFINITION(AddressExpression, ExpressionCodegenVisitor, llvm::Value*, llv
 ACCEPT_DEFINITION(IntConst, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(ThisExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 
-ACCEPT_DEFINITION(Expression, LValueVisitor, llvm::Value*, llvm::IRBuilder<>&)
-ACCEPT_DEFINITION(LocalVariableExpression, LValueVisitor, llvm::Value*, llvm::IRBuilder<>&)
-ACCEPT_DEFINITION(FieldAccessExpression, LValueVisitor, llvm::Value*, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(Expression, LValueVisitor, llvm::Value*, qlow::gen::FunctionGenerator&)
+ACCEPT_DEFINITION(LocalVariableExpression, LValueVisitor, llvm::Value*, qlow::gen::FunctionGenerator&)
+ACCEPT_DEFINITION(FieldAccessExpression, LValueVisitor, llvm::Value*, qlow::gen::FunctionGenerator&)
 
 ACCEPT_DEFINITION(AssignmentStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 ACCEPT_DEFINITION(DoEndBlock, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 

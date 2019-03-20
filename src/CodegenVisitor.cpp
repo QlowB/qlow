@@ -8,6 +8,7 @@
 
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/Support/raw_os_ostream.h>
 
 
 using namespace qlow;
@@ -147,15 +148,15 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, ll
     std::vector<Value*> arguments;
     
     if (call.target != nullptr) {
-        auto* target = call.target->accept(fg.lvalueVisitor, builder);
+        auto* target = call.target->accept(*this, builder);
 
 #ifdef DEBUGGING
         Printer::getInstance() << "creating 'this' argument";
 #endif
-        if (llvm::LoadInst* li = llvm::dyn_cast<llvm::LoadInst>(target); li) {
-            llvm::Value* ptr = builder.CreateLoad(semCtxt.getLlvmType(call.target->type, builder.getContext())->getPointerTo(), li, "ptrload");
+        /*if (llvm::LoadInst* li = llvm::dyn_cast<llvm::LoadInst>(target); li) {
+            llvm::Value* ptr = builder.CreateLoad(semCtxt.getLlvmType(call.target->type, builder.getContext()), li, "ptrload");
             arguments.push_back(ptr);
-        } else
+        } else*/
             arguments.push_back(target);
     }
     
@@ -178,10 +179,12 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::MethodCallExpression& call, ll
 
 llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access, llvm::IRBuilder<>& builder)
 {
-    /*using llvm::Value;
+    using llvm::Value;
     using llvm::Type;
+
+    sem::Context& semCtxt = access.context;
     
-    Type* type = access.target->type->getLlvmType(builder.getContext());
+    Type* type = semCtxt.getLlvmType(access.target->type, builder.getContext());
     
     if (type == nullptr)
         throw "no access type";
@@ -189,13 +192,18 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access,
         type = type->getPointerElementType();
     }
     
-    llvm::Value* target = access.target->accept(fg.lvalueVisitor, builder);
-    
+    llvm::Value* target = access.target->accept(fg.lvalueVisitor, fg);
+    llvm::raw_os_ostream os(Printer::getInstance());
+    type->print(os);
+    os << "\n";
+    os.flush();
+
     int structIndex = access.accessed->llvmStructIndex;
     llvm::ArrayRef<Value*> indexList = {
         llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, structIndex, false)),
         llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false))
     };
+
     Value* ptr = builder.CreateGEP(type, target, indexList);
     return builder.CreateLoad(ptr);
     
@@ -204,15 +212,14 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access,
     //                               llvm::ConstantInt::get(builder.getContext(),
     //                               llvm::APInt(32, 0, false)), 0);
     return llvm::ConstantInt::get(builder.getContext(),
-                                   llvm::APInt(32, 0, false));*/
-                                   return nullptr;
+                                   llvm::APInt(32, 0, false));
 }
 
 
 llvm::Value* ExpressionCodegenVisitor::visit(sem::AddressExpression& node, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
-    Value* lvalue = node.target->accept(fg.lvalueVisitor, builder);
+    Value* lvalue = node.target->accept(fg.lvalueVisitor, fg);
     
     // this check is unnecessary
     if (auto* allocaInst = llvm::dyn_cast<llvm::AllocaInst>(lvalue)) {
@@ -237,13 +244,13 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::ThisExpression& thisExpr, llvm
 }
 
 
-llvm::Value* LValueVisitor::visit(sem::Expression& e, llvm::IRBuilder<>& builder)
+llvm::Value* LValueVisitor::visit(sem::Expression& e, qlow::gen::FunctionGenerator& fg)
 {
     throw "cannot construct lvalue from expression";
 }
 
 
-llvm::Value* LValueVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
+llvm::Value* LValueVisitor::visit(sem::LocalVariableExpression& lve, qlow::gen::FunctionGenerator& fg)
 {
     assert(lve.var->allocaInst != nullptr);
     
@@ -260,12 +267,13 @@ llvm::Value* LValueVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBui
         return lve.var->allocaInst;
     }
     else {
-        throw "unable to find alloca instance of local variable";
+        return lve.var->allocaInst;
+        //throw "unable to find alloca instance of local variable";
     }
 }
 
 
-llvm::Value* LValueVisitor::visit(sem::FieldAccessExpression& access, llvm::IRBuilder<>& builder)
+llvm::Value* LValueVisitor::visit(sem::FieldAccessExpression& access, qlow::gen::FunctionGenerator& fg)
 {
     /*
     using llvm::Value;
@@ -287,8 +295,9 @@ llvm::Value* LValueVisitor::visit(sem::FieldAccessExpression& access, llvm::IRBu
     
     using llvm::Value;
     using llvm::Type;
+    sem::Context& semCtxt = access.context;
     
-    /*Type* type = access.target->type->getLlvmType(builder.getContext());
+    Type* type = semCtxt.getLlvmType(access.target->type, fg.builder.getContext());
     
     if (type == nullptr)
         throw "no access type";
@@ -296,16 +305,15 @@ llvm::Value* LValueVisitor::visit(sem::FieldAccessExpression& access, llvm::IRBu
         type = type->getPointerElementType();
     }
     
-    llvm::Value* target = access.target->accept(*this, builder);
+    llvm::Value* target = access.target->accept(fg.expressionVisitor, fg.builder);
     
     int structIndex = access.accessed->llvmStructIndex;
     llvm::ArrayRef<Value*> indexList = {
-        llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, structIndex, false)),
-        llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false))
+        llvm::ConstantInt::get(fg.builder.getContext(), llvm::APInt(32, structIndex, false)),
+        llvm::ConstantInt::get(fg.builder.getContext(), llvm::APInt(32, 0, false))
     };
-    Value* ptr = builder.CreateGEP(type, target, indexList);
-    return ptr;*/
-    return nullptr;
+    Value* ptr = fg.builder.CreateGEP(type, target, indexList);
+    return ptr;
 }
 
 
@@ -325,9 +333,9 @@ llvm::Value* StatementVisitor::visit(sem::IfElseBlock& ifElseBlock,
     using llvm::Value;
     using llvm::BasicBlock;
     
-    llvm::IRBuilder<> builder(fg.getContext());
-    builder.SetInsertPoint(fg.getCurrentBlock());
-    auto condition = ifElseBlock.condition->accept(fg.expressionVisitor, builder);
+
+    fg.builder.SetInsertPoint(fg.getCurrentBlock());
+    auto condition = ifElseBlock.condition->accept(fg.expressionVisitor, fg.builder);
     
     llvm::Function* function = fg.getCurrentBlock()->getParent();
     
@@ -335,21 +343,21 @@ llvm::Value* StatementVisitor::visit(sem::IfElseBlock& ifElseBlock,
     BasicBlock* elseB = BasicBlock::Create(fg.getContext(), "else", function);
     BasicBlock* merge = BasicBlock::Create(fg.getContext(), "merge", function);
     
-    Value* boolCond = builder.CreateIntCast(condition, llvm::Type::getInt1Ty(fg.getContext()), false);
+    Value* boolCond = fg.builder.CreateIntCast(condition, llvm::Type::getInt1Ty(fg.getContext()), false);
     
-    builder.CreateCondBr(boolCond, thenB, elseB);  
+    fg.builder.CreateCondBr(boolCond, thenB, elseB);  
     
     fg.pushBlock(thenB);
     ifElseBlock.ifBlock->accept(*this, fg);
-    builder.SetInsertPoint(thenB);
+    fg.builder.SetInsertPoint(thenB);
     if (!thenB->getTerminator())
-        builder.CreateBr(merge);
+        fg.builder.CreateBr(merge);
     fg.popBlock();
     fg.pushBlock(elseB);
     ifElseBlock.elseBlock->accept(*this, fg);
-    builder.SetInsertPoint(elseB);
+    fg.builder.SetInsertPoint(elseB);
     if (!elseB->getTerminator())
-        builder.CreateBr(merge);
+        fg.builder.CreateBr(merge);
     fg.popBlock();
     fg.popBlock();
     fg.pushBlock(merge);
@@ -363,8 +371,7 @@ llvm::Value* StatementVisitor::visit(sem::WhileBlock& whileBlock,
     using llvm::Value;
     using llvm::BasicBlock;
     
-    llvm::IRBuilder<> builder(fg.getContext());
-    builder.SetInsertPoint(fg.getCurrentBlock());
+    fg.builder.SetInsertPoint(fg.getCurrentBlock());
     
     llvm::Function* function = fg.getCurrentBlock()->getParent();
     
@@ -374,18 +381,18 @@ llvm::Value* StatementVisitor::visit(sem::WhileBlock& whileBlock,
     
     
     //builder.CreateCondBr(boolCond, body, merge);
-    builder.CreateBr(startloop);
+    fg.builder.CreateBr(startloop);
     fg.pushBlock(startloop);
-    builder.SetInsertPoint(startloop);
-    auto condition = whileBlock.condition->accept(fg.expressionVisitor, builder);
-    Value* boolCond = builder.CreateIntCast(condition, llvm::Type::getInt1Ty(fg.getContext()), false);
-    builder.CreateCondBr(condition, body, merge);
+    fg.builder.SetInsertPoint(startloop);
+    auto condition = whileBlock.condition->accept(fg.expressionVisitor, fg.builder);
+    Value* boolCond = fg.builder.CreateIntCast(condition, llvm::Type::getInt1Ty(fg.getContext()), false);
+    fg.builder.CreateCondBr(condition, body, merge);
     fg.popBlock();
     
     fg.pushBlock(body);
     whileBlock.body->accept(*this, fg);
-    builder.SetInsertPoint(body);
-    builder.CreateBr(startloop);
+    fg.builder.SetInsertPoint(body);
+    fg.builder.CreateBr(startloop);
     fg.popBlock();
     fg.pushBlock(merge);
     return nullptr;
@@ -396,14 +403,14 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
         qlow::gen::FunctionGenerator& fg)
 {
     Printer& printer = Printer::getInstance();
-    llvm::IRBuilder<> builder(fg.getContext());
-    builder.SetInsertPoint(fg.getCurrentBlock());
+    fg.builder.SetInsertPoint(fg.getCurrentBlock());
     
-    auto val = assignment.value->accept(fg.expressionVisitor, builder);
-    auto target = assignment.target->accept(fg.lvalueVisitor, builder);
+    auto val = assignment.value->accept(fg.expressionVisitor, fg.builder);
+    auto target = assignment.target->accept(fg.lvalueVisitor, fg);
     
-    return builder.CreateStore(val, target);
+    return fg.builder.CreateStore(val, target);
     
+    /*
     if (auto* targetVar =
         dynamic_cast<sem::LocalVariableExpression*>(assignment.target.get()); targetVar) {
 #ifdef DEBUGGING
@@ -437,17 +444,16 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
     }
     
     return nullptr;
-    //return llvm::ConstantFP::get(fg.getContext(), llvm::APFloat(5123.0));
+    //return llvm::ConstantFP::get(fg.getContext(), llvm::APFloat(5123.0));*/
 }
 
 
 llvm::Value* StatementVisitor::visit(sem::ReturnStatement& returnStatement,
         qlow::gen::FunctionGenerator& fg)
 {
-    llvm::IRBuilder<> builder(fg.getContext());
-    builder.SetInsertPoint(fg.getCurrentBlock());
-    auto val = returnStatement.value->accept(fg.expressionVisitor, builder);
-    builder.CreateRet(val);
+    fg.builder.SetInsertPoint(fg.getCurrentBlock());
+    auto val = returnStatement.value->accept(fg.expressionVisitor, fg.builder);
+    fg.builder.CreateRet(val);
     return val;
 }
 
@@ -455,11 +461,10 @@ llvm::Value* StatementVisitor::visit(sem::ReturnStatement& returnStatement,
 llvm::Value* StatementVisitor::visit(sem::FeatureCallStatement& fc, gen::FunctionGenerator& fg)
 {
     llvm::Module* module = fg.getModule();
-    llvm::IRBuilder<> builder(fg.getContext());
-    builder.SetInsertPoint(fg.getCurrentBlock());
+    fg.builder.SetInsertPoint(fg.getCurrentBlock());
     //llvm::Constant* c = module->getOrInsertFunction(fc.expr->callee->name, {});
     
-    return fc.expr->accept(fg.expressionVisitor, builder);
+    return fc.expr->accept(fg.expressionVisitor, fg.builder);
     
     /*
     llvm::Function* f = fc.expr->callee->llvmNode;

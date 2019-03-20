@@ -82,6 +82,31 @@ std::string Type::asString(void) const
 }
 
 
+std::string Type::asIdentifier(void) const
+{
+    using namespace std::literals;
+    return std::visit(
+        [&] (const auto& t) -> std::string {
+            using T = std::decay_t<decltype(t)>;
+            if constexpr (std::is_same<T, NativeType>::value) {
+                return "native";
+            }
+            else if constexpr (std::is_same<T, ClassType>::value) {
+                return this->getClass()->name;
+            }
+            else if constexpr (std::is_same<T, PointerType>::value) {
+                return this->typeScope->getContext().getType(t.targetType).asIdentifier() + "_ptr";
+            }
+            else if constexpr (std::is_same<T, ArrayType>::value) {
+                return this->typeScope->getContext().getType(t.targetType).asIdentifier() + "_arr";
+            }
+        }
+        ,
+        type
+    );
+}
+
+
 size_t Type::hash(void) const
 {
     auto value1 = std::visit(
@@ -103,7 +128,7 @@ size_t Type::hash(void) const
         },
         type
     );
-    auto h = type.index() * 11111111111111111 + value1;
+    auto h = type.index() * 2542345234523 + value1;
     Printer::getInstance() << h << std::endl;
     return h;
 }

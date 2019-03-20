@@ -21,13 +21,15 @@ Context::Context(void)
 
 
 qlow::sem::TypeId Context::addType(Type&& type) {
-    if (typesMap.find(type) != typesMap.end()) {
+    if (typesMap.count(type) != 0) {
         return typesMap[type];
     }
     else {
         Type gogo = std::move(type);
         types.push_back({ std::move(gogo), nullptr });
-        return types.size() - 1;
+        auto id = types.size() - 1;
+        typesMap[types[id].first] = id;
+        return id;
     }
 }
 
@@ -126,7 +128,7 @@ void Context::createLlvmTypes(llvm::LLVMContext& llvmCtxt)
 {
     for (auto& [type, llvmType] : types) {
         if (type.getKind() != Type::Kind::NATIVE) {
-            llvmType = llvm::StructType::create(llvmCtxt);
+            llvmType = llvm::StructType::create(llvmCtxt, type.asIdentifier());
         }
     }
     for (auto& [type, llvmType] : types) {
@@ -154,6 +156,7 @@ void Context::createLlvmTypes(llvm::LLVMContext& llvmCtxt)
             }
 
             llvm::dyn_cast<llvm::StructType>(llvmType)->setBody(llvm::ArrayRef(structTypes));
+            llvmType = llvmType->getPointerTo();
         }
     }
 }

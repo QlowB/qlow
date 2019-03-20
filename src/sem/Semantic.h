@@ -288,7 +288,7 @@ struct qlow::sem::Expression :
                      llvm::IRBuilder<>,
                      qlow::ExpressionCodegenVisitor>,
     public Visitable<llvm::Value*,
-                     llvm::IRBuilder<>,
+                     qlow::gen::FunctionGenerator,
                      qlow::LValueVisitor>
 {
     TypeId type;
@@ -302,7 +302,7 @@ struct qlow::sem::Expression :
     inline virtual bool isLValue(void) const { return false; }
     
     virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override = 0;
-    virtual llvm::Value* accept(LValueVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual llvm::Value* accept(LValueVisitor& visitor, qlow::gen::FunctionGenerator&) override;
 };
 
 
@@ -330,7 +330,7 @@ struct qlow::sem::LocalVariableExpression : public Expression
     inline virtual bool isLValue(void) const override { return true; }
 
     virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
-    virtual llvm::Value* accept(LValueVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual llvm::Value* accept(LValueVisitor& visitor, qlow::gen::FunctionGenerator&) override;
     virtual std::string toString(void) const override;
 };
 
@@ -462,7 +462,7 @@ struct qlow::sem::FieldAccessExpression : public Expression
     inline virtual bool isLValue(void) const override { return true; }
     
     virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
-    virtual llvm::Value* accept(LValueVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual llvm::Value* accept(LValueVisitor& visitor, qlow::gen::FunctionGenerator&) override;
     
     virtual std::string toString(void) const override;
 };

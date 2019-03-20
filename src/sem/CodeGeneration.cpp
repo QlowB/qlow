@@ -115,7 +115,7 @@ std::unique_ptr<llvm::Module> generateModule(sem::GlobalScope& semantic)
 #ifdef DEBUGGING
                 module->print(verifyStream, nullptr);
 #endif
-                throw "corrupt llvm function";
+                throw (std::string("corrupt llvm function") + method->name).c_str();
             }
 #ifdef DEBUGGING
             printf("verified function: %s\n", method->name.c_str());
@@ -132,7 +132,7 @@ std::unique_ptr<llvm::Module> generateModule(sem::GlobalScope& semantic)
         bool corrupt = llvm::verifyFunction(*f, &verifyStream);
         if (corrupt) {
             module->print(verifyStream, nullptr);
-            throw "corrupt llvm function";
+            throw method->name.c_str();
         }
 #ifdef DEBUGGING
         printf("verified function: %s\n", method->name.c_str());
@@ -273,7 +273,7 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
 #endif
     targetMachine->addPassesToEmitFile(pm, dest,
 //        llvm::LLVMTargetMachine::CGFT_ObjectFile,
-        nullptr,
+//        nullptr,
         llvm::TargetMachine::CGFT_ObjectFile);
 
     pm.run(*module);
@@ -342,7 +342,9 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     
     builder.SetInsertPoint(getCurrentBlock());
     //if (method.returnType->equals(sem::NativeType(sem::NativeType::Type::VOID))) {
-    if (method.returnType == sem::NO_TYPE) {
+    if (method.returnType == sem::NO_TYPE ||
+        (semCtxt.getType(method.returnType).getKind() == sem::Type::Kind::NATIVE &&
+        semCtxt.getType(method.returnType).getNativeKind() == sem::Type::Native::VOID)) {
         if (!getCurrentBlock()->getTerminator())
             builder.CreateRetVoid();
     }
