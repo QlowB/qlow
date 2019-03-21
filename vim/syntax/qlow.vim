@@ -10,7 +10,7 @@ endif
 
 
 
-syn keyword keywordy class do end if while return extern as
+syn keyword keywordy class struct do end if while return extern as new
 syn keyword typey Integer Boolean
 syn keyword typey String Char 
 syn keyword typey Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128

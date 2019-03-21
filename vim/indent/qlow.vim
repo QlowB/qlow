@@ -9,7 +9,7 @@ setlocal nosmartindent
 setlocal nocindent
 setlocal autoindent
 setlocal comments=:--
-setlocal indentkeys+==end,=do,=class
+setlocal indentkeys+==end,=do,=class,=struct
 
 let b:undo_indent = "setl smartindent< indentkeys< indentexpr< autoindent< comments< "
 
