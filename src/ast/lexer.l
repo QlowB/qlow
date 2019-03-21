@@ -93,6 +93,7 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 \n                      yycolumn = 0; //return SET_TOKEN(NEW_LINE);
 
 "class"                 return SET_TOKEN(CLASS);
+"struct"                return SET_TOKEN(STRUCT);
 "do"                    yy_push_state(METHOD, yyscanner); return SET_TOKEN(DO);
 <METHOD>"end"           yy_pop_state(yyscanner); return SET_TOKEN(END);
 <INITIAL>"end"          return SET_TOKEN(END);

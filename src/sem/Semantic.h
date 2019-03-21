@@ -50,6 +50,7 @@ namespace qlow
         
         struct CastExpression;
         
+        struct NewExpression;
         struct NewArrayExpression;
 
         struct MethodCallExpression;
@@ -390,6 +391,18 @@ struct qlow::sem::CastExpression : public Expression
     
     virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     
+    virtual std::string toString(void) const override;
+};
+
+
+struct qlow::sem::NewExpression : public Expression
+{
+    inline NewExpression(Context& context, TypeId type) :
+        Expression{ context, type }
+    {
+    }
+    
+    virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
     virtual std::string toString(void) const override;
 };
 

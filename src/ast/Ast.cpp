@@ -44,6 +44,7 @@ ACCEPT_DEFINITION(AddressExpression, StructureVisitor)
 ACCEPT_DEFINITION(IntConst, StructureVisitor)
 ACCEPT_DEFINITION(UnaryOperation, StructureVisitor)
 ACCEPT_DEFINITION(BinaryOperation, StructureVisitor)
+ACCEPT_DEFINITION(NewExpression, StructureVisitor)
 ACCEPT_DEFINITION(NewArrayExpression, StructureVisitor)
 ACCEPT_DEFINITION(CastExpression, StructureVisitor)
 

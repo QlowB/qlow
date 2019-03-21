@@ -113,9 +113,9 @@ std::unique_ptr<llvm::Module> generateModule(sem::GlobalScope& semantic)
             bool corrupt = llvm::verifyFunction(*f, &verifyStream);
             if (corrupt) {
 #ifdef DEBUGGING
-                module->print(verifyStream, nullptr);
+                //module->print(verifyStream, nullptr);
 #endif
-                throw (std::string("corrupt llvm function") + method->name).c_str();
+                throw (std::string("corrupt llvm function: ") + method->name).c_str();
             }
 #ifdef DEBUGGING
             printf("verified function: %s\n", method->name.c_str());
@@ -131,8 +131,8 @@ std::unique_ptr<llvm::Module> generateModule(sem::GlobalScope& semantic)
         //printer.debug() << "verifying function: " << method->name << std::endl;
         bool corrupt = llvm::verifyFunction(*f, &verifyStream);
         if (corrupt) {
-            module->print(verifyStream, nullptr);
-            throw method->name.c_str();
+            f->print(verifyStream, nullptr);
+            throw (std::string("corrupt llvm function: ") + method->name).c_str();
         }
 #ifdef DEBUGGING
         printf("verified function: %s\n", method->name.c_str());

@@ -42,6 +42,7 @@ class qlow::ExpressionCodegenVisitor :
         sem::UnaryOperation,
         sem::BinaryOperation,
         sem::CastExpression,
+        sem::NewExpression,
         sem::NewArrayExpression,
         sem::MethodCallExpression,
         sem::FieldAccessExpression,
@@ -61,6 +62,7 @@ public:
     llvm::Value* visit(sem::UnaryOperation& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::BinaryOperation& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::CastExpression& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::NewExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::NewArrayExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::MethodCallExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::FieldAccessExpression& node, llvm::IRBuilder<>&) override;

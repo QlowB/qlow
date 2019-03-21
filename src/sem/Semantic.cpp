@@ -176,6 +176,7 @@ ReturnType ClassName::accept(Visitor& v, Arg arg) \
 ACCEPT_DEFINITION(LocalVariableExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(BinaryOperation, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(CastExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(NewExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(NewArrayExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(UnaryOperation, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(MethodCallExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
@@ -232,6 +233,13 @@ std::string CastExpression::toString(void) const
     // TODO remove optional unwrapping
     return "CastExpression[" + expression->toString() + " to " +
         context.getType(targetType).asString() + "]";
+}
+
+
+std::string NewExpression::toString(void) const
+{
+    // TODO remove optional unwrapping
+    return "NewExpression[" + context.getType(type).asString() + "]";
 }
 
 

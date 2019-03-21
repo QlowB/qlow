@@ -78,6 +78,7 @@ namespace qlow
         struct UnaryOperation;
         struct BinaryOperation;
         
+        struct NewExpression;
         struct NewArrayExpression;
         
         struct CastExpression;
@@ -538,6 +539,21 @@ struct qlow::ast::BinaryOperation : public Operation
     {
     }
 
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
+};
+
+
+struct qlow::ast::NewExpression : public Expression
+{
+    std::unique_ptr<ast::Type> type;
+    inline NewExpression(std::unique_ptr<ast::Type> type,
+                              const CodePosition& cp) :
+        AstObject{ cp },
+        Expression{ cp },
+        type{ std::move(type) }
+    {
+    }
+    
     virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 
