@@ -39,7 +39,7 @@ add_definitions( ${LLVM_DEFINITIONS} )
 
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_CLANG )
     target_compile_options(${PROJECT_NAME} PRIVATE 
-        -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable
+        -Wall -Wextra -Wpedantic -pedantic -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable
     )
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -DDEBUGGING")
 endif()
