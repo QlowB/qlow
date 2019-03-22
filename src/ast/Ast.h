@@ -44,6 +44,8 @@ namespace qlow
         // base class
         struct AstObject;
 
+        struct ImportDeclaration;
+
         struct Class;
 
         struct Type;
@@ -104,7 +106,7 @@ public:
     inline const OwningList<AstObject>& getObjects(void) const  { return objects; }
     inline       OwningList<AstObject>& getObjects(void)        { return objects; }
 
-    void merge(Ast&& other);
+    void merge(Ast other);
 };
 
 
@@ -120,14 +122,30 @@ struct qlow::ast::AstObject :
 };
 
 
+struct qlow::ast::ImportDeclaration
+{
+    CodePosition pos;
+    std::string imported;
+    
+    inline ImportDeclaration(std::string imported, const CodePosition& cp) :
+        pos{ cp },
+        imported{ std::move(imported) }
+    {
+    }
+};
+
+
 struct qlow::ast::Class : public AstObject
 {
     std::string name;
     OwningList<FeatureDeclaration> features;
+
+    /// true if it is a class, false if struct
+    bool isReferenceType;
     
-    inline Class(const std::string& name, OwningList<FeatureDeclaration>& features, const CodePosition& cp) :
+    inline Class(std::string name, OwningList<FeatureDeclaration>& features, bool isReferenceType, const CodePosition& cp) :
         AstObject{ cp },
-        name{ name }, features(std::move(features))
+        name{ std::move(name) }, features(std::move(features)), isReferenceType{ isReferenceType }
     {
     }
 

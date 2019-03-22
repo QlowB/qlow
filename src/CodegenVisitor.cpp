@@ -131,7 +131,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::CastExpression& cast, llvm::IR
 llvm::Value* ExpressionCodegenVisitor::visit(sem::NewExpression& nexpr, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
-    
+
     sem::Context& semCtxt = nexpr.context;
     sem::TypeId type = nexpr.type;
 
@@ -213,10 +213,6 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access,
     }
     
     llvm::Value* target = access.target->accept(fg.lvalueVisitor, fg);
-    llvm::raw_os_ostream os(Printer::getInstance());
-    type->print(os);
-    os << "\n";
-    os.flush();
 
     int structIndex = access.accessed->llvmStructIndex;
     llvm::ArrayRef<Value*> indexList = {

@@ -91,7 +91,7 @@ while (0)
 %lex-param   { yyscan_t scanner }
 %parse-param { yyscan_t scanner }
 %parse-param { qlow::ast::Ast& ast }
-%parse-param { const qlow::ast::Parser& parser }
+%parse-param { qlow::ast::Parser& parser }
 
 
 %define api.prefix {qlow_parser_}
@@ -149,6 +149,9 @@ while (0)
     qlow::ast::NewArrayExpression* newArrayExpression;
     qlow::ast::CastExpression* castExpression;
 
+    qlow::ast::ImportDeclaration* importDeclaration;
+    std::vector<std::unique_ptr<qlow::ast::ImportDeclaration>>* importList;
+
     const char* cString;
     std::string* string;
     int token;
@@ -159,12 +162,15 @@ while (0)
 %token <string> INT_LITERAL
 %token <string> ASTERISK SLASH PLUS MINUS EQUALS NOT_EQUALS AND OR XOR CUSTOM_OPERATOR
 %token <token> TRUE FALSE
-%token <token> CLASS STRUCT DO END IF ELSE WHILE RETURN NEW EXTERN AS
+%token <token> CLASS STRUCT DO END IF ELSE WHILE RETURN NEW AS
+%token <token> EXTERN IMPORT
 %token <token> NEW_LINE
 %token <token> SEMICOLON COLON COMMA DOT ASSIGN AMPERSAND
 %token <token> ROUND_LEFT ROUND_RIGHT SQUARE_LEFT SQUARE_RIGHT
 %token <string> UNEXPECTED_SYMBOL
 
+%type <importDeclaration> importDeclaration
+%type <importList> importList
 %type <topLevel> topLevel
 %type <classDefinition> classDefinition
 %type <type> type
@@ -216,7 +222,9 @@ while (0)
 
 /* list of class definitions */
 topLevel:
-    /* empty */ {
+    importList {
+       parser.addImports(std::move(*$1));
+       delete $1; $1 = nullptr;
        $$ = &ast;
     }
     |
@@ -254,14 +262,41 @@ topLevel:
         $3 = nullptr;
     };
 
+importList:
+    /* empty */ {
+        $$ = new std::vector<std::unique_ptr<qlow::ast::ImportDeclaration>>();
+    }
+    |
+    importList importDeclaration {
+        $$ = $1;
+        $$->emplace_back($2);
+        $2 = nullptr;
+    };
+
+importDeclaration:
+    IMPORT IDENTIFIER {
+        $$ = new qlow::ast::ImportDeclaration(std::move(*$2), @2);
+        delete $2; $2 = nullptr;
+    };
 
 classDefinition:
     CLASS IDENTIFIER featureList END {
-        $$ = new Class(*$2, *$3, @$);
+        $$ = new Class(std::move(*$2), *$3, true, @$);
+        delete $2; delete $3; $2 = 0; $3 = 0;
+    }
+    |
+    STRUCT IDENTIFIER featureList END {
+        $$ = new Class(std::move(*$2), *$3, false, @$);
         delete $2; delete $3; $2 = 0; $3 = 0;
     }
     |
     CLASS error END {
+        reportError(qlow::SyntaxError(@2));
+        yyerrok;
+        $$ = nullptr;
+    }
+    |
+    STRUCT error END {
         reportError(qlow::SyntaxError(@2));
         yyerrok;
         $$ = nullptr;

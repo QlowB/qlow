@@ -1,4 +1,4 @@
-
+import std
 
 class Vec
     x: Integer

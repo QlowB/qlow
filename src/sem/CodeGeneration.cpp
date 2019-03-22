@@ -226,11 +226,13 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
     if (broken)
         throw "invalid llvm module";
     
-    llvm::InitializeAllTargetInfos();
-    llvm::InitializeAllTargets();
-    llvm::InitializeAllTargetMCs();
-    llvm::InitializeAllAsmParsers();
-    llvm::InitializeAllAsmPrinters();
+    llvm::InitializeNativeTarget ();
+    llvm::InitializeNativeTargetAsmPrinter();
+    //llvm::InitializeAllTargetInfos();
+    //llvm::InitializeAllTargets();
+    //llvm::InitializeAllTargetMCs();
+    //llvm::InitializeAllAsmParsers();
+    //llvm::InitializeAllAsmPrinters();
 
     PassManager pm;
     

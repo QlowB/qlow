@@ -74,6 +74,7 @@ struct qlow::sem::Class : public SemanticObject
 {
     qlow::ast::Class* astNode;
     std::string name;
+    bool isReferenceType;
     SymbolTable<Field> fields;
     SymbolTable<Method> methods;
     ClassScope scope;
@@ -87,6 +88,7 @@ struct qlow::sem::Class : public SemanticObject
         SemanticObject{ globalScope.getContext() },
         astNode{ astNode },
         name{ astNode->name },
+        isReferenceType{ astNode->isReferenceType },
         scope{ globalScope, this },
         classType{ globalScope.getContext().createClassType(this) },
         llvmType{ nullptr }
@@ -102,6 +104,8 @@ struct qlow::sem::Class : public SemanticObject
         llvmType{ nullptr }
     {
     }
+
+    
 
     virtual std::string toString(void) const override;
 };

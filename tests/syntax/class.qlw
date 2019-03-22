@@ -1,0 +1,15 @@
+class A
+    field: Integer
+    field2: B
+end
+
+class B
+    field: A
+end
+
+
+main do
+    a: A
+    a := new A
+end
+

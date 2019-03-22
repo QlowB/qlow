@@ -126,6 +126,7 @@ public:
         WRONG_NUMBER_OF_ARGUMENTS,
         TYPE_MISMATCH,
         INVALID_RETURN_TYPE,
+        NEW_FOR_NON_CLASS,
     };
     
     
@@ -148,6 +149,7 @@ public:
     virtual std::string getMessage(void) const noexcept;
 
     static SemanticError invalidReturnType(const std::string& should, const std::string& is, const CodePosition& where);
+    static SemanticError newForNonClass(const std::string& type, const CodePosition& where);
 };
 
 

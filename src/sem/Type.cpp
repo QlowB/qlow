@@ -129,7 +129,6 @@ size_t Type::hash(void) const
         type
     );
     auto h = type.index() * 2542345234523 + value1;
-    Printer::getInstance() << h << std::endl;
     return h;
 }
 

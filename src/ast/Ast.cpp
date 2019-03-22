@@ -6,11 +6,9 @@
 
 using namespace qlow::ast;
 
-void Ast::merge(Ast&& other)
+void Ast::merge(Ast other)
 {
-    objects.insert(objects.end(),
-                   std::make_move_iterator(other.objects.begin()),
-                   std::make_move_iterator(other.objects.end()));
+    std::move(other.objects.begin(), other.objects.end(), std::back_inserter(this->objects));
 }
 
 
