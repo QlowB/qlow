@@ -9,9 +9,11 @@ if exists("b:current_syntax")
 endif
 
 
+syntax match commenty "//.*"
+syntax region multicommenty start="/\*"  end="\*/" contains=multicommenty
 
 syn keyword keywordy class struct do end if while return extern as new
-syn keyword typey Integer Boolean
+syn keyword typey Integer Boolean Abool
 syn keyword typey String Char 
 syn keyword typey Float32 Float64
 
@@ -19,8 +21,6 @@ syn keyword typey Float32 Float64
 syntax match identifiery "[a-zA-Z][a-zA-Z0-9]*"
 syntax match numbery "\d\+"
 syntax match stringy "\".\+\""
-syntax match commenty "//.*"
-syntax region multicommenty start="/\*"  end="\*/" contains=multicommenty
 
 syntax keyword operatory not or and xor
 syntax match operatory "\v\:\="
@@ -34,7 +34,7 @@ hi def link operatory Operator
 hi def link typey Type
 hi def link commenty Comment
 hi def link multicommenty Comment
-hi Operator guifg=#FF0000 guibg=NONE gui=none
+" hi Operator guifg=#00FF00 guibg=NONE gui=NONE
 
 let b:current_syntax = "qlw"
 
