@@ -22,18 +22,20 @@
 %code requires {
 #include "Ast.h"
 
+// declare location type
 using QLOW_PARSER_LTYPE = qlow::CodePosition;
 using YYLTYPE = QLOW_PARSER_LTYPE;
 #define QLOW_PARSER_LTYPE_IS_DECLARED
 
+// declare token struct
 union QLOW_PARSER_STYPE;
 using YYSTYPE = QLOW_PARSER_STYPE;
 
+// define yyscan_t
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
 #endif
-//#define qlow_parser_lex(a,b,c)  (({ auto v = qlow_parser_lex(a, b, c); v; }))
 }
 
 %{
@@ -49,13 +51,10 @@ typedef void* yyscan_t;
 
 using namespace qlow::ast;
 
-//extern int qlow_parser_lex();
-//void yy_pop_state();
-
 int qlow_parser_error(qlow::CodePosition* loc, yyscan_t scan,
     Ast& ast, const Parser& parser, const char* msg)
 {
-    //throw msg;
+    throw qlow::SyntaxError(*loc);
     //printf("error happened: %s\n", msg);
     // throw msg;
     return 0;
@@ -64,7 +63,7 @@ int qlow_parser_error(qlow::CodePosition* loc, yyscan_t scan,
 
 extern "C" int qlow_parser_wrap(yyscan_t s)
 {
-    return 1; /* do not continue on EOF */
+    return 1;
 }
 
 
@@ -76,7 +75,7 @@ do                                                        \
       (Cur).first_column = YYRHSLOC(Rhs, 1).first_column; \
       (Cur).last_line    = YYRHSLOC(Rhs, N).last_line;    \
       (Cur).last_column  = YYRHSLOC(Rhs, N).last_column;  \
-      (Cur).filename     = parser.getFilename().c_str();  \
+      (Cur).filename     = parser.getFilename();          \
     }                                                     \
   else                                                    \
     {                                                     \
@@ -84,7 +83,7 @@ do                                                        \
         YYRHSLOC(Rhs, 0).last_line;                       \
       (Cur).first_column = (Cur).last_column =            \
         YYRHSLOC(Rhs, 0).last_column;                     \
-      (Cur).filename = parser.getFilename().c_str();      \
+      (Cur).filename = parser.getFilename();              \
     }                                                     \
 while (0)
 %}
@@ -98,6 +97,8 @@ while (0)
 %define api.prefix {qlow_parser_}
 %define parse.error verbose
 %define api.pure full
+
+// for better error messages
 // %define parse.lac full
 
 %locations
@@ -106,10 +107,7 @@ while (0)
 
 %initial-action
 {
-    // NOTE: the filename only lives as long as the parser.
-    // Do not use after deletion of the parser.
-    const auto* filename = parser.getFilename().c_str();
-    @$.filename = filename;
+    @$.filename = parser.getFilename();
     qlow_parser_set_extra(parser.getFilename(), scanner);
 };
 
@@ -147,6 +145,7 @@ while (0)
     qlow::ast::UnaryOperation* unaryOperation;
     qlow::ast::BinaryOperation* binaryOperation;
 
+    qlow::ast::NewExpression* newExpression;
     qlow::ast::NewArrayExpression* newArrayExpression;
     qlow::ast::CastExpression* castExpression;
 
@@ -160,15 +159,15 @@ while (0)
 %token <string> INT_LITERAL
 %token <string> ASTERISK SLASH PLUS MINUS EQUALS NOT_EQUALS AND OR XOR CUSTOM_OPERATOR
 %token <token> TRUE FALSE
-%token <token> CLASS DO END IF ELSE WHILE RETURN NEW EXTERN AS
+%token <token> CLASS STRUCT DO END IF ELSE WHILE RETURN NEW EXTERN AS
 %token <token> NEW_LINE
 %token <token> SEMICOLON COLON COMMA DOT ASSIGN AMPERSAND
 %token <token> ROUND_LEFT ROUND_RIGHT SQUARE_LEFT SQUARE_RIGHT
 %token <string> UNEXPECTED_SYMBOL
 
-%type <topLevel> topLevel 
+%type <topLevel> topLevel
 %type <classDefinition> classDefinition
-%type <type> type 
+%type <type> type
 %type <featureDeclaration> featureDeclaration
 %type <fieldDeclaration> fieldDeclaration
 %type <methodDefinition> methodDefinition
@@ -179,18 +178,19 @@ while (0)
 %type <expressionList> expressionList
 %type <argumentDeclaration> argumentDeclaration
 %type <doEndBlock> doEndBlock
-%type <ifElseBlock> ifElseBlock 
+%type <ifElseBlock> ifElseBlock
 %type <whileBlock> whileBlock
 %type <statement> statement
 %type <expression> expression operationExpression paranthesesExpression
 %type <featureCall> featureCall
-%type <assignmentStatement> assignmentStatement 
-%type <returnStatement> returnStatement 
+%type <assignmentStatement> assignmentStatement
+%type <returnStatement> returnStatement
 %type <localVariableStatement> localVariableStatement
-%type <addressExpression> addressExpression 
+%type <addressExpression> addressExpression
 %type <string> operator
 %type <unaryOperation> unaryOperation
 %type <binaryOperation> binaryOperation
+%type <newExpression> newExpression
 %type <newArrayExpression> newArrayExpression
 %type <castExpression> castExpression
 
@@ -539,6 +539,10 @@ expression:
         $$ = $1;
     }
     |
+    newExpression {
+        $$ = $1;
+    }
+    |
     newArrayExpression {
         $$ = $1;
     }
@@ -681,6 +685,12 @@ addressExpression:
 paranthesesExpression:
     ROUND_LEFT expression ROUND_RIGHT {
         $$ = $2;
+    };
+
+newExpression:
+    NEW type {
+        $$ = new NewExpression(std::unique_ptr<qlow::ast::Type>($2), @$);
+        $2 = nullptr;
     };
 
 newArrayExpression:

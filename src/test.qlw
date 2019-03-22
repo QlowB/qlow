@@ -3,8 +3,8 @@ fast_fibonacci(i: Integer): Integer do
     b: Integer
     temp: Integer
     count: Integer
-    count := i
-    a := 0
+    count := i 
+    a := 0 // asdfgadf
     b := 1
     while count != 0 do
         temp := a
@@ -17,6 +17,9 @@ end
 
 extern printint(x: Integer)
 
+class Aalala
+
+end
 
 /*
 bignumbers do

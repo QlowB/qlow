@@ -8,6 +8,7 @@
 
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/DataLayout.h>
 #include <llvm/Support/raw_os_ostream.h>
 
 
@@ -124,6 +125,25 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::CastExpression& cast, llvm::IR
         context.getType(cast.targetType).value().getLlvmType(builder.getContext())
     );*/
     return nullptr;
+}
+
+
+llvm::Value* ExpressionCodegenVisitor::visit(sem::NewExpression& nexpr, llvm::IRBuilder<>& builder)
+{
+    using llvm::Value;
+    
+    sem::Context& semCtxt = nexpr.context;
+    sem::TypeId type = nexpr.type;
+
+    const llvm::DataLayout& layout = builder.GetInsertBlock()->getModule()->getDataLayout();
+    llvm::Type* llvmTy = semCtxt.getLlvmType(type, builder.getContext())->getPointerElementType();
+    auto allocSize = layout.getTypeAllocSize(llvmTy);
+
+    auto size = llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, allocSize, false));
+    auto mallocCall = llvm::CallInst::CreateMalloc(builder.GetInsertBlock(), size->getType(), llvmTy, size, nullptr, nullptr, "");
+    //auto casted = builder.CreateBitCast(mallocCall, llvmTy);
+    builder.GetInsertBlock()->getInstList().push_back(llvm::cast<llvm::Instruction>(mallocCall));
+    return mallocCall;
 }
 
 

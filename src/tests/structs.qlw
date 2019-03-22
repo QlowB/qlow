@@ -27,6 +27,7 @@ end
 
 create_vec: Vec do
     var: Vec
+    var := new Vec
     var.x := 3
     var.y := 4
     return var
