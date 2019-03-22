@@ -60,7 +60,12 @@ endif()
 
 #explicit_llvm_config(${PROJECT_NAME} STATIC_LIBRARY)
 llvm_config(${PROJECT_NAME})
-target_link_libraries(${PROJECT_NAME} LLVM)
+
+llvm_map_components_to_libnames(llvm_libs X86 passes)
+
+message( ${llvm_libs} )
+target_link_libraries(${PROJECT_NAME} ${llvm_libs})
+
 
 #    MIRParser
 #    LTO
