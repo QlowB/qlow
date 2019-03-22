@@ -213,10 +213,6 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access,
     }
     
     llvm::Value* target = access.target->accept(fg.lvalueVisitor, fg);
-    llvm::raw_os_ostream os(Printer::getInstance());
-    type->print(os);
-    os << "\n";
-    os.flush();
 
     int structIndex = access.accessed->llvmStructIndex;
     llvm::ArrayRef<Value*> indexList = {

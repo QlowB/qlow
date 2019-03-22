@@ -44,6 +44,8 @@ namespace qlow
         // base class
         struct AstObject;
 
+        struct ImportDeclaration;
+
         struct Class;
 
         struct Type;
@@ -104,7 +106,7 @@ public:
     inline const OwningList<AstObject>& getObjects(void) const  { return objects; }
     inline       OwningList<AstObject>& getObjects(void)        { return objects; }
 
-    void merge(Ast&& other);
+    void merge(Ast other);
 };
 
 
@@ -117,6 +119,19 @@ struct qlow::ast::AstObject :
         pos{ cp } {}
         
     virtual ~AstObject(void);
+};
+
+
+struct qlow::ast::ImportDeclaration
+{
+    CodePosition pos;
+    std::string imported;
+    
+    inline ImportDeclaration(std::string imported, const CodePosition& cp) :
+        pos{ cp },
+        imported{ std::move(imported) }
+    {
+    }
 };
 
 

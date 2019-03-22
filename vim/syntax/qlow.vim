@@ -12,7 +12,7 @@ endif
 syntax match commenty "//.*"
 syntax region multicommenty start="/\*"  end="\*/" contains=multicommenty
 
-syn keyword keywordy class struct do end if while return extern as new
+syn keyword keywordy class struct do end if while return extern as new import
 syn keyword typey Integer Boolean Abool
 syn keyword typey String Char 
 syn keyword typey Float32 Float64
