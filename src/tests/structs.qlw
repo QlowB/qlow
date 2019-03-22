@@ -1,6 +1,6 @@
 
 
-class Vec
+struct Vec
     x: Integer
     y: Integer
 

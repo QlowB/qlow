@@ -124,10 +124,13 @@ struct qlow::ast::Class : public AstObject
 {
     std::string name;
     OwningList<FeatureDeclaration> features;
+
+    /// true if it is a class, false if struct
+    bool isReferenceType;
     
-    inline Class(const std::string& name, OwningList<FeatureDeclaration>& features, const CodePosition& cp) :
+    inline Class(std::string name, OwningList<FeatureDeclaration>& features, bool isReferenceType, const CodePosition& cp) :
         AstObject{ cp },
-        name{ name }, features(std::move(features))
+        name{ std::move(name) }, features(std::move(features)), isReferenceType{ isReferenceType }
     {
     }
 

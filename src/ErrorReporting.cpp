@@ -94,7 +94,7 @@ const std::string& InternalError::getMessage(void) const noexcept
     if (errors.find(errorCode) != errors.end())
         return errors.at(errorCode);
     else {
-        static std::string msg = "error message not found"s;
+        static std::string msg = ""s;
         return msg;
     }
 }
@@ -223,7 +223,7 @@ std::string SemanticError::getMessage(void) const noexcept
     if (errors.find(errorCode) != errors.end())
         return errors.at(errorCode);
     else
-        return "error message not found"s;
+        return ""s;
 }
 
 
@@ -232,5 +232,12 @@ SemanticError SemanticError::invalidReturnType(const std::string& should,
 {
     return SemanticError{ INVALID_RETURN_TYPE, "return type should be " +
         should + ", but " + is + " is given.", where };
+}
+
+
+SemanticError SemanticError::newForNonClass(const std::string& type,
+    const CodePosition& where)
+{
+    return SemanticError{ NEW_FOR_NON_CLASS, "cannot allocate instance of non-class type '" + type + "' using new", where };
 }
 

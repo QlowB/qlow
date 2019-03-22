@@ -156,7 +156,8 @@ void Context::createLlvmTypes(llvm::LLVMContext& llvmCtxt)
             }
 
             llvm::dyn_cast<llvm::StructType>(llvmType)->setBody(llvm::ArrayRef(structTypes));
-            llvmType = llvmType->getPointerTo();
+            if (type.getClass()->isReferenceType)
+                llvmType = llvmType->getPointerTo();
         }
     }
 }

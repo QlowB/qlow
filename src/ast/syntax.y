@@ -257,11 +257,22 @@ topLevel:
 
 classDefinition:
     CLASS IDENTIFIER featureList END {
-        $$ = new Class(*$2, *$3, @$);
+        $$ = new Class(std::move(*$2), *$3, true, @$);
+        delete $2; delete $3; $2 = 0; $3 = 0;
+    }
+    |
+    STRUCT IDENTIFIER featureList END {
+        $$ = new Class(std::move(*$2), *$3, false, @$);
         delete $2; delete $3; $2 = 0; $3 = 0;
     }
     |
     CLASS error END {
+        reportError(qlow::SyntaxError(@2));
+        yyerrok;
+        $$ = nullptr;
+    }
+    |
+    STRUCT error END {
         reportError(qlow::SyntaxError(@2));
         yyerrok;
         $$ = nullptr;

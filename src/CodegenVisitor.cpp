@@ -131,7 +131,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::CastExpression& cast, llvm::IR
 llvm::Value* ExpressionCodegenVisitor::visit(sem::NewExpression& nexpr, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
-    
+
     sem::Context& semCtxt = nexpr.context;
     sem::TypeId type = nexpr.type;
 

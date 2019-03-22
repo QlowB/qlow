@@ -415,8 +415,13 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::NewExpression& ast, sem::Scope& scope)
 {
     auto ret = std::make_unique<sem::NewExpression>(scope.getContext(), scope.getType(ast.type.get()));
-    return ret;
-    //return nullptr;
+    auto* classType = scope.getContext().getType(ret->type).getClass();
+    if (classType != nullptr && classType->isReferenceType) {
+        return ret;
+    }
+    else {
+        throw SemanticError::newForNonClass(scope.getContext().getType(ret->type).asString(), ast.pos);
+    }
 }
 
 
