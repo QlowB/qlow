@@ -189,10 +189,10 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
         target = unique_dynamic_cast<sem::Expression>(
             ast.target->accept(*this, scope));
     }
-    
+
     sem::Method* method;
     sem::Variable* var;
-    
+
     if (target) {
         auto& targetType = scope.getContext().getType(target->type);
         auto& typeScope = targetType.getTypeScope();
@@ -203,7 +203,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
         method = scope.getMethod(ast.name);
         var = scope.getVariable(ast.name);
     }
-    
+
     if (target) {
         if (var) {
             return std::make_unique<sem::FieldAccessExpression>(std::move(target), dynamic_cast<sem::Field*>(var));
@@ -211,7 +211,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
         else if (method) {
             auto fce = std::make_unique<sem::MethodCallExpression>(
                 std::move(target), method);
-    
+
             if (ast.arguments.size() != method->arguments.size())
                 throw SemanticError(SemanticError::WRONG_NUMBER_OF_ARGUMENTS, ast.name, ast.pos);
             for (size_t i = 0; i < ast.arguments.size(); i++) {
@@ -253,7 +253,15 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
         }
     }
     else if (method) {
-        auto fce = std::make_unique<sem::MethodCallExpression>(nullptr, method);
+        // create implicit 'this'
+        std::unique_ptr<sem::Expression> thisExpr = nullptr;
+        if (method->containingClass != nullptr) {
+            auto* thisVar = scope.getVariable("this");
+            if (!thisVar)
+                throw SemanticError(SemanticError::UNKNOWN_TYPE, "no this found", ast.pos);
+            thisExpr = std::make_unique<sem::LocalVariableExpression>(thisVar);
+        }
+        auto fce = std::make_unique<sem::MethodCallExpression>(std::move(thisExpr), method);
         for (auto& arg : ast.arguments) {
             auto argument = arg->accept(*this, scope);
             if (dynamic_cast<sem::Expression*>(argument.get())) {

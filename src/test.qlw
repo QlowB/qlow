@@ -4,7 +4,7 @@ fast_fibonacci(i: Integer): Integer do
     temp: Integer
     count: Integer
     count := i 
-    a := 0 // asdfgadf
+    a := 0 // sdfsfaf
     b := 1
     while count != 0 do
         temp := a

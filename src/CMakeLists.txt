@@ -63,8 +63,8 @@ llvm_config(${PROJECT_NAME})
 
 llvm_map_components_to_libnames(llvm_libs X86 passes)
 
-message( ${llvm_libs} )
-target_link_libraries(${PROJECT_NAME} ${llvm_libs})
+#message( ${llvm_libs} )
+target_link_libraries(${PROJECT_NAME} LLVM) # ${llvm_libs})
 
 
 #    MIRParser

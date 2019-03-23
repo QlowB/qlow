@@ -36,8 +36,8 @@
 
 #define register
 
-#define SET_TOKEN(t) (yylval_param->token = t)
-#define SET_STRING (yylval_param->string = new std::string(yytext, yyleng))
+#define CREATE_TOKEN(t) (yylval_param->token = t)
+#define CREATE_STRING (yylval_param->string = new std::string(yytext, yyleng))
 
 extern "C" int qlow_parser_wrap(yyscan_t s);
 
@@ -76,12 +76,12 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 <COMMENT>\n             yycolumn = 0;
 <COMMENT>.              ; // inside comment, ignore everything
 
-<LINE_COMMENT>"\n"      yycolumn = 0; yy_pop_state(yyscanner); //yy_push_state(INITIAL);
+<LINE_COMMENT>"\n"      yycolumn = 0; yy_pop_state(yyscanner); return CREATE_TOKEN(NEW_LINE); //yy_push_state(INITIAL);
 <LINE_COMMENT>.         ; // inside comment, ignore everything
 
 <STRING>"\""            yy_pop_state(yyscanner);
 <STRING>[^\"^\n]*          printf("%s\n", std::string(yytext, yyleng).c_str());
-<STRING>\n              yycolumn = 0; SET_STRING; return UNEXPECTED_SYMBOL; 
+<STRING>\n              yycolumn = 0; CREATE_STRING; return UNEXPECTED_SYMBOL; 
 
 "/*"                    yy_push_state(COMMENT, yyscanner); commentDepth = 1;
 "//"                    yy_push_state(LINE_COMMENT, yyscanner);
@@ -89,61 +89,61 @@ UTF8CHAR [\x00-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xe
 
 
 [\t ]                   ; // Space or tab ignored
-<METHOD>\n              yycolumn = 0; return SET_TOKEN(NEW_LINE);
-\n                      yycolumn = 0; //return SET_TOKEN(NEW_LINE);
+<METHOD>\n              yycolumn = 0; return CREATE_TOKEN(NEW_LINE);
+\n                      yycolumn = 0; //return CREATE_TOKEN(NEW_LINE);
 
-"class"                 return SET_TOKEN(CLASS);
-"struct"                return SET_TOKEN(STRUCT);
-"do"                    yy_push_state(METHOD, yyscanner); return SET_TOKEN(DO);
-<METHOD>"end"           yy_pop_state(yyscanner); return SET_TOKEN(END);
-<INITIAL>"end"          return SET_TOKEN(END);
-"if"                    return SET_TOKEN(IF);
-"while"                 return SET_TOKEN(WHILE);
-"else"                  return SET_TOKEN(ELSE);
-"return"                return SET_TOKEN(RETURN);
-"new"                   return SET_TOKEN(NEW);
-"extern"                return SET_TOKEN(EXTERN);
-"import"                return SET_TOKEN(IMPORT);
+"class"                 return CREATE_TOKEN(CLASS);
+"struct"                return CREATE_TOKEN(STRUCT);
+"do"                    yy_push_state(METHOD, yyscanner); return CREATE_TOKEN(DO);
+<METHOD>"end"           yy_pop_state(yyscanner); return CREATE_TOKEN(END);
+<INITIAL>"end"          return CREATE_TOKEN(END);
+"if"                    return CREATE_TOKEN(IF);
+"while"                 return CREATE_TOKEN(WHILE);
+"else"                  return CREATE_TOKEN(ELSE);
+"return"                return CREATE_TOKEN(RETURN);
+"new"                   return CREATE_TOKEN(NEW);
+"extern"                return CREATE_TOKEN(EXTERN);
+"import"                return CREATE_TOKEN(IMPORT);
 
-":"                     return SET_TOKEN(COLON);
-";"                     return SET_TOKEN(SEMICOLON);
-","                     return SET_TOKEN(COMMA);
-"."                     return SET_TOKEN(DOT);
-"&"                     return SET_TOKEN(AMPERSAND);
+":"                     return CREATE_TOKEN(COLON);
+";"                     return CREATE_TOKEN(SEMICOLON);
+","                     return CREATE_TOKEN(COMMA);
+"."                     return CREATE_TOKEN(DOT);
+"&"                     return CREATE_TOKEN(AMPERSAND);
 
-":="                    SET_STRING; return ASSIGN;
+":="                    CREATE_STRING; return ASSIGN;
 
-"=="                    SET_STRING; return EQUALS;
-"!="                    SET_STRING; return NOT_EQUALS;
-"and"                   SET_STRING; return AND;
-"or"                    SET_STRING; return OR;
-"xor"                   SET_STRING; return XOR;
-"not"                   SET_STRING; return NOT;
-"as"                    return SET_TOKEN(AS);
+"=="                    CREATE_STRING; return EQUALS;
+"!="                    CREATE_STRING; return NOT_EQUALS;
+"and"                   CREATE_STRING; return AND;
+"or"                    CREATE_STRING; return OR;
+"xor"                   CREATE_STRING; return XOR;
+"not"                   CREATE_STRING; return NOT;
+"as"                    return CREATE_TOKEN(AS);
 
-"+"                     SET_STRING; return PLUS;
-"-"                     SET_STRING; return MINUS;
-"*"                     SET_STRING; return ASTERISK;
-"/"                     SET_STRING; return SLASH;
-[\+\-\*\/=!<>]+         SET_STRING; return CUSTOM_OPERATOR;
+"+"                     CREATE_STRING; return PLUS;
+"-"                     CREATE_STRING; return MINUS;
+"*"                     CREATE_STRING; return ASTERISK;
+"/"                     CREATE_STRING; return SLASH;
+[\+\-\*\/=!<>]+         CREATE_STRING; return CUSTOM_OPERATOR;
 
-"("                     return SET_TOKEN(ROUND_LEFT);
-")"                     return SET_TOKEN(ROUND_RIGHT);
-"["                     return SET_TOKEN(SQUARE_LEFT);
-"]"                     return SET_TOKEN(SQUARE_RIGHT);
+"("                     return CREATE_TOKEN(ROUND_LEFT);
+")"                     return CREATE_TOKEN(ROUND_RIGHT);
+"["                     return CREATE_TOKEN(SQUARE_LEFT);
+"]"                     return CREATE_TOKEN(SQUARE_RIGHT);
 
-"false"                 return SET_TOKEN(FALSE);
-"true"                  return SET_TOKEN(TRUE);
+"false"                 return CREATE_TOKEN(FALSE);
+"true"                  return CREATE_TOKEN(TRUE);
 
-[0-9_]+                 SET_STRING; return INT_LITERAL;
-0x[0-9A-Fa-f]+          SET_STRING; return INT_LITERAL;
-[a-zA-Z_][a-zA-Z0-9_]*  SET_STRING; return IDENTIFIER;
+[0-9_]+                 CREATE_STRING; return INT_LITERAL;
+0x[0-9A-Fa-f]+          CREATE_STRING; return INT_LITERAL;
+[a-zA-Z_][a-zA-Z0-9_]*  CREATE_STRING; return IDENTIFIER;
 
-.                       SET_STRING; return UNEXPECTED_SYMBOL; // printf("Unexpected symbol %s.\n", std::string(yytext, yyleng).c_str()); yyterminate();
+.                       CREATE_STRING; return UNEXPECTED_SYMBOL; // printf("Unexpected symbol %s.\n", std::string(yytext, yyleng).c_str()); yyterminate();
 
 %%
 
-// [a-zA-Z_][a-zA-Z0-9_]*  SET_STRING; return IDENTIFIER;
+// [a-zA-Z_][a-zA-Z0-9_]*  CREATE_STRING; return IDENTIFIER;
 
 
 /*
