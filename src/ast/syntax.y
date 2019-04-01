@@ -277,6 +277,12 @@ importDeclaration:
     IMPORT IDENTIFIER {
         $$ = new qlow::ast::ImportDeclaration(std::move(*$2), @2);
         delete $2; $2 = nullptr;
+    }
+    |
+    importDeclaration DOT IDENTIFIER {
+        $$->pos = @$;
+        $$->imported.push_back(std::move(*$3));
+        delete $3; $3 = nullptr;
     };
 
 classDefinition:

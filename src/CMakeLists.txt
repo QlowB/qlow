@@ -46,6 +46,7 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_CLANG )
     target_compile_options(${PROJECT_NAME} PRIVATE 
         -Wall -Wextra -Wpedantic -pedantic -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable
     )
+    target_link_libraries(${PROJECT_NAME} stdc++fs)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -DDEBUGGING")
 endif()
 if ( MSVC )

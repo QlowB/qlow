@@ -30,5 +30,10 @@ qlow::ast::Ast Parser::parse(void)
 void Parser::addImports(std::vector<std::unique_ptr<ImportDeclaration>> toAdd)
 {
     std::move(toAdd.begin(), toAdd.end(), std::back_inserter(this->imports));
+}
 
+
+const std::vector<std::unique_ptr<qlow::ast::ImportDeclaration>>& Parser::getImports(void) const
+{
+    return imports;
 }

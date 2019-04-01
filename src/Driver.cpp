@@ -9,6 +9,10 @@
 #include "ErrorReporting.h"
 
 #include <cstdio>
+#include <set>
+#include <filesystem>
+#include <functional>
+#include <algorithm>
 
 extern std::unique_ptr<std::vector<std::unique_ptr<qlow::ast::AstObject>>> parsedClasses;
 extern FILE* qlow_parser_in;
@@ -176,17 +180,35 @@ bool Driver::parseStage(void)
     this->ast = std::make_unique<ast::Ast>();
     bool errorOccurred = false;
 
-    for (auto& filename : options.infiles) {
+    std::set<std::filesystem::path> alreadyParsed = {};
+    std::set<std::filesystem::path> toParse = {};
+
+    toParse.insert(options.infiles.begin(), options.infiles.end());
+
+    while(!toParse.empty()) {
+        auto filename = toParse.extract(toParse.begin()).value();
+        auto dirPath = filename.parent_path();
         std::FILE* file = std::fopen(filename.c_str(), "r");
 
         if (!file) {
-            reportError("could not open file "s + filename + ".");
+            reportError("could not open file "s + filename.string() + ".");
+            errorOccurred = true;
             continue;
         }
 
         try {
             // parse file content and add parsed objects to global ast
-            this->ast->merge(parseFile(file, filename));
+            ast::Parser parser(file, filename);
+            this->ast->merge(parser.parse());
+            for (auto& import : parser.getImports()) {
+                auto importPath = dirPath / import->getRelativePath();
+#ifdef DEBUGGING
+                printer << "imported " << importPath << std::endl;
+#endif
+                if (alreadyParsed.count(dirPath) == 0) {
+                    toParse.insert(importPath);
+                }
+            }
         }
         catch (const CompileError& ce) {
             ce.print(printer);
@@ -196,14 +218,20 @@ bool Driver::parseStage(void)
             reportError(errMsg);
             errorOccurred = true;
         }
+        catch (const SyntaxError& se) {
+            se.print(printer);
+            errorOccurred = true;
+        }
         catch (...) {
             reportError("an unknown error occurred.");
             errorOccurred = true;
+            throw;
         }
         
         if (file)
             std::fclose(file);
     }
+
     return errorOccurred;
 }
 
@@ -231,15 +259,6 @@ bool Driver::semanticStage(void)
 
     return errorOccurred;
 }
-
-
-qlow::ast::Ast Driver::parseFile(FILE* file,
-        const std::string& filename)
-{
-    ast::Parser parser(file, filename);
-    return parser.parse();
-}
-
 
 
 

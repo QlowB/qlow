@@ -269,13 +269,16 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
             features, targetOptions, relocModel);
 
     std::error_code errorCode;
-    raw_fd_ostream dest(filename, errorCode, llvm::sys::fs::F_None);
+
+    auto tempfile = std::filesystem::temp_directory_path() / "qlow.o";
+
+    raw_fd_ostream dest(tempfile.c_str(), errorCode, llvm::sys::fs::F_None);
 #ifdef DEBUGGING
     printer << "adding passes" << std::endl;
 #endif
     targetMachine->addPassesToEmitFile(pm, dest,
 //        llvm::LLVMTargetMachine::CGFT_ObjectFile,
-        nullptr,
+//        nullptr,
         llvm::TargetMachine::CGFT_ObjectFile);
 
     pm.run(*module);

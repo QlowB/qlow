@@ -51,8 +51,6 @@ public:
 
     bool parseStage(void);
     bool semanticStage(void);
-    
-    qlow::ast::Ast parseFile(FILE* file, const std::string& filename);
 };
 
 

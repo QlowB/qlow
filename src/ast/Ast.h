@@ -27,6 +27,7 @@
 #include <memory>
 #include <utility>
 #include <map>
+#include <filesystem>
 
 #include "Visitor.h"
 #include "Util.h"
@@ -125,13 +126,15 @@ struct qlow::ast::AstObject :
 struct qlow::ast::ImportDeclaration
 {
     CodePosition pos;
-    std::string imported;
+    std::vector<std::string> imported;
     
     inline ImportDeclaration(std::string imported, const CodePosition& cp) :
         pos{ cp },
-        imported{ std::move(imported) }
+        imported{ std::vector<std::string>{ std::move(imported) } }
     {
     }
+
+    std::filesystem::path getRelativePath(void) const;
 };
 
 
