@@ -270,14 +270,15 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
 
     std::error_code errorCode;
 
-    auto tempfile = std::filesystem::temp_directory_path() / "qlow.o";
-
-    raw_fd_ostream dest(tempfile.c_str(), errorCode, llvm::sys::fs::F_None);
+    raw_fd_ostream dest(filename, errorCode, llvm::sys::fs::F_None);
 #ifdef DEBUGGING
     printer << "adding passes" << std::endl;
 #endif
     targetMachine->addPassesToEmitFile(pm, dest,
 //        llvm::LLVMTargetMachine::CGFT_ObjectFile,
+#if defined(LLVM_VERSION_MAJOR) && LLVM_VERSION_MAJOR >= 7
+            nullptr,
+#endif
 //        nullptr,
         llvm::TargetMachine::CGFT_ObjectFile);
 

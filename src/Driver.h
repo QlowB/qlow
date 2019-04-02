@@ -51,6 +51,7 @@ public:
 
     bool parseStage(void);
     bool semanticStage(void);
+    bool linkingStage(void);
 };
 
 

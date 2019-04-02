@@ -41,6 +41,7 @@ include_directories( ${LLVM_INCLUDE_DIRS} )
 link_directories( ${LLVM_LIBRARY_DIRS} )
 add_definitions( ${LLVM_DEFINITIONS} )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE LLVM_VERSION=${LLVM_VERSION_MAJOR})
 
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_CLANG )
     target_compile_options(${PROJECT_NAME} PRIVATE 

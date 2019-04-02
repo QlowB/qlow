@@ -4,6 +4,7 @@
 #include "Semantic.h"
 #include "Builtin.h"
 #include "CodeGeneration.h"
+#include "Linking.h"
 
 #include "Printer.h"
 #include "ErrorReporting.h"
@@ -147,8 +148,11 @@ int Driver::run(void) try
         return 1;
     }
     
+    // TODO create better tempfile
+    std::string tmpPath = "/tmp/temp.o";
+
     try {
-        qlow::gen::generateObjectFile(options.outfile, std::move(mod), options.optLevel);
+        qlow::gen::generateObjectFile(tmpPath, std::move(mod), options.optLevel);
     }
     catch (const char* msg) {
         printError(printer, msg);
@@ -163,6 +167,14 @@ int Driver::run(void) try
 #ifdef DEBUGGING
     printer << "object exported!" << std::endl;
 #endif
+
+    try {
+        linkingStage();
+    }
+    catch (...) {
+        reportError("unknown error during linking");
+        return 1;
+    }
     
     return 0;
 }
@@ -261,6 +273,25 @@ bool Driver::semanticStage(void)
 }
 
 
+bool Driver::linkingStage(void)
+{
+    using namespace std::literals;
+    bool errorOccurred = false;
+    auto linkerPath = qlow::getLinkerExecutable();
+
+    int linkerRun = qlow::invokeProgram(linkerPath,
+        {
+            "/tmp/temp.o", "-e", "main", "--output="s + options.outfile,
+            "-lc", "-dynamic-linker", "/lib64/ld-linux-x86-64.so.2"
+        }
+    );
+
+    if (linkerRun != 0) {
+        reportError("linker error");
+        errorOccurred = true;
+    }
+    return errorOccurred;
+}
 
 
 
