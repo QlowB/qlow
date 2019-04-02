@@ -6,6 +6,8 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <filesystem>
+
 #include "Parser.h"
 #include "Scope.h"
 
@@ -30,6 +32,7 @@ struct qlow::Options
     bool emitLlvm;
     std::string outfile = "a.out";
     std::vector<std::string> infiles;
+    std::vector<std::string> libs;
     
     int optLevel = 0;
     
@@ -43,6 +46,8 @@ class qlow::Driver
     std::unique_ptr<ast::Ast> ast = nullptr;
     std::unique_ptr<sem::Context> context = nullptr;
     std::unique_ptr<sem::GlobalScope> semClasses = nullptr;
+
+    std::filesystem::path tempObject = "";
 public:
     Driver(void) = delete;
     Driver(int argc, char** argv);

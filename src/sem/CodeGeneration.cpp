@@ -138,6 +138,7 @@ std::unique_ptr<llvm::Module> generateModule(sem::GlobalScope& semantic)
         printf("verified function: %s\n", method->name.c_str());
 #endif
     }
+    generateStartFunction(module.get(), semantic.getMethod("main")->llvmNode);
     return module;
 }
 
@@ -200,6 +201,35 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
     
     //printf("UEEEEEEEE %s\n", method->name.c_str());
     return func;
+}
+
+
+
+llvm::Function* generateStartFunction(llvm::Module* module, llvm::Function* start)
+{
+    using llvm::Function;
+    using llvm::FunctionType;
+    using llvm::Type;
+    using llvm::IRBuilder;
+    using llvm::BasicBlock;
+    using llvm::Value;
+
+    FunctionType* startFuncType = FunctionType::get(
+        Type::getVoidTy(context), { Type::getInt32Ty(context), Type::getInt8PtrTy(context)->getPointerTo() }, false);
+    FunctionType* exitFuncType = FunctionType::get(
+        Type::getVoidTy(context), { Type::getInt32Ty(context) }, false);
+    Function* startFunction = Function::Create(startFuncType, Function::ExternalLinkage, "_qlow_start", module);
+    Function* exitFunction = Function::Create(exitFuncType, Function::ExternalLinkage, "exit", module);
+
+
+    IRBuilder<> builder(context);
+    BasicBlock* bb = BasicBlock::Create(context, "entry", startFunction);
+    builder.SetInsertPoint(bb);
+    builder.CreateCall(start, {});
+    builder.CreateCall(exitFunction, { llvm::ConstantInt::get(context, llvm::APInt(32, "0", 10)) });
+    builder.CreateRetVoid();
+
+    return startFunction;
 }
 
 

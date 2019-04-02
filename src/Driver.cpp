@@ -56,6 +56,11 @@ Options Options::parseOptions(int argc, char** argv)
                 options.optLevel = 2;
             }
         }
+        else if (arg.rfind("-l", 0) == 0) {
+            if (arg.size() > 2) {
+                options.libs.push_back(arg.substr(2));
+            }
+        }
         else {
             if (options.outfile == "")
                 options.outfile = arg + ".o";
@@ -149,10 +154,10 @@ int Driver::run(void) try
     }
     
     // TODO create better tempfile
-    std::string tmpPath = "/tmp/temp.o";
+    tempObject = "/tmp/temp.o";
 
     try {
-        qlow::gen::generateObjectFile(tmpPath, std::move(mod), options.optLevel);
+        qlow::gen::generateObjectFile(tempObject, std::move(mod), options.optLevel);
     }
     catch (const char* msg) {
         printError(printer, msg);
@@ -163,7 +168,7 @@ int Driver::run(void) try
         reportError("unknown error during object file creation");
         return 1;
     }
-    
+
 #ifdef DEBUGGING
     printer << "object exported!" << std::endl;
 #endif
@@ -279,12 +284,14 @@ bool Driver::linkingStage(void)
     bool errorOccurred = false;
     auto linkerPath = qlow::getLinkerExecutable();
 
-    int linkerRun = qlow::invokeProgram(linkerPath,
-        {
-            "/tmp/temp.o", "-e", "main", "--output="s + options.outfile,
-            "-lc", "-dynamic-linker", "/lib64/ld-linux-x86-64.so.2"
-        }
-    );
+    std::vector<std::string> ldArgs = {
+        tempObject.string(), "-e", "_qlow_start", "-o", options.outfile,
+        "-lc", "-dynamic-linker", "/lib64/ld-linux-x86-64.so.2"
+    };
+
+    std::copy(options.libs.begin(), options.libs.end(), std::back_inserter(ldArgs));
+
+    int linkerRun = qlow::invokeProgram(linkerPath, ldArgs);
 
     if (linkerRun != 0) {
         reportError("linker error");

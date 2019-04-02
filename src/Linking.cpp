@@ -29,8 +29,11 @@ int qlow::invokeProgram(const std::string& path, const std::vector<std::string>&
             strncpy(c_args[i + 1], args[i].c_str(), args[i].size() + 1);
         }
         c_args[args.size() + 1] = nullptr;
+#ifdef DEBUGGING
         for (size_t i = 0; i < args.size() + 1; i++)
-            Printer::getInstance() << c_args[i] << std::endl;
+            Printer::getInstance() << c_args[i] << " ";
+        Printer::getInstance() << std::endl;
+#endif
         execvp(path.c_str(), c_args);
     }
     else if (pid > 0) { // we are the parent
