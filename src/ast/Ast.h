@@ -291,6 +291,8 @@ struct qlow::ast::MethodDefinition : public FeatureDeclaration
     {
     }
 
+    inline bool isExtern(void) const { return body.get() == nullptr; }
+
     virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 

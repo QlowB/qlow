@@ -41,13 +41,20 @@ include_directories( ${LLVM_INCLUDE_DIRS} )
 link_directories( ${LLVM_LIBRARY_DIRS} )
 add_definitions( ${LLVM_DEFINITIONS} )
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE LLVM_VERSION=${LLVM_VERSION_MAJOR})
+if (${APPLE})
+    # hack to include libc++fs installed with homebrew
+    set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS "-L/usr/local/opt/llvm/lib")
+endif()
 
-if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_CLANG )
+if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER MATCHES ".*clang" )
     target_compile_options(${PROJECT_NAME} PRIVATE 
         -Wall -Wextra -Wpedantic -pedantic -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable
     )
-    target_link_libraries(${PROJECT_NAME} stdc++fs)
+    if (${APPLE})
+        target_link_libraries(${PROJECT_NAME} c++fs)
+    else()
+        target_link_libraries(${PROJECT_NAME} stdc++fs)
+    endif()
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -DDEBUGGING")
 endif()
 if ( MSVC )
@@ -59,6 +66,18 @@ if(ipo_supported)
     #set_property(TARGET ${PROJECT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
+
+#
+# assuming no cross compiling, target is set to the platform we are compiling on
+#
+
+if (${APPLE})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE QLOW_TARGET_APPLE)
+endif()
+
+if (${WIN32})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE QLOW_TARGET_APPLE)
+endif()
 
 #explicit_llvm_config(${PROJECT_NAME} STATIC_LIBRARY)
 llvm_config(${PROJECT_NAME})

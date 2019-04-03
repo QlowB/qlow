@@ -1,11 +1,25 @@
 #include "Linking.h"
 #include "Printer.h"
 
+#include <vector>
+#include <string>
+
 #include <cstring>
-#ifdef __unix__
+#if defined(__linux__) || defined(__APPLE__) || defined(__unix__)
 #include <unistd.h>
 #include <sys/wait.h>
 #endif
+
+
+std::string qlow::getExternalSymbol(const std::string& name)
+{
+#ifdef QLOW_TARGET_APPLE
+    return "_" + name;
+#else
+    return name;
+#endif
+}
+
 
 std::string qlow::getLinkerExecutable(void)
 {
@@ -17,7 +31,7 @@ int qlow::invokeProgram(const std::string& path, const std::vector<std::string>&
 {
 #ifdef _WIN32
     throw "unimplemented on windows";
-#elif defined(__unix__)
+#elif defined(__linux__) || defined(__APPLE__) || defined(__unix__)
     pid_t pid = fork();
     
     if (pid == 0) { // we are the child
@@ -56,6 +70,8 @@ int qlow::invokeProgram(const std::string& path, const std::vector<std::string>&
 #endif
     throw "error invoking program";
 }
+
+
 
 
 

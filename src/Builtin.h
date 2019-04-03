@@ -30,7 +30,7 @@ namespace qlow
 struct qlow::sem::NativeMethod : public sem::Method
 {
     inline NativeMethod(NativeScope& scope, TypeId returnType) :
-        Method{ scope, returnType }
+        Method{ scope, returnType, false }
     {
     }
     

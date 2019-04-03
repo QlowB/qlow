@@ -154,18 +154,20 @@ struct qlow::sem::Method : public SemanticObject
     ast::MethodDefinition* astNode;
     ThisExpression* thisExpression;
     std::unique_ptr<DoEndBlock> body;
+    bool isExtern;
 
     LocalScope scope;
 
     llvm::Function* llvmNode;
 
     inline Method(Scope& parentScope,
-            TypeId returnType) :
+            TypeId returnType, bool isExtern) :
         SemanticObject{ parentScope.getContext() },
         containingClass{ nullptr },
         returnType{ returnType },
         thisExpression{ nullptr },
         body{ nullptr },
+        isExtern{ isExtern },
         scope{ parentScope, this }
     {
     }
@@ -174,11 +176,12 @@ struct qlow::sem::Method : public SemanticObject
     inline Method(ast::MethodDefinition* astNode, Scope& parentScope) :
         SemanticObject{ parentScope.getContext() },
         containingClass{ nullptr },
-        returnType{ parentScope.getReturnableType()},
+        returnType{ parentScope.getReturnableType() },
         name{ astNode->name },
         astNode{ astNode },
         thisExpression{ nullptr },
         body{ nullptr },
+        isExtern{ astNode->isExtern() },
         scope{ parentScope, this }
     {
     }

@@ -53,7 +53,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefiniti
             ast.type->pos
         );
     }
-    auto m = std::make_unique<sem::Method>(scope, returnType);
+    auto m = std::make_unique<sem::Method>(scope, returnType, ast.isExtern());
     m->name = ast.name;
     m->astNode = &ast;
     

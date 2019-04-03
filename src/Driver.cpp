@@ -235,10 +235,6 @@ bool Driver::parseStage(void)
             reportError(errMsg);
             errorOccurred = true;
         }
-        catch (const SyntaxError& se) {
-            se.print(printer);
-            errorOccurred = true;
-        }
         catch (...) {
             reportError("an unknown error occurred.");
             errorOccurred = true;
@@ -286,7 +282,10 @@ bool Driver::linkingStage(void)
 
     std::vector<std::string> ldArgs = {
         tempObject.string(), "-e", "_qlow_start", "-o", options.outfile,
-        "-lc", "-dynamic-linker", "/lib64/ld-linux-x86-64.so.2"
+        "-lc",
+#ifdef __linux__
+        "-dynamic-linker", "/lib64/ld-linux-x86-64.so.2"
+#endif
     };
 
     std::copy(options.libs.begin(), options.libs.end(), std::back_inserter(ldArgs));

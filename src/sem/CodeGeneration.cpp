@@ -1,4 +1,5 @@
 #include "CodeGeneration.h"
+#include "Linking.h"
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/LegacyPassManager.h>
@@ -175,7 +176,16 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
 #endif 
     if (returnType == nullptr)
         throw "invalid return type";
-    Function* func = Function::Create(funcType, Function::ExternalLinkage, method->name, module);
+    std::string symbolName;
+    if (method->isExtern) {
+        Printer::getInstance() << method->name << " is extern" << std::endl;
+        symbolName = qlow::getExternalSymbol(method->name);
+    }
+    else {
+        Printer::getInstance() << method->name << " is not extern" << std::endl;
+        symbolName = method->name;
+    }
+    Function* func = Function::Create(funcType, Function::ExternalLinkage, symbolName, module);
     method->llvmNode = func;
     
     // linking alloca instances for funcs
@@ -219,7 +229,7 @@ llvm::Function* generateStartFunction(llvm::Module* module, llvm::Function* star
     FunctionType* exitFuncType = FunctionType::get(
         Type::getVoidTy(context), { Type::getInt32Ty(context) }, false);
     Function* startFunction = Function::Create(startFuncType, Function::ExternalLinkage, "_qlow_start", module);
-    Function* exitFunction = Function::Create(exitFuncType, Function::ExternalLinkage, "exit", module);
+    Function* exitFunction = Function::Create(exitFuncType, Function::ExternalLinkage, qlow::getExternalSymbol("exit"), module);
 
 
     IRBuilder<> builder(context);
