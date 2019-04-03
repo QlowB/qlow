@@ -178,11 +178,9 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
         throw "invalid return type";
     std::string symbolName;
     if (method->isExtern) {
-        Printer::getInstance() << method->name << " is extern" << std::endl;
         symbolName = qlow::getExternalSymbol(method->name);
     }
     else {
-        Printer::getInstance() << method->name << " is not extern" << std::endl;
         symbolName = method->name;
     }
     Function* func = Function::Create(funcType, Function::ExternalLinkage, symbolName, module);
