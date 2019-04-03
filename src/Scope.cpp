@@ -13,7 +13,7 @@ sem::Scope::~Scope(void)
 
 
 sem::Method* sem::Scope::resolveMethod(const std::string& name,
-    const std::vector<TypeId> argumentTypes)
+    const std::vector<Type*>& argumentTypes)
 {
     sem::Method* m = getMethod(name);
     if (!m)
@@ -46,22 +46,22 @@ sem::Method* sem::GlobalScope::getMethod(const std::string& name)
 }
 
 
-sem::TypeId sem::GlobalScope::getType(const ast::Type* name)
+sem::Type* sem::GlobalScope::getType(const ast::Type* name)
 {
     if (name == nullptr) {
-        return context.getVoidTypeId();
+        return context.getVoidType();
     }
 
     if (const auto* arr = dynamic_cast<const ast::ArrayType*>(name); arr) {
-        return context.createArrayType(getType(arr->arrayType.get()));
+        return context.getArrayType(getType(arr->arrayType.get()));
     }
     
-    if (const auto* ptr = dynamic_cast<const ast::PointerType*>(name)) {
+    /*if (const auto* ptr = dynamic_cast<const ast::PointerType*>(name)) {
         return context.createPointerType(getType(ptr->derefType.get()));
-    }
+    }*/
     
     auto native = context.getNativeScope().getType(name);
-    if (native != sem::NO_TYPE) {
+    if (native != nullptr) {
         return native;
     }
 
@@ -74,15 +74,15 @@ sem::TypeId sem::GlobalScope::getType(const ast::Type* name)
     
     auto t = classes.find(classType->typeName);
     if (t != classes.end())
-        return context.createClassType(t->second.get());
+        return context.getClassType(t->second.get());
     
-    return NO_TYPE;
+    return nullptr;
 }
 
 
-qlow::sem::TypeId sem::GlobalScope::getReturnableType(void)
+qlow::sem::Type* sem::GlobalScope::getReturnableType(void)
 {
-    return NO_TYPE;
+    return nullptr;
 }
 
 
@@ -98,36 +98,38 @@ std::string sem::GlobalScope::toString(void)
 }
 
 
-sem::TypeId sem::NativeScope::getType(const ast::Type* name)
+sem::Type* sem::NativeScope::getType(const ast::Type* name)
 {
+    if (name == nullptr) {
+        return context.getVoidType();
+    }
     if (const auto* arr = dynamic_cast<const ast::ArrayType*>(name); arr) {
-        return context.createArrayType(getType(arr->arrayType.get()));
+        return context.getArrayType(getType(arr->arrayType.get()));
     }
     
     const auto* classType = dynamic_cast<const ast::ClassType*>(name);
    
     if (!classType)
-        return NO_TYPE;
+        return nullptr;
 
-    
     auto t = types.find(classType->typeName);
     if (t != types.end())
         return t->second;
     
-    return NO_TYPE;
+    return nullptr;
 }
 
 
-sem::TypeId sem::NativeScope::getType(Type::Native nt)
+sem::Type* sem::NativeScope::getType(NativeType::NType nt)
 {
     if (typesByNative.find(nt) == typesByNative.end())
-        return sem::NO_TYPE;
+        return nullptr;
     else
         return typesByNative[nt];
 }
 
 
-void sem::NativeScope::addNativeType(std::string name, Type::Native nt, TypeId id)
+void sem::NativeScope::addNativeType(std::string name, NativeType::NType nt, Type* id)
 {
     types.emplace(std::move(name), id);
     typesByNative.emplace(nt, id);
@@ -180,15 +182,15 @@ std::string sem::ClassScope::toString(void)
 }
 
 
-sem::TypeId sem::ClassScope::getType(const ast::Type* name)
+sem::Type* sem::ClassScope::getType(const ast::Type* name)
 {
     return parentScope.getType(name);
 }
 
 
-sem::TypeId sem::ClassScope::getReturnableType(void)
+sem::Type* sem::ClassScope::getReturnableType(void)
 {
-    return NO_TYPE;
+    return nullptr;
 }
 
 
@@ -243,13 +245,13 @@ sem::Method* sem::LocalScope::getMethod(const std::string& name)
 }
 
 
-sem::TypeId sem::LocalScope::getType(const ast::Type* name)
+sem::Type* sem::LocalScope::getType(const ast::Type* name)
 {
     return parentScope.getType(name);
 }
 
 
-sem::TypeId sem::LocalScope::getReturnableType(void)
+sem::Type* sem::LocalScope::getReturnableType(void)
 {
     return returnType;
 }
@@ -269,10 +271,8 @@ std::string sem::LocalScope::toString(void)
 
 sem::Variable* sem::TypeScope::getVariable(const std::string& name)
 {
-    Type& ty = context.getType(type);
-    
-    if (ty.getKind() == Type::Kind::CLASS) {
-        auto& fields = ty.getClass()->fields;
+    if (type->isClassType()) {
+        auto& fields = type->getClass()->fields;
         if (fields.find(name) != fields.end())
             return fields[name].get();
     }
@@ -283,10 +283,8 @@ sem::Variable* sem::TypeScope::getVariable(const std::string& name)
 
 sem::Method* sem::TypeScope::getMethod(const std::string& name)
 {
-    Type& ty = context.getType(type);
-    
-    if (ty.getKind() == Type::Kind::CLASS) {
-        auto classRef = ty.getClass();
+    if (type->isClassType()) {
+        auto classRef = type->getClass();
         auto& methods = classRef->methods;
         if (methods.find(name) != methods.end())
             return methods[name].get();
@@ -295,15 +293,15 @@ sem::Method* sem::TypeScope::getMethod(const std::string& name)
 }
 
 
-sem::TypeId sem::TypeScope::getType(const ast::Type* name)
+sem::Type* sem::TypeScope::getType(const ast::Type* name)
 {
-    return NO_TYPE;
+    return nullptr;
 }
 
 
-sem::TypeId sem::TypeScope::getReturnableType(void)
+sem::Type* sem::TypeScope::getReturnableType(void)
 {
-    return NO_TYPE;
+    return nullptr;
 }
 
 

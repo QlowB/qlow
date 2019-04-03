@@ -30,8 +30,8 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
 {
     auto f = std::make_unique<sem::Field>(scope.getContext());
     f->name = ast.name;
-    auto type = scope.getType(ast.type.get());
-    if (type != sem::NO_TYPE) {
+    auto* type = scope.getType(ast.type.get());
+    if (type != nullptr) {
         f->type = type;
     }
     else {
@@ -47,7 +47,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FieldDeclarati
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::MethodDefinition& ast, sem::Scope& scope)
 {
     auto returnType = scope.getType(ast.type.get());
-    if (returnType == sem::NO_TYPE) {
+    if (returnType == nullptr) {
         throw SemanticError(SemanticError::UNKNOWN_TYPE,
             ast.type->asString(),
             ast.type->pos
@@ -82,7 +82,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::VariableDeclar
     auto v = std::make_unique<sem::Variable>(scope.getContext());
     v->name = ast.name;
     auto type = scope.getType(ast.type.get());
-    if (type != sem::NO_TYPE) {
+    if (type != nullptr) {
         v->type = type;
     }
     else {
@@ -114,7 +114,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::DoEndBlock& as
         if (ast::LocalVariableStatement* nvs = dynamic_cast<ast::LocalVariableStatement*>(statement.get()); nvs) {
             auto type = body->scope.getType(nvs->type.get());
 
-            if (type == sem::NO_TYPE)
+            if (type == nullptr)
                 throw SemanticError(SemanticError::UNKNOWN_TYPE,
                                     nvs->type->asString(),
                                     nvs->type->pos);
@@ -194,8 +194,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
     sem::Variable* var;
 
     if (target) {
-        auto& targetType = scope.getContext().getType(target->type);
-        auto& typeScope = targetType.getTypeScope();
+        auto& typeScope = target->type->getTypeScope();
         method = typeScope.getMethod(ast.name);
         var = typeScope.getVariable(ast.name);
     }
@@ -293,16 +292,14 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::AssignmentStat
     as->value = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
     as->target = unique_dynamic_cast<sem::Expression>(ast.target->accept(*this, scope));
     
-    if (as->target->type == as->value->type) {
+    if (as->target->type->operator==(*as->value->type)) {
         return as;
     }
     else {
         throw SemanticError(
             SemanticError::TYPE_MISMATCH,
-            "Can't assign expression of type to type.",
-            // TODO rewrite
-            //"Can't assign expression of type '" + as->value->type->asString() +
-            //"' to value of type '" + as->target->type->asString() + "'.",
+            "Can't assign expression of type '" + as->value->type->asString() +
+            "' to value of type '" + as->target->type->asString() + "'.",
             ast.pos
         );
     }
@@ -313,7 +310,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::ReturnStatemen
 {
     auto shouldReturn = scope.getReturnableType();
     
-    if (shouldReturn == sem::NO_TYPE) {
+    if (shouldReturn == nullptr) {
         if (ast.expr == nullptr)
             return std::make_unique<sem::ReturnStatement>(scope.getContext());
         else
@@ -334,8 +331,8 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::ReturnStatemen
     auto returnValue = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
     
     if (shouldReturn != returnValue->type) {
-        auto should = scope.getContext().getTypeString(shouldReturn);
-        auto is = scope.getContext().getTypeString(returnValue->type);
+        auto should = shouldReturn->asString();
+        auto is = returnValue->type->asString();
         throw SemanticError::invalidReturnType(should, is, ast.expr->pos);
     }
     
@@ -358,7 +355,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(
     auto targetType = target->type;
     
     if (!target->isLValue()) {
-        throw NotLValue(scope.getContext().getTypeString(targetType), ast.pos);
+        throw NotLValue(targetType->asString(), ast.pos);
     }
     
     return std::make_unique<sem::AddressExpression>(std::move(target));
@@ -390,10 +387,10 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
     auto leftEval = unique_dynamic_cast<sem::Expression>(ast.left->accept(*this, scope));
     auto rightEval = unique_dynamic_cast<sem::Expression>(ast.right->accept(*this, scope));
 
-    auto& leftType = context.getType(leftEval->type);
-    auto& rightType = context.getType(rightEval->type);
+    auto* leftType = leftEval->type;
+    auto* rightType = rightEval->type;
 
-    auto& scop =  leftType.getTypeScope();
+    auto& scop =  leftType->getTypeScope();
     sem::Method* operationMethod = scop.resolveMethod(
         ast.opString, { rightEval->type }
     );
@@ -406,7 +403,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
     if (!operationMethod) {
         throw SemanticError(SemanticError::OPERATOR_NOT_FOUND,
             "operator " + ast.opString + " not found for types '" +
-            leftType.asString() + "' and '" + rightType.asString() + "'",
+            leftType->asString() + "' and '" + rightType->asString() + "'",
             ast.opPos);
     }
     
@@ -423,12 +420,12 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::BinaryOperatio
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::NewExpression& ast, sem::Scope& scope)
 {
     auto ret = std::make_unique<sem::NewExpression>(scope.getContext(), scope.getType(ast.type.get()));
-    auto* classType = scope.getContext().getType(ret->type).getClass();
+    auto* classType = ret->type->getClass();
     if (classType != nullptr && classType->isReferenceType) {
         return ret;
     }
     else {
-        throw SemanticError::newForNonClass(scope.getContext().getType(ret->type).asString(), ast.pos);
+        throw SemanticError::newForNonClass(ret->type->asString(), ast.pos);
     }
 }
 

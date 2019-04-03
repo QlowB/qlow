@@ -71,13 +71,20 @@ std::pair<std::unique_ptr<Context>, std::unique_ptr<GlobalScope>>
     
     for (auto& [name, method] : globalScope->functions) {
         auto returnType = globalScope->getType(method->astNode->type.get());
-        if (returnType != NO_TYPE) {
+        if (returnType != nullptr) {
             method->returnType = returnType;
         }
         else {
-            SemanticError se(SemanticError::UNKNOWN_TYPE,
+            if (method->astNode->type == nullptr) {
+                throw SemanticError(SemanticError::UNKNOWN_TYPE,
+                            method->name,
+                            method->astNode->pos);
+            }
+            else {
+                throw SemanticError(SemanticError::UNKNOWN_TYPE,
                             method->astNode->type->asString(),
                             method->astNode->type->pos);
+            }
         }
         
         // otherwise add to the methods list
@@ -232,21 +239,21 @@ std::string CastExpression::toString(void) const
 {
     // TODO remove optional unwrapping
     return "CastExpression[" + expression->toString() + " to " +
-        context.getType(targetType).asString() + "]";
+        targetType->asString() + "]";
 }
 
 
 std::string NewExpression::toString(void) const
 {
     // TODO remove optional unwrapping
-    return "NewExpression[" + context.getType(type).asString() + "]";
+    return "NewExpression[" + type->asString() + "]";
 }
 
 
 std::string NewArrayExpression::toString(void) const
 {
     // TODO remove optional unwrapping
-    return "NewArrayExpression[" + context.getType(arrayType).asString() + "; " +
+    return "NewArrayExpression[" + elementType->asString() + "; " +
         length->toString() + "]";
 }
 

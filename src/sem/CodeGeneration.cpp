@@ -154,18 +154,18 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
     
     Type* returnType;
     if (method->returnType)
-        returnType = semCtxt.getLlvmType(method->returnType, context);
+        returnType = method->returnType->getLlvmType(context);
     else
         returnType = llvm::Type::getVoidTy(context);
     
     std::vector<Type*> argumentTypes;
     if (method->thisExpression != nullptr) {
-        Type* enclosingType = semCtxt.getLlvmType(method->thisExpression->type, context);
+        Type* enclosingType = method->thisExpression->type->getLlvmType(context);
         argumentTypes.push_back(enclosingType);
     }
     
     for (auto& arg : method->arguments) {
-        Type* argumentType = semCtxt.getLlvmType(arg->type, context);
+        Type* argumentType = arg->type->getLlvmType(context);
         argumentTypes.push_back(argumentType);
     }
     
@@ -362,11 +362,11 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     for (auto& [name, var] : method.body->scope.getLocals()) {
         if (var.get() == nullptr)
             throw "wtf null variable";
-        if (var->type == sem::NO_TYPE)
+        if (var->type == nullptr)
             throw "wtf null type";
         
 
-        llvm::AllocaInst* v = builder.CreateAlloca(semCtxt.getLlvmType(var->type, context));
+        llvm::AllocaInst* v = builder.CreateAlloca(var->type->getLlvmType(context));
         var->allocaInst = v;
     }
     
@@ -386,11 +386,8 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     
     builder.SetInsertPoint(getCurrentBlock());
     //if (method.returnType->equals(sem::NativeType(sem::NativeType::Type::VOID))) {
-    if (method.returnType == sem::NO_TYPE ||
-        (semCtxt.getType(method.returnType).getKind() == sem::Type::Kind::NATIVE &&
-        semCtxt.getType(method.returnType).getNativeKind() == sem::Type::Native::VOID)) {
-        if (!getCurrentBlock()->getTerminator())
-            builder.CreateRetVoid();
+    if (method.returnType == nullptr || method.returnType->isVoid()) {
+        builder.CreateRetVoid();
     }
 
     return func;

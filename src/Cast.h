@@ -19,17 +19,17 @@ namespace qlow
 class qlow::sem::Cast
 {
 public:
-    TypeId to;
-    
+    Type* to;
+
     bool isExplicit;
-    
-    inline Cast(TypeId to) :
+
+    inline Cast(Type* to) :
         to{ to },
         isExplicit{ true }
     {
     }
-    
-    inline Cast(TypeId to, bool isExplicit) :
+
+    inline Cast(Type* to, bool isExplicit) :
         to{ to },
         isExplicit{ isExplicit }
     {

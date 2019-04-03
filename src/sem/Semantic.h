@@ -78,7 +78,7 @@ struct qlow::sem::Class : public SemanticObject
     SymbolTable<Field> fields;
     SymbolTable<Method> methods;
     ClassScope scope;
-    TypeId classType;
+    Type* classType;
 
     /// \brief generated during llvm code generation, not availab
     llvm::Type* llvmType;
@@ -90,7 +90,7 @@ struct qlow::sem::Class : public SemanticObject
         name{ astNode->name },
         isReferenceType{ astNode->isReferenceType },
         scope{ globalScope, this },
-        classType{ globalScope.getContext().createClassType(this) },
+        classType{ globalScope.getContext().getClassType(this) },
         llvmType{ nullptr }
     {
     }
@@ -113,7 +113,7 @@ struct qlow::sem::Class : public SemanticObject
 
 struct qlow::sem::Variable : public SemanticObject
 {
-    TypeId type;
+    Type* type;
     std::string name;
     bool isParameter;
 
@@ -123,7 +123,7 @@ struct qlow::sem::Variable : public SemanticObject
     
     inline Variable(Context& context) :
         SemanticObject{ context } {}
-    inline Variable(Context& context, TypeId type, const std::string& name) :
+    inline Variable(Context& context, Type* type, const std::string& name) :
         SemanticObject{ context },
         type{ type },
         name{ name },
@@ -148,7 +148,7 @@ struct qlow::sem::Field : public Variable
 struct qlow::sem::Method : public SemanticObject
 {
     Class* containingClass;
-    TypeId returnType;
+    Type* returnType;
     std::vector<Variable*> arguments;
     std::string name;
     ast::MethodDefinition* astNode;
@@ -161,7 +161,7 @@ struct qlow::sem::Method : public SemanticObject
     llvm::Function* llvmNode;
 
     inline Method(Scope& parentScope,
-            TypeId returnType, bool isExtern) :
+            Type* returnType, bool isExtern) :
         SemanticObject{ parentScope.getContext() },
         containingClass{ nullptr },
         returnType{ returnType },
@@ -198,7 +198,7 @@ struct qlow::sem::ThisExpression : public Variable
     inline ThisExpression(Method* method) :
         Variable{
             method->context,
-            method->context.createClassType(method->containingClass),
+            method->context.getClassType(method->containingClass),
             "this"
         },
         method{ method }
@@ -299,9 +299,9 @@ struct qlow::sem::Expression :
                      qlow::gen::FunctionGenerator,
                      qlow::LValueVisitor>
 {
-    TypeId type;
+    Type* type;
     
-    inline Expression(Context& context, TypeId type) :
+    inline Expression(Context& context, Type* type) :
         SemanticObject{ context },
         type{ type }
     {
@@ -318,7 +318,7 @@ struct qlow::sem::Operation : public Expression
 {
     std::string opString;
     
-    inline Operation(Context& context, TypeId type) :
+    inline Operation(Context& context, Type* type) :
         Expression{ context, type }
     {
     }
@@ -348,7 +348,7 @@ struct qlow::sem::AddressExpression : public Expression
     std::unique_ptr<sem::Expression> target;
     
     inline AddressExpression(std::unique_ptr<sem::Expression> target) :
-        Expression{ target->context, context.createPointerType(target->type) },
+        Expression{ target->context, nullptr /*context.createPointerType(target->type)*/ },
         target{ std::move(target) }
     {
     }
@@ -367,7 +367,7 @@ struct qlow::sem::BinaryOperation : public Operation
     sem::Method* operationMethod;
     
     inline BinaryOperation(Context& context,
-            TypeId type, ast::BinaryOperation* astNode) :
+            Type* type, ast::BinaryOperation* astNode) :
         Operation{ context, type },
         astNode{ astNode }
     {
@@ -382,12 +382,12 @@ struct qlow::sem::BinaryOperation : public Operation
 struct qlow::sem::CastExpression : public Expression
 {
     std::unique_ptr<Expression> expression;
-    TypeId targetType;
+    Type* targetType;
     
     ast::CastExpression* astNode;
     
     inline CastExpression(std::unique_ptr<Expression> expression,
-                          TypeId type,
+                          Type* type,
                           ast::CastExpression* astNode) :
         Expression{ expression->context, type },
         expression{ std::move(expression) },
@@ -404,7 +404,7 @@ struct qlow::sem::CastExpression : public Expression
 
 struct qlow::sem::NewExpression : public Expression
 {
-    inline NewExpression(Context& context, TypeId type) :
+    inline NewExpression(Context& context, Type* type) :
         Expression{ context, type }
     {
     }
@@ -416,12 +416,12 @@ struct qlow::sem::NewExpression : public Expression
 
 struct qlow::sem::NewArrayExpression : public Expression
 {
-    TypeId arrayType;
+    Type* elementType;
     std::unique_ptr<Expression> length;
     
-    inline NewArrayExpression(Context& context, TypeId arrayType) :
-        Expression{ context, context.createArrayType(arrayType) },
-        arrayType{ arrayType }
+    inline NewArrayExpression(Context& context, Type* elementType) :
+        Expression{ context, context.getArrayType(elementType) },
+        elementType{ elementType }
     {
     }
     
@@ -435,7 +435,7 @@ struct qlow::sem::UnaryOperation : public Operation
     qlow::ast::UnaryOperation::Side side;
     std::unique_ptr<Expression> arg;
     
-    inline UnaryOperation(Context& context, TypeId type) :
+    inline UnaryOperation(Context& context, Type* type) :
         Operation{ context, type }
     {
     }
@@ -493,7 +493,7 @@ struct qlow::sem::IntConst : public Expression
     unsigned long long value;
 
     inline IntConst(Context& context, unsigned long long value) :
-        Expression{ context, context.getNativeTypeId(Type::Native::INTEGER) },
+        Expression{ context, context.getNativeType(NativeType::NType::INTEGER) },
         value{ value }
     {
     }

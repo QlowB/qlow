@@ -12,13 +12,14 @@ namespace llvm {
     class LLVMContext;
 }
 
+
 namespace qlow::sem
 {
     struct SemanticObject;
     class Type;
-    
-    using TypeId = size_t;
-    const TypeId NO_TYPE = std::numeric_limits<TypeId>::max();
+    class NativeType;
+    class ClassType;
+    class ArrayType;
 
     // forward declarations to other files
     struct Class;
@@ -46,71 +47,29 @@ struct qlow::sem::SemanticObject
 class qlow::sem::Type
 {
     friend class Context;
-public:
-    enum class Kind
-    {
-        NATIVE,
-        CLASS,
-        POINTER,
-        ARRAY
-    };
-
-    enum class Native
-    {
-        VOID,
-        BOOLEAN,
-        INTEGER,
-    };
-
-private:
-    struct NativeType
-    {
-        Native type;
-        inline bool operator==(const NativeType& other) const { return type == other.type; }
-    };
-
-    struct ClassType
-    {
-        Class* classType;
-        inline bool operator==(const ClassType& other) const { return classType == other.classType; }
-    };
-
-    struct PointerType
-    {
-        TypeId targetType;
-        inline bool operator==(const PointerType& other) const { return targetType == other.targetType; }
-    };
-
-    struct ArrayType 
-    {
-        TypeId targetType;
-        inline bool operator==(const ArrayType& other) const { return targetType == other.targetType; }
-    };
-
-    using Union = std::variant<NativeType, ClassType, PointerType, ArrayType>;
-
+protected:
     std::unique_ptr<TypeScope> typeScope;
-    Union type;
+    llvm::Type* llvmType;
 
-    Type(Context& context, Union type, TypeId id);
-    Type(Context& context, Union type, std::string name, TypeId id);
+    Type(void);
 
 public:
-    ~Type(void);
+
+    virtual ~Type(void);
+
     Type(const Type& other) = delete;
-    Type(Type&& other) = default;
+    Type(Type&& other) = delete;
     void operator = (const Type& other) = delete;
-    Type& operator = (Type&& other) = default;
+    Type& operator = (Type&& other) = delete;
 
-    Kind getKind(void) const;
-    Native getNativeKind(void) const;
-
-    std::string asString(void) const;
-    std::string asIdentifier(void) const;
-    size_t hash(void) const;
+    virtual std::string asString(void) const = 0;
+    virtual std::string asIdentifier(void) const = 0;
+    virtual size_t hash(void) const = 0;
 
     bool operator == (const Type& other) const;
     inline bool operator != (const Type& other) const { return !this->operator==(other); }
+
+    virtual bool equals(const Type& other) const = 0;
 
     /**
      * @brief return the class of this type if it is a class type,
@@ -118,7 +77,7 @@ public:
      * @post ensures that if <code>this->getKind() == Kind::CLASS</code>,
      *       it will not return a <code>nullptr</code>
      */
-    Class* getClass(void) const;
+    virtual Class* getClass(void) const;
     
     /**
      * @brief returns the type scope of this type
@@ -129,6 +88,90 @@ public:
      * @brief sets the type scope of this type
      */
     void setTypeScope(std::unique_ptr<TypeScope> scope);
+
+    //virtual void setLlvmType(llvm::Type* type);
+    virtual llvm::Type* getLlvmType(llvm::LLVMContext&) const;
+
+    virtual void createLlvmTypeDecl(llvm::LLVMContext&) = 0;
+
+    virtual bool isClassType(void) const;
+    virtual bool isNativeType(void) const;
+    virtual bool isArrayType(void) const;
+
+    virtual bool isVoid(void) const;
+};
+
+
+class qlow::sem::NativeType : public Type
+{
+    friend class Context;
+public:
+    enum class NType
+    {
+        VOID,
+        INTEGER,
+        BOOLEAN,
+    };
+protected:
+
+    NType type;
+    inline NativeType(NType type) :
+        type{ type }
+    {
+    }
+public:
+
+    virtual bool equals(const Type& other) const override;
+
+    virtual bool isNativeType(void) const override;
+    virtual bool isVoid(void) const override;
+
+    virtual std::string asString(void) const override;
+    virtual std::string asIdentifier(void) const override;
+    virtual size_t hash(void) const override;
+
+    virtual void createLlvmTypeDecl(llvm::LLVMContext&) override;
+};
+
+
+class qlow::sem::ClassType : public Type
+{
+    friend class Context;
+protected:
+    Class* type;
+    inline ClassType(Class* type) :
+        type{ type }
+    {
+    }
+public:
+    virtual bool equals(const Type& other) const override;
+    virtual bool isClassType(void) const override;
+    virtual Class* getClass(void) const override;
+
+    virtual std::string asString(void) const override;
+    virtual std::string asIdentifier(void) const override;
+    virtual size_t hash(void) const override;
+    virtual void createLlvmTypeDecl(llvm::LLVMContext&) override;
+};
+
+
+class qlow::sem::ArrayType : public Type
+{
+    friend class Context;
+protected:
+    Type* elementType;
+    inline ArrayType(Type* elementType) :
+        elementType{ elementType }
+    {
+    }
+public:
+    virtual bool equals(const Type& other) const override;
+    virtual bool isArrayType(void) const override;
+
+    virtual std::string asString(void) const override;
+    virtual std::string asIdentifier(void) const override;
+    virtual size_t hash(void) const override;
+    virtual void createLlvmTypeDecl(llvm::LLVMContext&) override;
 };
 
 

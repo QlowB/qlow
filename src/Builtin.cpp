@@ -17,18 +17,18 @@ sem::NativeScope qlow::sem::generateNativeScope(Context& context)
     
     NativeScope scope{ context };
 
-    std::map<std::string, Type::Native> natives = {
-        { "Void",       Type::Native::VOID },
-        { "Boolean",    Type::Native::BOOLEAN },
-        { "Integer",    Type::Native::INTEGER },
+    std::map<std::string, NativeType::NType> natives = {
+        { "Void",       NativeType::NType::VOID },
+        { "Boolean",    NativeType::NType::BOOLEAN },
+        { "Integer",    NativeType::NType::INTEGER },
     };
 
     for (auto [name, type] : natives) {
-        TypeId id = context.createNativeType(name, type);
+        Type* id = context.getNativeType(type);
         scope.addNativeType(name, type, id);
     }
     
-    /*std::map<std::string, NativeType::Type> natives = {
+    /*std::map<std::string, NativeType::NType> natives = {
         { "Boolean",    NativeType::BOOLEAN },
         { "Char",       NativeType::CHAR },
         { "String",     NativeType::STRING },
@@ -37,7 +37,7 @@ sem::NativeScope qlow::sem::generateNativeScope(Context& context)
         { "Float64",    NativeType::FLOAT64 },
     };
     
-    std::map<std::string, NativeType::Type> integers = {
+    std::map<std::string, NativeType::NType> integers = {
         { "Integer",    NativeType::INTEGER },
         { "Int8",       NativeType::INT8 },
         { "Int16",      NativeType::INT16 },
@@ -134,23 +134,23 @@ void qlow::sem::fillNativeScope(NativeScope& scope)
 {
     Context& context = scope.getContext();
 
-    TypeId integer = context.getNativeTypeId(Type::Native::INTEGER);
-    context.getType(integer).setTypeScope(
-        std::make_unique<NativeTypeScope>(generateNativeTypeScope(context, Type::Native::INTEGER))
+    Type* integer = context.getNativeType(NativeType::NType::INTEGER);
+    integer->setTypeScope(
+        std::make_unique<NativeTypeScope>(generateNativeTypeScope(context, NativeType::NType::INTEGER))
     );
 }
 
 
-sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, Type::Native native)
+sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, NativeType::NType native)
 {
-    NativeTypeScope scope{ context, context.getNativeTypeId(native) };
+    NativeTypeScope scope{ context, context.getNativeType(native) };
 
 
     scope.nativeMethods.insert(
         { "+",
             std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
-                context.getNativeTypeId(Type::Native::INTEGER),
-                context.getNativeTypeId(native),
+                context.getNativeType(NativeType::NType::INTEGER),
+                context.getNativeType(native),
                 [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
                     return builder.CreateAdd(a, b);
                 }
@@ -160,8 +160,8 @@ sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, Type::
     scope.nativeMethods.insert(
         { "-",
             std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
-                context.getNativeTypeId(Type::Native::INTEGER),
-                context.getNativeTypeId(native),
+                context.getNativeType(NativeType::NType::INTEGER),
+                context.getNativeType(native),
                 [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
                     return builder.CreateSub(a, b);
                 }
@@ -171,8 +171,8 @@ sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, Type::
     scope.nativeMethods.insert(
         { "*",
             std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
-                context.getNativeTypeId(Type::Native::INTEGER),
-                context.getNativeTypeId(native),
+                context.getNativeType(NativeType::NType::INTEGER),
+                context.getNativeType(native),
                 [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
                     return builder.CreateMul(a, b);
                 }
@@ -182,8 +182,8 @@ sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, Type::
     scope.nativeMethods.insert(
         { "/",
             std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
-                context.getNativeTypeId(Type::Native::INTEGER),
-                context.getNativeTypeId(native),
+                context.getNativeType(NativeType::NType::INTEGER),
+                context.getNativeType(native),
                 [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
                     return builder.CreateSDiv(a, b);
                 }
@@ -195,8 +195,8 @@ sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, Type::
     scope.nativeMethods.insert(
         { "==",
             std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
-                context.getNativeTypeId(Type::Native::BOOLEAN),
-                context.getNativeTypeId(native),
+                context.getNativeType(NativeType::NType::BOOLEAN),
+                context.getNativeType(native),
                 [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
                     return builder.CreateICmpEQ(a, b);
                 }
@@ -206,8 +206,8 @@ sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, Type::
     scope.nativeMethods.insert(
         { "!=",
             std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
-                context.getNativeTypeId(Type::Native::BOOLEAN),
-                context.getNativeTypeId(native),
+                context.getNativeType(NativeType::NType::BOOLEAN),
+                context.getNativeType(native),
                 [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
                     return builder.CreateICmpNE(a, b);
                 }

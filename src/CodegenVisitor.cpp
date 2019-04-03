@@ -18,7 +18,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::LocalVariableExpression& lve, 
 {
     assert(lve.var->allocaInst != nullptr);
     if (llvm::dyn_cast<llvm::AllocaInst>(lve.var->allocaInst)) {
-        llvm::Type* returnType = lve.context.getLlvmType(lve.type, builder.getContext());
+        llvm::Type* returnType = lve.type->getLlvmType(builder.getContext());
         llvm::Value* val = builder.CreateLoad(returnType, lve.var->allocaInst);
         return val;
     }
@@ -34,7 +34,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::UnaryOperation& unop, llvm::IR
     auto value = unop.arg->accept(*this, builder);
     auto& type = unop.arg->type;
     
-    if (type == sem::NO_TYPE)//(type->equals(sem::NativeType(sem::NativeType::Type::VOID)))
+    if (type == nullptr)//(type->equals(sem::NativeType(sem::NativeType::Type::VOID)))
         throw "invalid type to negate";
 
     /*
@@ -133,10 +133,10 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::NewExpression& nexpr, llvm::IR
     using llvm::Value;
 
     sem::Context& semCtxt = nexpr.context;
-    sem::TypeId type = nexpr.type;
+    sem::Type* type = nexpr.type;
 
     const llvm::DataLayout& layout = builder.GetInsertBlock()->getModule()->getDataLayout();
-    llvm::Type* llvmTy = semCtxt.getLlvmType(type, builder.getContext())->getPointerElementType();
+    llvm::Type* llvmTy = type->getLlvmType(builder.getContext())->getPointerElementType();
     auto allocSize = layout.getTypeAllocSize(llvmTy);
 
     auto size = llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, allocSize, false));
@@ -204,7 +204,7 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access,
 
     sem::Context& semCtxt = access.context;
     
-    Type* type = semCtxt.getLlvmType(access.target->type, builder.getContext());
+    Type* type = access.target->type->getLlvmType(builder.getContext());
     
     if (type == nullptr)
         throw "no access type";
@@ -313,7 +313,7 @@ llvm::Value* LValueVisitor::visit(sem::FieldAccessExpression& access, qlow::gen:
     using llvm::Type;
     sem::Context& semCtxt = access.context;
     
-    Type* type = semCtxt.getLlvmType(access.target->type, fg.builder.getContext());
+    Type* type = access.target->type->getLlvmType(fg.builder.getContext());
     
     if (type == nullptr)
         throw "no access type";
