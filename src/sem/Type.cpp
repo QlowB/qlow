@@ -8,6 +8,7 @@
 #include <llvm/IR/Type.h>
 
 #include <map>
+#include <climits>
 
 using qlow::sem::Type;
 using qlow::sem::NativeType;
@@ -81,6 +82,17 @@ bool Type::isVoid(void) const
 }
 
 
+const std::vector<NativeType::NType> NativeType::nativeTypes = {
+    NType::VOID,
+    NType::INTEGER,
+    NType::BOOLEAN,
+    NType::C_CHAR,
+    NType::C_SHORT,
+    NType::C_INT,
+    NType::C_LONG,
+};
+
+
 bool NativeType::equals(const Type& other) const
 {
     return other.isNativeType() && static_cast<const NativeType&>(other).type == type;
@@ -105,6 +117,10 @@ std::string NativeType::asString(void) const
         { NType::VOID, "Void" },
         { NType::INTEGER, "Integer" },
         { NType::BOOLEAN, "Boolean" },
+        { NType::C_CHAR, "CChar" },
+        { NType::C_SHORT, "CShort" },
+        { NType::C_INT, "CInt" },
+        { NType::C_LONG, "CLong" },
     };
     return names.at(type);
 }
@@ -134,6 +150,35 @@ void NativeType::createLlvmTypeDecl(llvm::LLVMContext& ctxt)
     case NType::BOOLEAN:
         llvmType = llvm::Type::getInt1Ty(ctxt);
         break;
+#if CHAR_BIT == 8 && USHRT_MAX == 65535 && UINT_MAX == 4294967295
+    case NType::C_CHAR:
+        llvmType = llvm::Type::getInt8Ty(ctxt);
+        break;
+    case NType::C_SHORT:
+        llvmType = llvm::Type::getInt16Ty(ctxt);
+        break;
+    case NType::C_INT:
+        llvmType = llvm::Type::getInt32Ty(ctxt);
+        break;
+#else
+#error unknown C abi
+#endif
+
+#if ULONG_MAX == 4294967295
+    case NType::C_LONG:
+        llvmType = llvm::Type::getInt32Ty(ctxt);
+        break;
+#elif ULONG_MAX == 18446744073709551615ULL
+    case NType::C_LONG:
+        llvmType = llvm::Type::getInt64Ty(ctxt);
+        break;
+#else
+#error unknown C abi
+#endif
+    default:
+        throw qlow::SemanticError(SemanticError::UNKNOWN_TYPE,
+                "invalid native type '" + asString() + "'",
+                qlow::CodePosition::none());
     }
 }
 

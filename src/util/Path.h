@@ -23,8 +23,22 @@ public:
     {
     }
 
+    inline Path(const char* path) :
+        path{ path }
+    {
+    }
+
     void append(const Path& other);
+    Path parentPath(void) const;
+
+    Path operator +(const std::string& op) const;
+
+    /// for compatibilty with std::map
+    inline bool operator < (const Path& other) const { return path < other.path; }
+
     operator const std::string&(void) const;
+    const std::string& string(void) const;
+    const char* c_str(void) const;
     
 private:
     bool endsWithSeparator(void) const;

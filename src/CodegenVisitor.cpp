@@ -119,11 +119,13 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::BinaryOperation& binop, llvm::
 
 llvm::Value* ExpressionCodegenVisitor::visit(sem::CastExpression& cast, llvm::IRBuilder<>& builder)
 {
-    /*return builder.CreateCast(
-        llvm::Instruction::CastOps::SExt,
-        cast.expression->accept(*this, builder),
-        context.getType(cast.targetType).value().getLlvmType(builder.getContext())
-    );*/
+    if (cast.isNativeCast) {
+        return builder.CreateCast(
+            llvm::Instruction::CastOps::SExt,
+            cast.expression->accept(*this, builder),
+            cast.targetType->getLlvmType(builder.getContext())
+        );
+    }
     return nullptr;
 }
 

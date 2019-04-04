@@ -42,8 +42,15 @@ struct qlow::CodePosition
     int last_line;
     int first_column;
     int last_column;
-    
+
     inline bool isMultiline(void) const { return first_line != last_line; }
+
+    static inline CodePosition none(void) { return CodePosition{ "", 0, 0, 0, 0 }; }
+    inline bool isNone(void)
+    {
+        return filename == "" && first_line == 0 && last_line == 0 && first_column == 0 &&
+               last_column == 0;
+    }
 
     std::string getReportFormat(void) const noexcept;
 };

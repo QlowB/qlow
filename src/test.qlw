@@ -17,7 +17,7 @@ end
 */
 
 main: Integer do
-    count: Integer
+    count: CInt
     count := 0
     while count != 20 do
         printint(fast_fibonacci(count))

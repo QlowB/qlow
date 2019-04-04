@@ -1,6 +1,7 @@
 #ifndef QLOW_SEM_TYPE_H
 #define QLOW_SEM_TYPE_H
 
+#include <vector>
 #include <variant>
 #include <memory>
 #include <string>
@@ -111,7 +112,12 @@ public:
         VOID,
         INTEGER,
         BOOLEAN,
+        C_CHAR,
+        C_SHORT,
+        C_INT,
+        C_LONG,
     };
+    static const std::vector<NType> nativeTypes;
 protected:
 
     NType type;

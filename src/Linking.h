@@ -1,7 +1,8 @@
 #ifndef QLOW_LINKING_H_
 #define QLOW_LINKING_H_
 
-#include <filesystem>
+#include "Path.h"
+#include <vector>
 
 namespace qlow
 {

@@ -3,7 +3,7 @@
 
 #include <cstdio>
 #include <string>
-#include <filesystem>
+#include "Path.h"
 #include "Ast.h"
 
 namespace qlow
@@ -17,10 +17,10 @@ namespace qlow
 class qlow::ast::Parser
 {
     FILE* stream;
-    std::filesystem::path filename;
+    qlow::util::Path filename;
     std::vector<std::unique_ptr<ImportDeclaration>> imports;
 public:
-    inline Parser(FILE* stream, std::filesystem::path filename) :
+    inline Parser(FILE* stream, qlow::util::Path filename) :
         stream{ stream }, filename{ std::move(filename) } {}
     
     Ast parse(void);
@@ -28,7 +28,7 @@ public:
     void addImports(std::vector<std::unique_ptr<ImportDeclaration>> toAdd);
     const std::vector<std::unique_ptr<ImportDeclaration>>& getImports(void) const;
 
-    inline std::string getFilename(void) const { return filename.string(); }
+    inline std::string getFilename(void) const { return filename; }
 };
 
 #endif // QLOW_AST_PARSER_H

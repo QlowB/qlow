@@ -12,17 +12,17 @@ void Ast::merge(Ast other)
 }
 
 
-std::filesystem::path ImportDeclaration::getRelativePath(void) const
+qlow::util::Path ImportDeclaration::getRelativePath(void) const
 {
     if (imported.empty())
         return "";
-    std::filesystem::path path = imported[0];
+    qlow::util::Path path = imported[0];
 
     for (size_t i = 1; i < imported.size(); i++) {
-        path = path / imported[i];
+        path.append(imported[i]);
     }
 
-    return path.string() + ".qlw";
+    return path + ".qlw";
 }
 
 

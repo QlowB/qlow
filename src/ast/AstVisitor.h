@@ -5,6 +5,7 @@
 #include "Ast.h"
 #include "Semantic.h"
 #include "Builtin.h"
+#include "Type.h"
 #include "Scope.h"
 
 
@@ -79,6 +80,8 @@ public:
     ReturnType visit(ast::NewExpression& ast, sem::Scope& scope) override;
     ReturnType visit(ast::NewArrayExpression& ast, sem::Scope& scope) override;
     ReturnType visit(ast::CastExpression& ast, sem::Scope& scope) override;
+
+    ReturnType createImplicitCast(std::unique_ptr<sem::Expression>, sem::Type* targetType, sem::Scope& scope);
 };
 
 

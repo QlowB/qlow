@@ -10,6 +10,7 @@
 #include "CodeGeneration.h"
 
 #include "Driver.h"
+#include "Path.h"
 
 int main(int argc, char** argv) try
 {
@@ -28,7 +29,7 @@ int main(int argc, char** argv) try
 catch (float f) {
     std::cerr << "uncaught float" << std::endl;
 }
-catch (std::bad_alloc ba) {
+catch (const std::bad_alloc& ba) {
     std::cerr << "out of memory" << std::endl;
 }
 /*catch(...) {

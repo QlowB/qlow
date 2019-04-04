@@ -17,15 +17,9 @@ sem::NativeScope qlow::sem::generateNativeScope(Context& context)
     
     NativeScope scope{ context };
 
-    std::map<std::string, NativeType::NType> natives = {
-        { "Void",       NativeType::NType::VOID },
-        { "Boolean",    NativeType::NType::BOOLEAN },
-        { "Integer",    NativeType::NType::INTEGER },
-    };
-
-    for (auto [name, type] : natives) {
+    for (auto type : NativeType::nativeTypes) {
         Type* id = context.getNativeType(type);
-        scope.addNativeType(name, type, id);
+        scope.addNativeType(id->asString(), type, id);
     }
     
     /*std::map<std::string, NativeType::NType> natives = {

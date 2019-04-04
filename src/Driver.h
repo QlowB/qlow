@@ -6,7 +6,8 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <filesystem>
+
+#include "Path.h"
 
 #include "Parser.h"
 #include "Scope.h"
@@ -47,7 +48,7 @@ class qlow::Driver
     std::unique_ptr<sem::Context> context = nullptr;
     std::unique_ptr<sem::GlobalScope> semClasses = nullptr;
 
-    std::filesystem::path tempObject = "";
+    qlow::util::Path tempObject = "";
 public:
     Driver(void) = delete;
     Driver(int argc, char** argv);

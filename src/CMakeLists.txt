@@ -22,7 +22,7 @@ if( NOT LLVM_FOUND )
 endif()
 
 if ( BISON_FOUND AND FLEX_FOUND )
-    BISON_TARGET(QlowParser ast/syntax.y ${CMAKE_CURRENT_BINARY_DIR}/syntax.cpp)
+    BISON_TARGET(QlowParser ast/syntax.y ${CMAKE_CURRENT_BINARY_DIR}/syntax.cpp COMPILE_FLAGS -Wno-other)
     FLEX_TARGET(QlowLexer ast/lexer.l ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
     ADD_FLEX_BISON_DEPENDENCY(QlowLexer QlowParser)
 else()
@@ -41,20 +41,10 @@ include_directories( ${LLVM_INCLUDE_DIRS} )
 link_directories( ${LLVM_LIBRARY_DIRS} )
 add_definitions( ${LLVM_DEFINITIONS} )
 
-if (${APPLE})
-    # hack to include libc++fs installed with homebrew
-    set_property(TARGET ${PROJECT_NAME} APPEND_STRING PROPERTY LINK_FLAGS "-L/usr/local/opt/llvm/lib")
-endif()
-
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_CXX_COMPILER MATCHES ".*clang" )
     target_compile_options(${PROJECT_NAME} PRIVATE 
         -Wall -Wextra -Wpedantic -pedantic -Wno-unused-parameter -Wno-unused-function -Wno-unused-variable
     )
-    if (${APPLE})
-        target_link_libraries(${PROJECT_NAME} c++fs)
-    else()
-        target_link_libraries(${PROJECT_NAME} stdc++fs)
-    endif()
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -DDEBUGGING")
 endif()
 if ( MSVC )

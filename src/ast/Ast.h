@@ -27,10 +27,10 @@
 #include <memory>
 #include <utility>
 #include <map>
-#include <filesystem>
 
 #include "Visitor.h"
 #include "Util.h"
+#include "Path.h"
 #include "ErrorReporting.h"
 
 namespace qlow
@@ -134,7 +134,7 @@ struct qlow::ast::ImportDeclaration
     {
     }
 
-    std::filesystem::path getRelativePath(void) const;
+    qlow::util::Path getRelativePath(void) const;
 };
 
 

@@ -218,6 +218,8 @@ while (0)
 
 %start topLevel
 
+%expect 65
+
 %%
 
 /* list of class definitions */

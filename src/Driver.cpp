@@ -8,10 +8,10 @@
 
 #include "Printer.h"
 #include "ErrorReporting.h"
+#include "Path.h"
 
 #include <cstdio>
 #include <set>
-#include <filesystem>
 #include <functional>
 #include <algorithm>
 
@@ -197,14 +197,14 @@ bool Driver::parseStage(void)
     this->ast = std::make_unique<ast::Ast>();
     bool errorOccurred = false;
 
-    std::set<std::filesystem::path> alreadyParsed = {};
-    std::set<std::filesystem::path> toParse = {};
+    std::set<qlow::util::Path> alreadyParsed = {};
+    std::set<qlow::util::Path> toParse = {};
 
     toParse.insert(options.infiles.begin(), options.infiles.end());
 
     while(!toParse.empty()) {
         auto filename = toParse.extract(toParse.begin()).value();
-        auto dirPath = filename.parent_path();
+        auto dirPath = filename.parentPath();
         std::FILE* file = std::fopen(filename.c_str(), "r");
 
         if (!file) {
@@ -218,9 +218,10 @@ bool Driver::parseStage(void)
             ast::Parser parser(file, filename);
             this->ast->merge(parser.parse());
             for (auto& import : parser.getImports()) {
-                auto importPath = dirPath / import->getRelativePath();
+                auto importPath = dirPath;
+                importPath.append(import->getRelativePath());
 #ifdef DEBUGGING
-                printer << "imported " << importPath << std::endl;
+                printer << "imported " << importPath.string() << std::endl;
 #endif
                 if (alreadyParsed.count(dirPath) == 0) {
                     toParse.insert(importPath);

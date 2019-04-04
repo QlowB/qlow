@@ -300,10 +300,12 @@ struct qlow::sem::Expression :
                      qlow::LValueVisitor>
 {
     Type* type;
+    CodePosition pos;
     
-    inline Expression(Context& context, Type* type) :
+    inline Expression(Context& context, Type* type, const CodePosition& pos) :
         SemanticObject{ context },
-        type{ type }
+        type{ type },
+        pos{ pos }
     {
     }
     
@@ -318,8 +320,8 @@ struct qlow::sem::Operation : public Expression
 {
     std::string opString;
     
-    inline Operation(Context& context, Type* type) :
-        Expression{ context, type }
+    inline Operation(Context& context, Type* type, const CodePosition& pos) :
+        Expression{ context, type, pos }
     {
     }
 };
@@ -329,8 +331,8 @@ struct qlow::sem::LocalVariableExpression : public Expression
 {
     Variable* var;
     
-    inline LocalVariableExpression(Variable* var) :
-        Expression{ var->context, var->type },
+    inline LocalVariableExpression(Variable* var, const CodePosition& pos) :
+        Expression{ var->context, var->type, pos },
         var{ var }
     {
     }
@@ -348,7 +350,7 @@ struct qlow::sem::AddressExpression : public Expression
     std::unique_ptr<sem::Expression> target;
     
     inline AddressExpression(std::unique_ptr<sem::Expression> target) :
-        Expression{ target->context, nullptr /*context.createPointerType(target->type)*/ },
+        Expression{ target->context, nullptr /*context.createPointerType(target->type)*/, CodePosition{} },
         target{ std::move(target) }
     {
     }
@@ -368,7 +370,7 @@ struct qlow::sem::BinaryOperation : public Operation
     
     inline BinaryOperation(Context& context,
             Type* type, ast::BinaryOperation* astNode) :
-        Operation{ context, type },
+        Operation{ context, type , astNode->pos},
         astNode{ astNode }
     {
     }
@@ -385,14 +387,21 @@ struct qlow::sem::CastExpression : public Expression
     Type* targetType;
     
     ast::CastExpression* astNode;
+
+    bool isImplicit;
+    bool isNativeCast;
     
     inline CastExpression(std::unique_ptr<Expression> expression,
                           Type* type,
-                          ast::CastExpression* astNode) :
-        Expression{ expression->context, type },
+                          ast::CastExpression* astNode,
+                          bool isNative,
+                          const CodePosition& pos) :
+        Expression{ expression->context, type, pos },
         expression{ std::move(expression) },
         targetType{ type },
-        astNode{ astNode }
+        astNode{ astNode },
+        isImplicit{ astNode == nullptr },
+        isNativeCast{ isNative }
     {
     }
     
@@ -404,8 +413,8 @@ struct qlow::sem::CastExpression : public Expression
 
 struct qlow::sem::NewExpression : public Expression
 {
-    inline NewExpression(Context& context, Type* type) :
-        Expression{ context, type }
+    inline NewExpression(Context& context, Type* type, const CodePosition& pos) :
+        Expression{ context, type, pos }
     {
     }
     
@@ -419,8 +428,8 @@ struct qlow::sem::NewArrayExpression : public Expression
     Type* elementType;
     std::unique_ptr<Expression> length;
     
-    inline NewArrayExpression(Context& context, Type* elementType) :
-        Expression{ context, context.getArrayType(elementType) },
+    inline NewArrayExpression(Context& context, Type* elementType, const CodePosition& pos) :
+        Expression{ context, context.getArrayType(elementType), pos },
         elementType{ elementType }
     {
     }
@@ -435,8 +444,8 @@ struct qlow::sem::UnaryOperation : public Operation
     qlow::ast::UnaryOperation::Side side;
     std::unique_ptr<Expression> arg;
     
-    inline UnaryOperation(Context& context, Type* type) :
-        Operation{ context, type }
+    inline UnaryOperation(Context& context, Type* type, const CodePosition& pos) :
+        Operation{ context, type, pos }
     {
     }
     
@@ -452,8 +461,8 @@ struct qlow::sem::MethodCallExpression : public Expression
     OwningList<Expression> arguments;
     
     inline MethodCallExpression(std::unique_ptr<Expression> target,
-                                Method* callee) :
-        Expression{ callee->context, callee->returnType },
+                                Method* callee, const CodePosition& pos) :
+        Expression{ callee->context, callee->returnType, pos },
         callee{ callee },
         target{ std::move(target) }
     {
@@ -472,8 +481,8 @@ struct qlow::sem::FieldAccessExpression : public Expression
     //OwningList<Expression> arguments;
     
     inline FieldAccessExpression(std::unique_ptr<Expression> target,
-                                 Field* accessed ) :
-        Expression{ target->context, accessed->type },
+                                 Field* accessed, const CodePosition& pos) :
+        Expression{ target->context, accessed->type, pos },
         accessed{ accessed },
         target{ std::move(target) }
     {
@@ -492,8 +501,8 @@ struct qlow::sem::IntConst : public Expression
 {
     unsigned long long value;
 
-    inline IntConst(Context& context, unsigned long long value) :
-        Expression{ context, context.getNativeType(NativeType::NType::INTEGER) },
+    inline IntConst(Context& context, unsigned long long value, const CodePosition& pos) :
+        Expression{ context, context.getNativeType(NativeType::NType::INTEGER), pos },
         value{ value }
     {
     }
