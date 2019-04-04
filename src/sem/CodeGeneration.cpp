@@ -1,5 +1,4 @@
 #include "CodeGeneration.h"
-#include "Linking.h"
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/LegacyPassManager.h>
@@ -139,7 +138,6 @@ std::unique_ptr<llvm::Module> generateModule(sem::GlobalScope& semantic)
         printf("verified function: %s\n", method->name.c_str());
 #endif
     }
-    generateStartFunction(module.get(), semantic.getMethod("main")->llvmNode);
     return module;
 }
 
@@ -154,18 +152,18 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
     
     Type* returnType;
     if (method->returnType)
-        returnType = method->returnType->getLlvmType(context);
+        returnType = semCtxt.getLlvmType(method->returnType, context);
     else
         returnType = llvm::Type::getVoidTy(context);
     
     std::vector<Type*> argumentTypes;
     if (method->thisExpression != nullptr) {
-        Type* enclosingType = method->thisExpression->type->getLlvmType(context);
+        Type* enclosingType = semCtxt.getLlvmType(method->thisExpression->type, context);
         argumentTypes.push_back(enclosingType);
     }
     
     for (auto& arg : method->arguments) {
-        Type* argumentType = arg->type->getLlvmType(context);
+        Type* argumentType = semCtxt.getLlvmType(arg->type, context);
         argumentTypes.push_back(argumentType);
     }
     
@@ -176,14 +174,7 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
 #endif 
     if (returnType == nullptr)
         throw "invalid return type";
-    std::string symbolName;
-    if (method->isExtern) {
-        symbolName = qlow::getExternalSymbol(method->name);
-    }
-    else {
-        symbolName = method->name;
-    }
-    Function* func = Function::Create(funcType, Function::ExternalLinkage, symbolName, module);
+    Function* func = Function::Create(funcType, Function::ExternalLinkage, method->name, module);
     method->llvmNode = func;
     
     // linking alloca instances for funcs
@@ -212,35 +203,6 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
 }
 
 
-
-llvm::Function* generateStartFunction(llvm::Module* module, llvm::Function* start)
-{
-    using llvm::Function;
-    using llvm::FunctionType;
-    using llvm::Type;
-    using llvm::IRBuilder;
-    using llvm::BasicBlock;
-    using llvm::Value;
-
-    FunctionType* startFuncType = FunctionType::get(
-        Type::getVoidTy(context), { Type::getInt32Ty(context), Type::getInt8PtrTy(context)->getPointerTo() }, false);
-    FunctionType* exitFuncType = FunctionType::get(
-        Type::getVoidTy(context), { Type::getInt32Ty(context) }, false);
-    Function* startFunction = Function::Create(startFuncType, Function::ExternalLinkage, "_qlow_start", module);
-    Function* exitFunction = Function::Create(exitFuncType, Function::ExternalLinkage, qlow::getExternalSymbol("exit"), module);
-
-
-    IRBuilder<> builder(context);
-    BasicBlock* bb = BasicBlock::Create(context, "entry", startFunction);
-    builder.SetInsertPoint(bb);
-    builder.CreateCall(start, {});
-    builder.CreateCall(exitFunction, { llvm::ConstantInt::get(context, llvm::APInt(32, "0", 10)) });
-    builder.CreateRetVoid();
-
-    return startFunction;
-}
-
-
 void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Module> module, int optLevel)
 {
     using llvm::legacy::PassManager;
@@ -257,7 +219,7 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
 #endif
     auto ostr = llvm::raw_os_ostream(printer);
 #ifdef DEBUGGING
-    module->print(ostr, nullptr);
+    //module->print(ostr, nullptr);
 #endif
     bool broken = llvm::verifyModule(*module);
     
@@ -266,6 +228,7 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
     
     llvm::InitializeNativeTarget ();
     llvm::InitializeNativeTargetAsmPrinter();
+    llvm::InitializeNativeTargetAsmParser();
     //llvm::InitializeAllTargetInfos();
     //llvm::InitializeAllTargets();
     //llvm::InitializeAllTargetMCs();
@@ -307,18 +270,16 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
             features, targetOptions, relocModel);
 
     std::error_code errorCode;
-
     raw_fd_ostream dest(filename, errorCode, llvm::sys::fs::F_None);
 #ifdef DEBUGGING
     printer << "adding passes" << std::endl;
 #endif
-    targetMachine->addPassesToEmitFile(pm, dest,
+    bool success = targetMachine->addPassesToEmitFile(pm, dest,
 //        llvm::LLVMTargetMachine::CGFT_ObjectFile,
-#if defined(LLVM_VERSION_MAJOR) && LLVM_VERSION_MAJOR >= 7
-            nullptr,
-#endif
 //        nullptr,
         llvm::TargetMachine::CGFT_ObjectFile);
+
+    Printer::getInstance() << (success ? "SUCC!!" : "NO SUCC :(") << std::endl;
 
     pm.run(*module);
     dest.flush();
@@ -362,11 +323,11 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     for (auto& [name, var] : method.body->scope.getLocals()) {
         if (var.get() == nullptr)
             throw "wtf null variable";
-        if (var->type == nullptr)
+        if (var->type == sem::NO_TYPE)
             throw "wtf null type";
         
 
-        llvm::AllocaInst* v = builder.CreateAlloca(var->type->getLlvmType(context));
+        llvm::AllocaInst* v = builder.CreateAlloca(semCtxt.getLlvmType(var->type, context));
         var->allocaInst = v;
     }
     
@@ -386,8 +347,11 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     
     builder.SetInsertPoint(getCurrentBlock());
     //if (method.returnType->equals(sem::NativeType(sem::NativeType::Type::VOID))) {
-    if (method.returnType == nullptr || method.returnType->isVoid()) {
-        builder.CreateRetVoid();
+    if (method.returnType == sem::NO_TYPE ||
+        (semCtxt.getType(method.returnType).getKind() == sem::Type::Kind::NATIVE &&
+        semCtxt.getType(method.returnType).getNativeKind() == sem::Type::Native::VOID)) {
+        if (!getCurrentBlock()->getTerminator())
+            builder.CreateRetVoid();
     }
     return func;
 }
