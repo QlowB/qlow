@@ -389,7 +389,6 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     if (method.returnType == nullptr || method.returnType->isVoid()) {
         builder.CreateRetVoid();
     }
-
     return func;
 }
 
