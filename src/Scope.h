@@ -54,9 +54,6 @@ public:
     inline Scope(Context& context) :
         context{ context } {}
 
-    Scope(Scope&&) = default;
-    Scope& operator=(Scope&&) = default;
-
     virtual ~Scope(void);
     virtual Variable* getVariable(const std::string& name) = 0;
     virtual Method* getMethod(const std::string& name) = 0;
@@ -160,9 +157,6 @@ public:
         type{ type }
     {
     }
-
-    TypeScope(TypeScope&&) = default;
-    TypeScope& operator=(TypeScope&&) = default;
     
     virtual Variable* getVariable(const std::string& name);
     virtual Method* getMethod(const std::string& name);

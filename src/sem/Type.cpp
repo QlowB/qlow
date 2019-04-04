@@ -20,6 +20,7 @@ qlow::sem::SemanticObject::~SemanticObject(void) = default;
 
 std::string qlow::sem::SemanticObject::toString(void) const
 {
+    
     return "SemanticObject [" + util::toString(this) + "]";
 }
 

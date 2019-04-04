@@ -181,7 +181,7 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
             throw "internal error";
         method->arguments[argIndex]->allocaInst = &*argIterator;
 #ifdef DEBUGGING
-        printf("allocaInst of arg '%s': %p\n", method->arguments[argIndex]->name.c_str(), method->arguments[argIndex]->allocaInst);
+        printf("allocaInst of arg '%s': %p\n", method->arguments[argIndex]->name.c_str(), (void*)method->arguments[argIndex]->allocaInst);
 #endif 
         argIndex++;
     }
