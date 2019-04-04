@@ -30,9 +30,9 @@ else()
     include_directories(bison/)
 endif()
 
-FILE(GLOB CppSources *.cpp ast/*.cpp sem/*.cpp)
+FILE(GLOB CppSources *.cpp ast/*.cpp sem/*.cpp util/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(ast sem .)
+include_directories(ast sem util .)
 
 add_executable(${PROJECT_NAME} ${BISON_QlowParser_OUTPUTS} ${FLEX_QlowLexer_OUTPUTS} ${CppSources} ${AdditionalSources})
 
@@ -76,7 +76,7 @@ if (${APPLE})
 endif()
 
 if (${WIN32})
-    target_compile_definitions(${PROJECT_NAME} PRIVATE QLOW_TARGET_APPLE)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE QLOW_TARGET_WINDOWS)
 endif()
 
 #explicit_llvm_config(${PROJECT_NAME} STATIC_LIBRARY)
