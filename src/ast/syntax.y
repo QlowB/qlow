@@ -599,7 +599,7 @@ expression:
     }
     |
     INT_LITERAL {
-        $$ = new IntConst(std::move(*$1), @$);
+        $$ = new IntConst(*$1, @$);
         delete $1;
     };/*
     |

@@ -54,6 +54,7 @@ ACCEPT_DEFINITION(ReturnStatement, StructureVisitor)
 ACCEPT_DEFINITION(LocalVariableStatement, StructureVisitor)
 ACCEPT_DEFINITION(AddressExpression, StructureVisitor)
 ACCEPT_DEFINITION(IntConst, StructureVisitor)
+ACCEPT_DEFINITION(StringConst, StructureVisitor)
 ACCEPT_DEFINITION(UnaryOperation, StructureVisitor)
 ACCEPT_DEFINITION(BinaryOperation, StructureVisitor)
 ACCEPT_DEFINITION(NewExpression, StructureVisitor)
@@ -66,7 +67,7 @@ Statement::~Statement(void)
 }
 
 
-qlow::ast::IntConst::IntConst(std::string&& val, const qlow::CodePosition& p) :
+qlow::ast::IntConst::IntConst(const std::string& val, const qlow::CodePosition& p) :
     AstObject{ p },
     Expression{ p },
     value{ strtoull(val.c_str(), nullptr, 0) }

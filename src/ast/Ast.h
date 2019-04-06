@@ -75,7 +75,9 @@ namespace qlow
         struct ReturnStatement;
         struct LocalVariableStatement;
         struct AddressExpression;
+
         struct IntConst;
+        struct StringConst;
 
         struct Operation;
         struct UnaryOperation;
@@ -497,7 +499,22 @@ struct qlow::ast::IntConst : public Expression
         Expression(p),
         value{ v } {}
         
-    IntConst(std::string&& val, const CodePosition& p);
+    IntConst(const std::string& val, const CodePosition& p);
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
+};
+
+
+struct qlow::ast::StringConst : public Expression
+{
+    std::string value;
+    
+    StringConst(std::string value, const CodePosition& p) :
+        AstObject(p),
+        Expression(p),
+        value{ std::move(value) }
+    {
+    }
+
     virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
 };
 

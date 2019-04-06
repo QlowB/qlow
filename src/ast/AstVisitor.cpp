@@ -368,6 +368,13 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::IntConst& ast,
 }
 
 
+std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::StringConst& ast, sem::Scope& scope)
+{
+    // TODO implement
+    return nullptr;
+}
+
+
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::UnaryOperation& ast, sem::Scope& scope)
 {
     auto argument = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
