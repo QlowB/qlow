@@ -17,7 +17,8 @@ using namespace qlow;
 llvm::Value* ExpressionCodegenVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
 {
     assert(lve.var->allocaInst != nullptr);
-    if (llvm::dyn_cast<llvm::AllocaInst>(lve.var->allocaInst)) {
+    // TODO improve handling of arrays
+    if (llvm::dyn_cast<llvm::AllocaInst>(lve.var->allocaInst) && !lve.type->isArrayType()) {
         llvm::Type* returnType = lve.type->getLlvmType(builder.getContext());
         llvm::Value* val = builder.CreateLoad(returnType, lve.var->allocaInst);
         return val;
@@ -152,8 +153,30 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::NewExpression& nexpr, llvm::IR
 llvm::Value* ExpressionCodegenVisitor::visit(sem::NewArrayExpression& naexpr, llvm::IRBuilder<>& builder)
 {
     using llvm::Value;
-    // TODO implement
-    return nullptr;
+
+    sem::Context& semCtxt = naexpr.context;
+    llvm::LLVMContext& llvmCtxt = builder.getContext();
+
+    const llvm::DataLayout& layout = builder.GetInsertBlock()->getModule()->getDataLayout();
+    llvm::Type* llvmTy = naexpr.elementType->getLlvmType(llvmCtxt);
+    llvm::Type* arrayStructType = naexpr.type->getLlvmType(llvmCtxt);
+    auto elementSize = layout.getTypeAllocSize(llvmTy);
+
+    llvm::Value* lengthExpr = naexpr.length->accept(*this, builder);
+    llvm::Value* allocSize = builder.CreateMul(lengthExpr, llvm::ConstantInt::get(llvm::Type::getInt64Ty(llvmCtxt), elementSize));
+
+    auto mallocCall = llvm::CallInst::CreateMalloc(builder.GetInsertBlock(), allocSize->getType(), llvmTy, allocSize, nullptr, nullptr, "");
+    //auto casted = builder.CreateBitCast(mallocCall, llvmTy);
+    builder.GetInsertBlock()->getInstList().push_back(llvm::cast<llvm::Instruction>(mallocCall));
+
+    llvm::Value* result = builder.CreateAlloca(arrayStructType);
+    llvm::Value* arrRef = builder.CreateStructGEP(arrayStructType, result, 0);
+    llvm::Value* lenRef = builder.CreateStructGEP(arrayStructType, result, 1);
+
+    builder.CreateStore(mallocCall, arrRef);
+    builder.CreateStore(lengthExpr, lenRef);
+
+    return result; // builder.CreateGEP(result, llvm::ConstantInt::get(llvm::Type::getInt64Ty(llvmCtxt), 0));
 }
 
 
@@ -249,6 +272,30 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::AddressExpression& node, llvm:
 }
 
 
+llvm::Value* ExpressionCodegenVisitor::visit(sem::ArrayAccessExpression& node, llvm::IRBuilder<>& builder)
+{
+    auto array = node.array->accept(*this, builder);
+    auto index = node.index->accept(*this, builder);
+
+    auto arrType = node.array->type;
+    if (!arrType->isArrayType()) {
+        throw "trying to access non-array type as array.";
+    }
+
+    sem::ArrayType* at = static_cast<sem::ArrayType*>(arrType);
+    auto elemType = at->getArrayOf();
+
+    auto arrPtr = builder.CreateStructGEP(at->getLlvmType(builder.getContext()), array, 0);
+    // TODO implement range checks
+    //auto length = builder.CreateStructGEP(at->getLlvmType(builder.getContext()), array, 1);
+
+    auto arr = builder.CreateLoad(arrPtr);
+    auto accessVal = builder.CreateGEP(arr, index);
+
+    return builder.CreateLoad(accessVal);
+}
+
+
 llvm::Value* ExpressionCodegenVisitor::visit(sem::IntConst& node, llvm::IRBuilder<>& builder)
 {
     return llvm::ConstantInt::get(builder.getContext(),
@@ -285,8 +332,8 @@ llvm::Value* LValueVisitor::visit(sem::LocalVariableExpression& lve, qlow::gen::
         return lve.var->allocaInst;
     }
     else {
-        return lve.var->allocaInst;
-        //throw "unable to find alloca instance of local variable";
+        throw "unable to find alloca instance of local variable";
+        //return lve.var->allocaInst;
     }
 }
 
@@ -335,10 +382,38 @@ llvm::Value* LValueVisitor::visit(sem::FieldAccessExpression& access, qlow::gen:
 }
 
 
-llvm::Value* StatementVisitor::visit(sem::DoEndBlock& assignment,
+llvm::Value* LValueVisitor::visit(sem::ArrayAccessExpression& node, qlow::gen::FunctionGenerator& fg)
+{
+    auto& builder = fg.builder;
+    auto array = node.array->accept(fg.expressionVisitor, builder);
+    auto index = node.index->accept(fg.expressionVisitor, builder);
+
+    auto arrType = node.array->type;
+    if (!arrType->isArrayType()) {
+        throw "trying to access non-array type as array.";
+    }
+
+    //auto ostr = llvm::raw_os_ostream(Printer::getInstance());
+    //fg.getModule()->print(ostr, nullptr);
+
+    auto elemType = arrType->getArrayOf();
+
+    auto arrPtr = builder.CreateStructGEP(arrType->getLlvmType(builder.getContext()), array, 0);
+    // TODO implement range check
+    //auto length = builder.CreateStructGEP(arrType->getLlvmType(builder.getContext()), array, 1);
+
+    auto arr = builder.CreateLoad(arrPtr);
+
+    auto accessVal = builder.CreateGEP(arr, index);
+
+    return accessVal;
+}
+
+
+llvm::Value* StatementVisitor::visit(sem::DoEndBlock& block,
         qlow::gen::FunctionGenerator& fg)
 {
-    for (auto& statement : assignment.statements) {
+    for (auto& statement : block.statements) {
         statement->accept(*this, fg);
     }
     return nullptr;
@@ -426,7 +501,13 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
     auto val = assignment.value->accept(fg.expressionVisitor, fg.builder);
     auto target = assignment.target->accept(fg.lvalueVisitor, fg);
     
-    return fg.builder.CreateStore(val, target);
+    if (val->getType()->isPointerTy() && val->getType()->getPointerElementType()->isStructTy()) {
+        const llvm::DataLayout& layout = fg.builder.GetInsertBlock()->getModule()->getDataLayout();
+        return fg.builder.CreateMemCpy(target, val, layout.getTypeAllocSize(val->getType()->getPointerElementType()), 1);
+    }
+    else {
+        return fg.builder.CreateStore(val, target);
+    }
     
     /*
     if (auto* targetVar =
@@ -471,6 +552,9 @@ llvm::Value* StatementVisitor::visit(sem::ReturnStatement& returnStatement,
 {
     fg.builder.SetInsertPoint(fg.getCurrentBlock());
     auto val = returnStatement.value->accept(fg.expressionVisitor, fg.builder);
+    if (returnStatement.value != nullptr && val == nullptr) {
+        throw "internal error: returned type is invalid";
+    }
     fg.builder.CreateRet(val);
     return val;
 }

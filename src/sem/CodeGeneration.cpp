@@ -212,8 +212,15 @@ llvm::Function* generateStartFunction(llvm::Module* module, llvm::Function* star
     IRBuilder<> builder(context);
     BasicBlock* bb = BasicBlock::Create(context, "entry", startFunction);
     builder.SetInsertPoint(bb);
-    builder.CreateCall(start, {});
-    builder.CreateCall(exitFunction, { llvm::ConstantInt::get(context, llvm::APInt(32, "0", 10)) });
+    auto returnVal = builder.CreateCall(start, {});
+
+    if (start->getReturnType()->isIntegerTy()) {
+        auto rv = builder.CreateIntCast(returnVal, llvm::Type::getInt32Ty(context), true);
+        builder.CreateCall(exitFunction, { rv });
+    }
+    else {
+        builder.CreateCall(exitFunction, { llvm::ConstantInt::get(context, llvm::APInt(32, "0", 10)) });
+    }
     builder.CreateRetVoid();
 
     return startFunction;

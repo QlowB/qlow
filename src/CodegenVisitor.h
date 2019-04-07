@@ -47,6 +47,7 @@ class qlow::ExpressionCodegenVisitor :
         sem::MethodCallExpression,
         sem::FieldAccessExpression,
         sem::AddressExpression,
+        sem::ArrayAccessExpression,
         sem::IntConst,
         sem::ThisExpression
     >
@@ -67,6 +68,7 @@ public:
     llvm::Value* visit(sem::MethodCallExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::FieldAccessExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::AddressExpression& node, llvm::IRBuilder<>&) override;
+    llvm::Value* visit(sem::ArrayAccessExpression& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::IntConst& node, llvm::IRBuilder<>&) override;
     llvm::Value* visit(sem::ThisExpression& node, llvm::IRBuilder<>&) override;
 };
@@ -79,13 +81,15 @@ class qlow::LValueVisitor :
 
         sem::Expression,
         sem::LocalVariableExpression,
-        sem::FieldAccessExpression
+        sem::FieldAccessExpression,
+        sem::ArrayAccessExpression
     >
 {
 public:
     llvm::Value* visit(sem::Expression& node, qlow::gen::FunctionGenerator& fg) override;
     llvm::Value* visit(sem::LocalVariableExpression& node, qlow::gen::FunctionGenerator& fg) override;
     llvm::Value* visit(sem::FieldAccessExpression& node, qlow::gen::FunctionGenerator& fg) override;
+    llvm::Value* visit(sem::ArrayAccessExpression& node, qlow::gen::FunctionGenerator& fg) override;
 };
 
 

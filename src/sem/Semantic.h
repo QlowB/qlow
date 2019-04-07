@@ -43,6 +43,7 @@ namespace qlow
         
         struct LocalVariableExpression;
         struct AddressExpression;
+        struct ArrayAccessExpression;
 
         struct Operation;
         struct UnaryOperation;
@@ -359,6 +360,27 @@ struct qlow::sem::AddressExpression : public Expression
 };
 
 
+struct qlow::sem::ArrayAccessExpression : public Expression
+{
+    std::unique_ptr<sem::Expression> array;
+    std::unique_ptr<sem::Expression> index;
+
+    inline ArrayAccessExpression(std::unique_ptr<sem::Expression> array,
+                                 std::unique_ptr<sem::Expression> index,
+                                 const CodePosition& pos) :
+        Expression{ array->context, array->type->getArrayOf(), pos },
+        array{ std::move(array) },
+        index{ std::move(index) }
+    {
+    }
+
+    virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual llvm::Value* accept(LValueVisitor& visitor, qlow::gen::FunctionGenerator&) override;
+
+    virtual std::string toString(void) const override;
+};
+
+
 struct qlow::sem::BinaryOperation : public Operation
 {
     std::unique_ptr<Expression> left;
@@ -428,9 +450,10 @@ struct qlow::sem::NewArrayExpression : public Expression
     Type* elementType;
     std::unique_ptr<Expression> length;
     
-    inline NewArrayExpression(Context& context, Type* elementType, const CodePosition& pos) :
-        Expression{ context, context.getArrayType(elementType), pos },
-        elementType{ elementType }
+    inline NewArrayExpression(Type* elementType, std::unique_ptr<Expression> length, const CodePosition& pos) :
+        Expression{ length->context, length->context.getArrayType(elementType), pos },
+        elementType{ elementType },
+        length{ std::move(length) }
     {
     }
     
@@ -508,6 +531,7 @@ struct qlow::sem::IntConst : public Expression
     }
     
     virtual llvm::Value* accept(ExpressionCodegenVisitor& visitor, llvm::IRBuilder<>& arg2) override;
+    virtual std::string toString(void) const override;
 };
 
 

@@ -189,12 +189,14 @@ ACCEPT_DEFINITION(UnaryOperation, ExpressionCodegenVisitor, llvm::Value*, llvm::
 ACCEPT_DEFINITION(MethodCallExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(FieldAccessExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(AddressExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
+ACCEPT_DEFINITION(ArrayAccessExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(IntConst, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 ACCEPT_DEFINITION(ThisExpression, ExpressionCodegenVisitor, llvm::Value*, llvm::IRBuilder<>&)
 
 ACCEPT_DEFINITION(Expression, LValueVisitor, llvm::Value*, qlow::gen::FunctionGenerator&)
 ACCEPT_DEFINITION(LocalVariableExpression, LValueVisitor, llvm::Value*, qlow::gen::FunctionGenerator&)
 ACCEPT_DEFINITION(FieldAccessExpression, LValueVisitor, llvm::Value*, qlow::gen::FunctionGenerator&)
+ACCEPT_DEFINITION(ArrayAccessExpression, LValueVisitor, llvm::Value*, qlow::gen::FunctionGenerator&)
 
 ACCEPT_DEFINITION(AssignmentStatement, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
 ACCEPT_DEFINITION(DoEndBlock, StatementVisitor, llvm::Value*, qlow::gen::FunctionGenerator&) 
@@ -219,6 +221,12 @@ std::string ReturnStatement::toString(void) const
 std::string LocalVariableExpression::toString(void) const
 {
     return "LocalVariableExpression[" + var->name + "]";
+}
+
+
+std::string ArrayAccessExpression::toString(void) const
+{
+    return "ArrayAccessExpression[" + array->toString() + "[" + index->toString() + "]]";
 }
 
 
@@ -273,6 +281,12 @@ std::string FieldAccessExpression::toString(void) const
         return "FieldAccessExpression[" + target->toString() + "." + accessed->toString() + "]";
     else
         return "FieldAccessExpression[" + accessed->toString() + "]";
+}
+
+
+std::string IntConst::toString(void) const
+{
+    return "IntConst[" + std::to_string(value) + "]";
 }
 
 

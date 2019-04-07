@@ -75,6 +75,7 @@ namespace qlow
         struct ReturnStatement;
         struct LocalVariableStatement;
         struct AddressExpression;
+        struct ArrayAccessExpression;
 
         struct IntConst;
         struct StringConst;
@@ -483,6 +484,24 @@ struct qlow::ast::AddressExpression : public Expression
         AstObject{ cp },
         Expression{ cp },
        target{ std::move(target) }
+    {
+    } 
+
+    virtual std::unique_ptr<sem::SemanticObject> accept(StructureVisitor& v, sem::Scope&);
+};
+
+
+struct qlow::ast::ArrayAccessExpression : public Expression
+{
+    std::unique_ptr<Expression> array;
+    std::unique_ptr<Expression> index;
+    inline ArrayAccessExpression(std::unique_ptr<Expression> array,
+                                 std::unique_ptr<Expression> index,
+                                 const CodePosition& cp) :
+        AstObject{ cp },
+        Expression{ cp },
+       array{ std::move(array) },
+       index{ std::move(index) }
     {
     } 
 

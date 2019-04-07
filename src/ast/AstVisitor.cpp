@@ -362,6 +362,16 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(
 }
 
 
+std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(
+    ast::ArrayAccessExpression& ast, sem::Scope& scope)
+{
+    auto array = unique_dynamic_cast<sem::Expression>(ast.array->accept(*this, scope));
+    auto index = unique_dynamic_cast<sem::Expression>(ast.index->accept(*this, scope));
+
+    return std::make_unique<sem::ArrayAccessExpression>(std::move(array), std::move(index), ast.pos);
+}
+
+
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::IntConst& ast, sem::Scope& scope)
 {
     return std::make_unique<sem::IntConst>(scope.getContext(), ast.value, ast.pos);
@@ -439,7 +449,8 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::NewExpression&
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::NewArrayExpression& ast, sem::Scope& scope)
 {
-    auto ret = std::make_unique<sem::NewArrayExpression>(scope.getContext(), scope.getType(ast.type.get()), ast.pos);
+    auto length = unique_dynamic_cast<sem::Expression>(ast.length->accept(*this, scope));
+    auto ret = std::make_unique<sem::NewArrayExpression>(scope.getType(ast.type.get()), std::move(length), ast.pos);
     return ret;
 }
 

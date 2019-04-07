@@ -79,6 +79,14 @@ public:
      *       it will not return a <code>nullptr</code>
      */
     virtual Class* getClass(void) const;
+
+    /**
+     * \brief get the type of which this type is an array type of.
+     * 
+     * \return the type of which this type is an array type of, or
+     *         <code>nullptr</code> if this type is not an array type.
+     */
+    virtual Type* getArrayOf(void) const;
     
     /**
      * @brief returns the type scope of this type
@@ -173,6 +181,7 @@ protected:
 public:
     virtual bool equals(const Type& other) const override;
     virtual bool isArrayType(void) const override;
+    virtual Type* getArrayOf(void) const override;
 
     virtual std::string asString(void) const override;
     virtual std::string asIdentifier(void) const override;

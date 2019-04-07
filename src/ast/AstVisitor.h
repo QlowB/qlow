@@ -48,6 +48,7 @@ class qlow::StructureVisitor :
         ast::ReturnStatement,
         ast::LocalVariableStatement,
         ast::AddressExpression,
+        ast::ArrayAccessExpression,
         ast::IntConst,
         ast::StringConst,
         ast::UnaryOperation,
@@ -75,6 +76,7 @@ public:
     ReturnType visit(ast::ReturnStatement& ast, sem::Scope& scope) override;
     ReturnType visit(ast::LocalVariableStatement& ast, sem::Scope& scope) override;
     ReturnType visit(ast::AddressExpression& ast, sem::Scope& scope) override;
+    ReturnType visit(ast::ArrayAccessExpression& ast, sem::Scope& scope) override;
     ReturnType visit(ast::IntConst& ast, sem::Scope& scope) override;
     ReturnType visit(ast::StringConst& ast, sem::Scope& scope) override;
     ReturnType visit(ast::UnaryOperation& ast, sem::Scope& scope) override;

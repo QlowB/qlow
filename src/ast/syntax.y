@@ -141,6 +141,7 @@ while (0)
     qlow::ast::ReturnStatement* returnStatement;
     qlow::ast::LocalVariableStatement* localVariableStatement;
     qlow::ast::AddressExpression* addressExpression;
+    qlow::ast::ArrayAccessExpression* arrayAccessExpression;
 
     qlow::ast::UnaryOperation* unaryOperation;
     qlow::ast::BinaryOperation* binaryOperation;
@@ -193,6 +194,7 @@ while (0)
 %type <returnStatement> returnStatement
 %type <localVariableStatement> localVariableStatement
 %type <addressExpression> addressExpression
+%type <arrayAccessExpression> arrayAccessExpression
 %type <string> operator
 %type <unaryOperation> unaryOperation
 %type <binaryOperation> binaryOperation
@@ -218,7 +220,7 @@ while (0)
 
 %start topLevel
 
-%expect 65
+%expect 77
 
 %%
 
@@ -590,6 +592,10 @@ expression:
         $$ = $1;
     }
     |
+    arrayAccessExpression {
+        $$ = $1;
+    }
+    |
     castExpression {
         $$ = $1;
     }
@@ -725,6 +731,12 @@ addressExpression:
         $2 = nullptr;
     };
 
+arrayAccessExpression:
+    expression SQUARE_LEFT expression SQUARE_RIGHT {
+        $$ = new ArrayAccessExpression(std::unique_ptr<Expression>($1), std::unique_ptr<Expression>($3), @$);
+        $1 = nullptr; $3 = nullptr;
+    };
+
 paranthesesExpression:
     ROUND_LEFT expression ROUND_RIGHT {
         $$ = $2;
@@ -738,7 +750,11 @@ newExpression:
 
 newArrayExpression:
     NEW SQUARE_LEFT type SEMICOLON expression SQUARE_RIGHT {
-        $$ = nullptr;
+        $$ = new NewArrayExpression(
+            std::unique_ptr<qlow::ast::Type>($3),
+            std::unique_ptr<qlow::ast::Expression>($5),
+        @$);
+        $3 = nullptr; $5 = nullptr;
     };
     
 castExpression:

@@ -20,7 +20,6 @@ qlow::sem::SemanticObject::~SemanticObject(void) = default;
 
 std::string qlow::sem::SemanticObject::toString(void) const
 {
-    
     return "SemanticObject [" + util::toString(this) + "]";
 }
 
@@ -36,6 +35,12 @@ bool Type::operator==(const Type& other) const
 
 
 qlow::sem::Class* Type::getClass(void) const
+{
+    return nullptr;
+}
+
+
+Type* Type::getArrayOf(void) const
 {
     return nullptr;
 }
@@ -235,6 +240,12 @@ bool ArrayType::equals(const Type& other) const
 bool ArrayType::isArrayType(void) const
 {
     return true;
+}
+
+
+Type* ArrayType::getArrayOf(void) const
+{
+    return elementType;
 }
 
 

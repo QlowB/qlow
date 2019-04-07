@@ -88,6 +88,7 @@ void Context::createLlvmTypes(llvm::LLVMContext& llvmCtxt)
             type->createLlvmTypeDecl(llvmCtxt);
         }
         else {
+            // all structs and array types are structs
             type->llvmType = llvm::StructType::create(llvmCtxt, type->asIdentifier());
         }
     }
@@ -103,6 +104,14 @@ void Context::createLlvmTypes(llvm::LLVMContext& llvmCtxt)
             llvm::dyn_cast<llvm::StructType>(type->llvmType)->setBody(llvm::ArrayRef(structTypes));
             if (type->getClass()->isReferenceType)
                 type->llvmType = type->llvmType->getPointerTo();
+        }
+        if (type->isArrayType()) {
+            ArrayType* arrType = static_cast<ArrayType*>(type.get());
+            std::vector<llvm::Type*> structTypes {
+                arrType->elementType->getLlvmType(llvmCtxt)->getPointerTo(),    // elements pointer
+                llvm::Type::getInt64Ty(llvmCtxt)                                // length
+            };
+            llvm::dyn_cast<llvm::StructType>(type->llvmType)->setBody(llvm::ArrayRef(structTypes));
         }
     }
 }
