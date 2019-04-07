@@ -19,16 +19,21 @@ def test_file(path):
     test = [qlow_executable, path, "-o", path + ".o"]
     print("running test " + " ".join(test))
     output = subprocess.run(test, stdout=subprocess.PIPE)
-    with open(path + ".c.did", "w") as out:
+    with open(path + ".c.out", "w") as out:
         out.write(output.stdout.decode("utf-8"))
     
-    with open(path + ".c.did", "r") as did, open(path + ".c.should", "r") as should:
+    with open(path + ".c.out", "r") as did, open(path + ".c.out.ref", "r") as should:
         if did.readlines() == should.readlines():
             global succeeded
             succeeded += 1
         else:
             global failed
             failed += 1
+    
+    exefile = path + ".o"
+    if os.path.isfile(exefile):
+        runOut = subprocess.run(exefile, stdout=subprocess.PIPE)
+
 
 
 

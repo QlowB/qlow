@@ -44,16 +44,15 @@ struct qlow::sem::SemanticObject
 };
 
 
-
 class qlow::sem::Type
 {
     friend class Context;
 protected:
     std::unique_ptr<TypeScope> typeScope;
     llvm::Type* llvmType;
+    Context& context;
 
-    Type(void);
-
+    Type(Context& context);
 public:
 
     virtual ~Type(void);
@@ -87,6 +86,8 @@ public:
      *         <code>nullptr</code> if this type is not an array type.
      */
     virtual Type* getArrayOf(void) const;
+
+    virtual bool isReferenceType(void) const;
     
     /**
      * @brief returns the type scope of this type
@@ -104,10 +105,13 @@ public:
     virtual void createLlvmTypeDecl(llvm::LLVMContext&) = 0;
 
     virtual bool isClassType(void) const;
+    virtual bool isStructType(void) const;
     virtual bool isNativeType(void) const;
     virtual bool isArrayType(void) const;
 
     virtual bool isVoid(void) const;
+
+    inline Context& getContext(void) const { return context; }
 };
 
 
@@ -129,7 +133,8 @@ public:
 protected:
 
     NType type;
-    inline NativeType(NType type) :
+    inline NativeType(Context& context, NType type) :
+        Type{ context },
         type{ type }
     {
     }
@@ -153,13 +158,16 @@ class qlow::sem::ClassType : public Type
     friend class Context;
 protected:
     Class* type;
-    inline ClassType(Class* type) :
+    inline ClassType(Context& context, Class* type) :
+        Type{ context },
         type{ type }
     {
     }
 public:
     virtual bool equals(const Type& other) const override;
     virtual bool isClassType(void) const override;
+    virtual bool isStructType(void) const override;
+    virtual bool isReferenceType(void) const override;
     virtual Class* getClass(void) const override;
 
     virtual std::string asString(void) const override;
@@ -175,6 +183,7 @@ class qlow::sem::ArrayType : public Type
 protected:
     Type* elementType;
     inline ArrayType(Type* elementType) :
+        Type{ elementType->getContext() },
         elementType{ elementType }
     {
     }

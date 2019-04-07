@@ -85,7 +85,7 @@ public:
     ReturnType visit(ast::NewArrayExpression& ast, sem::Scope& scope) override;
     ReturnType visit(ast::CastExpression& ast, sem::Scope& scope) override;
 
-    ReturnType createImplicitCast(std::unique_ptr<sem::Expression>, sem::Type* targetType, sem::Scope& scope);
+    std::unique_ptr<sem::Expression> createImplicitCast(std::unique_ptr<sem::Expression>, sem::Type* targetType, sem::Scope& scope);
 };
 
 

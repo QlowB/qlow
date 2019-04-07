@@ -128,10 +128,20 @@ void qlow::sem::fillNativeScope(NativeScope& scope)
 {
     Context& context = scope.getContext();
 
-    Type* integer = context.getNativeType(NativeType::NType::INTEGER);
-    integer->setTypeScope(
-        std::make_unique<NativeTypeScope>(generateNativeTypeScope(context, NativeType::NType::INTEGER))
-    );
+    static const std::vector<NativeType::NType> integerTypes {
+        NativeType::NType::INTEGER,
+        NativeType::NType::C_CHAR,
+        NativeType::NType::C_SHORT,
+        NativeType::NType::C_INT,
+        NativeType::NType::C_LONG,
+    };
+
+    for (auto integerType : integerTypes) {
+        Type* integer = context.getNativeType(integerType);
+        integer->setTypeScope(
+            std::make_unique<NativeTypeScope>(generateNativeTypeScope(context, integerType))
+        );
+    }
 }
 
 
@@ -143,7 +153,7 @@ sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, Native
     scope.nativeMethods.insert(
         { "+",
             std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
-                context.getNativeType(NativeType::NType::INTEGER),
+                context.getNativeType(native),
                 context.getNativeType(native),
                 [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
                     return builder.CreateAdd(a, b);
@@ -154,7 +164,7 @@ sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, Native
     scope.nativeMethods.insert(
         { "-",
             std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
-                context.getNativeType(NativeType::NType::INTEGER),
+                context.getNativeType(native),
                 context.getNativeType(native),
                 [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
                     return builder.CreateSub(a, b);
@@ -165,7 +175,7 @@ sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, Native
     scope.nativeMethods.insert(
         { "*",
             std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
-                context.getNativeType(NativeType::NType::INTEGER),
+                context.getNativeType(native),
                 context.getNativeType(native),
                 [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
                     return builder.CreateMul(a, b);
@@ -176,7 +186,7 @@ sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, Native
     scope.nativeMethods.insert(
         { "/",
             std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
-                context.getNativeType(NativeType::NType::INTEGER),
+                context.getNativeType(native),
                 context.getNativeType(native),
                 [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
                     return builder.CreateSDiv(a, b);
@@ -204,6 +214,28 @@ sem::NativeTypeScope qlow::sem::generateNativeTypeScope(Context& context, Native
                 context.getNativeType(native),
                 [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
                     return builder.CreateICmpNE(a, b);
+                }
+            )
+        }
+    );
+    scope.nativeMethods.insert(
+        { "<",
+            std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
+                context.getNativeType(NativeType::NType::BOOLEAN),
+                context.getNativeType(native),
+                [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                    return builder.CreateICmpSLT(a, b);
+                }
+            )
+        }
+    );
+    scope.nativeMethods.insert(
+        { ">",
+            std::make_unique<BinaryNativeMethod>(context.getNativeScope(),
+                context.getNativeType(NativeType::NType::BOOLEAN),
+                context.getNativeType(native),
+                [] (llvm::IRBuilder<>& builder, llvm::Value* a, llvm::Value* b) {
+                    return builder.CreateICmpSGT(a, b);
                 }
             )
         }

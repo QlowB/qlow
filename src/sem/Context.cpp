@@ -35,7 +35,7 @@ qlow::sem::NativeScope& Context::getNativeScope(void)
 
 sem::Type* Context::getNativeType(NativeType::NType nativeType)
 {
-    auto t = std::unique_ptr<NativeType>(new NativeType(nativeType));
+    auto t = std::unique_ptr<NativeType>(new NativeType(*this, nativeType));
 
     const auto& find = typeMap.find(t.get());
     if (find != typeMap.end()) {
@@ -51,7 +51,7 @@ sem::Type* Context::getNativeType(NativeType::NType nativeType)
 
 sem::Type* Context::getClassType(Class* classType)
 {
-    auto t = std::unique_ptr<ClassType>(new ClassType(classType));
+    auto t = std::unique_ptr<ClassType>(new ClassType(*this, classType));
 
     const auto& find = typeMap.find(t.get());
     if (find != typeMap.end()) {

@@ -107,7 +107,7 @@ while (0)
 
 %initial-action
 {
-    @$.filename = parser.getFilename();
+        @$.filename = parser.getFilename();
     qlow_parser_set_extra(parser.getFilename(), scanner);
 };
 

@@ -17,8 +17,8 @@ using namespace qlow;
 llvm::Value* ExpressionCodegenVisitor::visit(sem::LocalVariableExpression& lve, llvm::IRBuilder<>& builder)
 {
     assert(lve.var->allocaInst != nullptr);
-    // TODO improve handling of arrays
-    if (llvm::dyn_cast<llvm::AllocaInst>(lve.var->allocaInst) && !lve.type->isArrayType()) {
+    // TODO improve handling of arrays and structs
+    if (llvm::dyn_cast<llvm::AllocaInst>(lve.var->allocaInst) && !lve.type->isArrayType() && !lve.type->isStructType()) {
         llvm::Type* returnType = lve.type->getLlvmType(builder.getContext());
         llvm::Value* val = builder.CreateLoad(returnType, lve.var->allocaInst);
         return val;
@@ -236,8 +236,8 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access,
     if (type->isPointerTy()) {
         type = type->getPointerElementType();
     }
-    
-    llvm::Value* target = access.target->accept(fg.lvalueVisitor, fg);
+
+    llvm::Value* target = access.target->accept(fg.expressionVisitor, builder);
 
     int structIndex = access.accessed->llvmStructIndex;
     llvm::ArrayRef<Value*> indexList = {
@@ -245,7 +245,8 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access,
         llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false))
     };
 
-    Value* ptr = builder.CreateGEP(type, target, indexList);
+    //Value* ptr = builder.CreateGEP(type, target, indexList);
+    Value* ptr = fg.builder.CreateStructGEP(type, target, structIndex);
     return builder.CreateLoad(ptr);
     
     
@@ -377,7 +378,8 @@ llvm::Value* LValueVisitor::visit(sem::FieldAccessExpression& access, qlow::gen:
         llvm::ConstantInt::get(fg.builder.getContext(), llvm::APInt(32, structIndex, false)),
         llvm::ConstantInt::get(fg.builder.getContext(), llvm::APInt(32, 0, false))
     };
-    Value* ptr = fg.builder.CreateGEP(type, target, indexList);
+    //Value* ptr = fg.builder.CreateGEP(type, target, indexList);
+    Value* ptr = fg.builder.CreateStructGEP(type, target, structIndex);
     return ptr;
 }
 
@@ -501,7 +503,7 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
     auto val = assignment.value->accept(fg.expressionVisitor, fg.builder);
     auto target = assignment.target->accept(fg.lvalueVisitor, fg);
     
-    if (val->getType()->isPointerTy() && val->getType()->getPointerElementType()->isStructTy()) {
+    if (!assignment.value->type->isNativeType() && !assignment.value->type->isReferenceType()) {
         const llvm::DataLayout& layout = fg.builder.GetInsertBlock()->getModule()->getDataLayout();
 #if LLVM_VERSION_MAJOR >= 7
         return fg.builder.CreateMemCpy(target, 1, val, 1, layout.getTypeAllocSize(val->getType()->getPointerElementType()), false);

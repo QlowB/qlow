@@ -23,7 +23,13 @@ std::string qlow::sem::SemanticObject::toString(void) const
     return "SemanticObject [" + util::toString(this) + "]";
 }
 
-Type::Type(void) = default;
+Type::Type(Context& context) :
+    typeScope{ std::make_unique<TypeScope>(context, this) },
+    context{ context }
+{
+}
+
+
 Type::~Type(void) = default;
 
 
@@ -46,6 +52,12 @@ Type* Type::getArrayOf(void) const
 }
 
 
+bool Type::isReferenceType(void) const
+{
+    return false;
+}
+
+
 void Type::setTypeScope(std::unique_ptr<TypeScope> scope)
 {
     this->typeScope = std::move(scope);
@@ -65,6 +77,12 @@ llvm::Type* Type::getLlvmType(llvm::LLVMContext& c) const
 
 
 bool Type::isClassType(void) const
+{
+    return false;
+}
+
+
+bool Type::isStructType(void) const
 {
     return false;
 }
@@ -195,15 +213,27 @@ bool ClassType::equals(const Type& other) const
 }
 
 
-qlow::sem::Class* ClassType::getClass(void) const
-{
-    return type;
-}
-
-
 bool ClassType::isClassType(void) const
 {
     return true;
+}
+
+
+bool ClassType::isStructType(void) const
+{
+    return !getClass()->isReferenceType;
+}
+
+
+bool ClassType::isReferenceType(void) const
+{
+    return getClass()->isReferenceType;
+}
+
+
+qlow::sem::Class* ClassType::getClass(void) const
+{
+    return type;
 }
 
 

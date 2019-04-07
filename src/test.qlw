@@ -1,27 +1,16 @@
 import some
 
-
-class Aalala
-
+struct Pair
+    a: Integer
+    b: Integer
 end
-
-/*
-bignumbers do
-    a: Int128
-    b: Int128
-    c: Int64
-
-    b := a + c as Int128
-    //c := b as Int64
-end
-*/
 
 main: Integer do
-    count: CInt
-    count := 0
-    while count != 20 do
-        printint(fast_fibonacci(count))
-        count := count + 1
+    count: Pair
+    count.a := 0
+    while count.a != 20 do
+        printint(fast_fibonacci(count.a))
+        count.a := count.a + 1
     end
     return 0
     //do_shit

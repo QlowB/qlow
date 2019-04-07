@@ -184,10 +184,12 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::Expression& as
 
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& ast, sem::Scope& scope)
 {
+    // TODO rewrite this mess
+
     std::unique_ptr<sem::Expression> target = nullptr;
     if (ast.target) {
-        target = unique_dynamic_cast<sem::Expression>(
-            ast.target->accept(*this, scope));
+        auto expr = ast.target->accept(*this, scope);
+        target = unique_dynamic_cast<sem::Expression>(std::move(expr));
     }
 
     sem::Method* method;
@@ -217,18 +219,10 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
                 auto& arg = ast.arguments[i];
                 auto& argTypeShouldHave = method->arguments[i]->type;
                 auto argument = arg->accept(*this, scope);
-                if (sem::Expression* expr =
-                        dynamic_cast<sem::Expression*>(argument.get()); expr) {
-                    if (expr->type != argTypeShouldHave)
-                        throw SemanticError(SemanticError::TYPE_MISMATCH,
-                            "argument passed to function has wrong type",
-                            // TODO rewrite types
-                            //expr->type->asString() + "' instead of '" +
-                            //argTypeShouldHave->asString() + "'",
-                            arg->pos
-                        );
-                    fce->arguments.push_back(
-                        unique_dynamic_cast<sem::Expression>(std::move(argument)));
+                if (dynamic_cast<sem::Expression*>(argument.get())) {
+                    auto expr = unique_dynamic_cast<sem::Expression>(std::move(argument));
+                    auto castedParameter = createImplicitCast(std::move(expr), argTypeShouldHave, scope);
+                    fce->arguments.push_back(std::move(castedParameter));
                 }
                 else {
                     throw "internal error: non-expression passed as function parameter";
@@ -260,11 +254,18 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
                 throw SemanticError(SemanticError::UNKNOWN_TYPE, "no this found", ast.pos);
             thisExpr = std::make_unique<sem::LocalVariableExpression>(thisVar, CodePosition::none());
         }
+        if (ast.arguments.size() != method->arguments.size())
+                throw SemanticError(SemanticError::WRONG_NUMBER_OF_ARGUMENTS, ast.name, ast.pos);
         auto fce = std::make_unique<sem::MethodCallExpression>(std::move(thisExpr), method, ast.pos);
-        for (auto& arg : ast.arguments) {
+        for (size_t i = 0; i < ast.arguments.size(); i++) {
+            auto& arg = ast.arguments[i];
+            auto& argTypeShouldHave = method->arguments[i]->type;
             auto argument = arg->accept(*this, scope);
+
             if (dynamic_cast<sem::Expression*>(argument.get())) {
-                fce->arguments.push_back(unique_dynamic_cast<sem::Expression>(std::move(argument)));
+                auto expr = unique_dynamic_cast<sem::Expression>(std::move(argument));
+                auto castedParameter = createImplicitCast(std::move(expr), argTypeShouldHave, scope);
+                fce->arguments.push_back(std::move(castedParameter));
             }
             else {
                 throw "internal error: non-expression passed as function parameter";
@@ -286,12 +287,12 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::FeatureCall& a
 std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::AssignmentStatement& ast, sem::Scope& scope)
 {
     auto as = std::make_unique<sem::AssignmentStatement>(scope.getContext());
-    
+
 //    as->value = unique_dynamic_cast<sem::Expression>(visit(*ast.expr, classes));
 //    as->target = unique_dynamic_cast<sem::Expression>(visit(*ast.target, classes));
     as->value = unique_dynamic_cast<sem::Expression>(ast.expr->accept(*this, scope));
     as->target = unique_dynamic_cast<sem::Expression>(ast.target->accept(*this, scope));
-    
+
     if (as->target->type->operator==(*as->value->type)) {
         return as;
     }
@@ -464,11 +465,14 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::CastExpression
 }
 
 
-std::unique_ptr<sem::SemanticObject> StructureVisitor::createImplicitCast(
+std::unique_ptr<sem::Expression> StructureVisitor::createImplicitCast(
         std::unique_ptr<sem::Expression> expr, sem::Type* targetType, sem::Scope& scope)
 {
+    Printer::getInstance() << "casting " << expr->type->asString() << " to " << targetType->asString() << std::endl;
+    if (expr->type->equals(*targetType))
+        return expr;
     auto* exprType = expr->type;
-    if (/*exprType->isImplicitelyCastableTo(targetType)*/true) {
+    if (false /*exprType->isImplicitelyCastableTo(targetType)*/) {
         return std::make_unique<sem::CastExpression>(
             std::move(expr), targetType, nullptr, true, expr->pos);
     }
