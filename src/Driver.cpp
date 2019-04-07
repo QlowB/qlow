@@ -254,7 +254,7 @@ bool Driver::semanticStage(void)
 {
     Printer& printer = Printer::getInstance();
     bool errorOccurred = false;
-    #error YOU SHALL BE ASSIMILATED INTO SPARKLING UNIVERSE DUST
+
     try {
         std::tie(this->context, this->semClasses) = qlow::sem::createFromAst(*this->ast);
     }
