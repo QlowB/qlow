@@ -503,7 +503,9 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
     
     if (val->getType()->isPointerTy() && val->getType()->getPointerElementType()->isStructTy()) {
         const llvm::DataLayout& layout = fg.builder.GetInsertBlock()->getModule()->getDataLayout();
-        return fg.builder.CreateMemCpy(target, val, layout.getTypeAllocSize(val->getType()->getPointerElementType()), 1);
+        return fg.builder.CreateMemCpy(target, 1, val, 1, layout.getTypeAllocSize(val->getType()->getPointerElementType()), false);
+        //llvm::Intrinsic::memcpy_element_unordered_atomic
+        //return fg.builder.CreateMemMove(target, val, layout.getTypeAllocSize(val->getType()->getPointerElementType()), 1);
     }
     else {
         return fg.builder.CreateStore(val, target);
