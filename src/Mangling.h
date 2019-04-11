@@ -18,7 +18,7 @@ class qlow::Mangler
 {
 public:
     Mangler(void) = default;
-    
+
     std::string mangle(const sem::Method& method);
 };
 
