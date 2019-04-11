@@ -240,10 +240,10 @@ llvm::Value* ExpressionCodegenVisitor::visit(sem::FieldAccessExpression& access,
     llvm::Value* target = access.target->accept(fg.expressionVisitor, builder);
 
     int structIndex = access.accessed->llvmStructIndex;
-    llvm::ArrayRef<Value*> indexList = {
+    /*llvm::ArrayRef<Value*> indexList = {
         llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, structIndex, false)),
         llvm::ConstantInt::get(builder.getContext(), llvm::APInt(32, 0, false))
-    };
+    };*/
 
     //Value* ptr = builder.CreateGEP(type, target, indexList);
     Value* ptr = fg.builder.CreateStructGEP(type, target, structIndex);
@@ -374,10 +374,10 @@ llvm::Value* LValueVisitor::visit(sem::FieldAccessExpression& access, qlow::gen:
     llvm::Value* target = access.target->accept(fg.expressionVisitor, fg.builder);
     
     int structIndex = access.accessed->llvmStructIndex;
-    llvm::ArrayRef<Value*> indexList = {
+    /*llvm::ArrayRef<Value*> indexList = {
         llvm::ConstantInt::get(fg.builder.getContext(), llvm::APInt(32, structIndex, false)),
         llvm::ConstantInt::get(fg.builder.getContext(), llvm::APInt(32, 0, false))
-    };
+    };*/
     //Value* ptr = fg.builder.CreateGEP(type, target, indexList);
     Value* ptr = fg.builder.CreateStructGEP(type, target, structIndex);
     return ptr;
