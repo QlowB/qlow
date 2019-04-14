@@ -14,7 +14,8 @@ class qlow::util::Path
 {
     std::string path;
 
-    static const std::string dirSeparator;
+    static const std::string dirSeparators;
+    static const std::string defaultDirSeparator;
 
 public:
 
