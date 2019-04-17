@@ -468,7 +468,9 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::CastExpression
 std::unique_ptr<sem::Expression> StructureVisitor::createImplicitCast(
         std::unique_ptr<sem::Expression> expr, sem::Type* targetType, sem::Scope& scope)
 {
+#ifdef DEBUGGING
     Printer::getInstance() << "casting " << expr->type->asString() << " to " << targetType->asString() << std::endl;
+#endif
     if (expr->type->equals(*targetType))
         return expr;
     auto* exprType = expr->type;
