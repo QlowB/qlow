@@ -188,6 +188,8 @@ struct qlow::sem::Method : public SemanticObject
     }
     
     void generateThisExpression(void);
+
+    std::string getMangledName(void) const;
     
     virtual std::string toString(void) const override;
 };

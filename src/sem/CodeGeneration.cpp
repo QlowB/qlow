@@ -1,4 +1,5 @@
 #include "CodeGeneration.h"
+#include "Mangling.h"
 #include "Linking.h"
 
 #include <llvm/IR/LLVMContext.h>
@@ -155,13 +156,7 @@ llvm::Function* generateFunction(llvm::Module* module, sem::Method* method)
 #endif 
     if (returnType == nullptr)
         throw "invalid return type";
-    std::string symbolName;
-    if (method->isExtern) {
-        symbolName = qlow::getExternalSymbol(method->name);
-    }
-    else {
-        symbolName = method->name;
-    }
+    std::string symbolName = method->getMangledName();
     Function* func = Function::Create(funcType, Function::ExternalLinkage, symbolName, module);
     method->llvmNode = func;
     
@@ -333,7 +328,7 @@ llvm::Function* qlow::gen::FunctionGenerator::generate(void)
     printf("generate function %s\n", method.name.c_str()); 
 #endif
 
-    Function* func = module->getFunction(method.name);
+    Function* func = module->getFunction(method.getMangledName());
 
     if (func == nullptr) {
         throw "internal error: function not found";

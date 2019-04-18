@@ -172,10 +172,7 @@ class qlow::sem::NativeTypeScope : public TypeScope
 {
 public:
     SymbolTable<NativeMethod> nativeMethods;
-    inline NativeTypeScope(Context& context, Type* type) :
-        TypeScope{ context, type }
-    {
-    }
+    NativeTypeScope(Context& context, Type* type);
 
     NativeTypeScope(NativeTypeScope&&);
     //NativeTypeScope& operator=(NativeTypeScope&&);

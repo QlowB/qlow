@@ -2,6 +2,8 @@
 #include "Type.h"
 #include "Ast.h"
 #include "AstVisitor.h"
+#include "Mangling.h"
+#include "Linking.h"
 
 #include "CodegenVisitor.h"
 
@@ -163,6 +165,15 @@ void Method::generateThisExpression(void)
     auto te = std::make_unique<ThisExpression>(this);
     thisExpression = te.get();
     scope.putVariable(this->thisExpression->name, std::move(te));
+}
+
+
+std::string Method::getMangledName(void) const
+{
+    if (isExtern)
+        return qlow::getExternalSymbol(name);
+    else
+        return qlow::mangle(*this);
 }
 
 

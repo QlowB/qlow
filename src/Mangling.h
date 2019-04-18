@@ -10,16 +10,14 @@ namespace qlow
     namespace sem
     {
         struct Method;
+        class Type;
     }
-}
 
 
-class qlow::Mangler
-{
-public:
-    Mangler(void) = default;
 
     std::string mangle(const sem::Method& method);
-};
+    std::string mangle(const sem::Type* type);
+}
+
 
 #endif // QLOW_MANGLING_H_

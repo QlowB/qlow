@@ -318,6 +318,12 @@ bool sem::TypeScope::isNativeTypeScope(void) const
 }
 
 
+sem::NativeTypeScope::NativeTypeScope(Context& context, Type* type) :
+    TypeScope{ context, type }
+{
+}
+
+
 sem::NativeTypeScope::NativeTypeScope(NativeTypeScope&&) = default;
 //sem::NativeTypeScope& sem::NativeTypeScope::operator=(NativeTypeScope&&) = default;
 
