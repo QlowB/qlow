@@ -72,10 +72,33 @@ endif()
 #explicit_llvm_config(${PROJECT_NAME} STATIC_LIBRARY)
 llvm_config(${PROJECT_NAME})
 
-llvm_map_components_to_libnames(llvm_libs X86 passes)
+if (${BUILD_STATIC})
+    llvm_map_components_to_libnames(llvm_libs X86 passes)
+#    set(LLVM_LINK_COMPONENTS
+#      BitWriter
+#      BitReader
+#      AsmParser
+#      Analysis
+#      TransformUtils
+#      ScalarOpts
+#      Target
+#      Core
+#      IRReader
+#      Linker
+#      Support
+#      X86Disassembler
+#      X86AsmParser
+#      X86CodeGen
+#      Global
+#    )
+    target_link_libraries(${PROJECT_NAME} ${llvm_libs})
+else()
+    target_link_libraries(${PROJECT_NAME} LLVM)
+endif()
+
 
 #message( ${llvm_libs} )
-target_link_libraries(${PROJECT_NAME} LLVM) # ${llvm_libs})
+target_link_libraries(${PROJECT_NAME} ${llvm_libs})
 
 
 #    MIRParser

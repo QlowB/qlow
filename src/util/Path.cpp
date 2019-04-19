@@ -3,16 +3,18 @@
 using qlow::util::Path;
 
 #ifdef QLOW_TARGET_WINDOWS
-const std::string Path::dirSeparator = "\\";
+const std::string Path::dirSeparators = "\\/";
+const std::string Path::defaultDirSeparator = "\\";
 #else
-const std::string Path::dirSeparator = "/";
+const std::string Path::dirSeparators = "/";
+const std::string Path::defaultDirSeparator = "/";
 #endif
 
 
 void Path::append(const Path& other)
 {
     if (!endsWithSeparator())
-        path += dirSeparator;
+        path += defaultDirSeparator;
     path += other.path;
 }
 
@@ -21,7 +23,7 @@ Path Path::parentPath(void) const
 {
     Path parent = *this;
 
-    if (parent.path == dirSeparator)
+    if (parent.path == defaultDirSeparator)
         return parent;
 
     if (parent.endsWithSeparator()) {
@@ -33,7 +35,7 @@ Path Path::parentPath(void) const
         parent.path.pop_back();
     }
 
-    if (parent.path.size() > dirSeparator.size() && parent.endsWithSeparator())
+    if (parent.path.size() >= 2 && parent.endsWithSeparator())
         parent.path.pop_back();
 
     return parent;
@@ -68,6 +70,7 @@ const char* Path::c_str(void) const
 
 bool Path::endsWithSeparator(void) const
 {
-    return path.size() >= dirSeparator.size() &&
-        std::equal(dirSeparator.rbegin(), dirSeparator.rend(), path.rbegin());
+    return !path.empty() && dirSeparators.find(path[path.size() - 1]) != std::string::npos;
+    /*return path.size() >= dirSeparator.size() &&
+        std::equal(dirSeparator.rbegin(), dirSeparator.rend(), path.rbegin());*/
 }
