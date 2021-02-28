@@ -300,7 +300,7 @@ std::unique_ptr<sem::SemanticObject> StructureVisitor::visit(ast::AssignmentStat
         throw SemanticError(
             SemanticError::TYPE_MISMATCH,
             "Can't assign expression of type '" + as->value->type->asString() +
-            "' to value of type '" + as->target->type->asString() + "'.",
+            "' to variable of type '" + as->target->type->asString() + "'.",
             ast.pos
         );
     }

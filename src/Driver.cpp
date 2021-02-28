@@ -125,7 +125,7 @@ int Driver::run(void) try
     }*/
     
     auto* mainMethod = semClasses->getMethod("main");
-    if (mainMethod == nullptr && false) {
+    if (mainMethod == nullptr) {
         // TODO handle main ckeck well
         qlow::printError(printer, "no main method found");
         return 1;

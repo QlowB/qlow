@@ -31,6 +31,10 @@ Path Path::parentPath(void) const
         return parent;
     }
 
+    if (parent.path.find(defaultDirSeparator) == std::string::npos) {
+        return "";
+    }
+
     while (!parent.endsWithSeparator()) {
         parent.path.pop_back();
     }

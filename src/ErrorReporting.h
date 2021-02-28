@@ -134,6 +134,8 @@ public:
         TYPE_MISMATCH,
         INVALID_RETURN_TYPE,
         NEW_FOR_NON_CLASS,
+
+        NO_MAIN_METHOD,
     };
     
     

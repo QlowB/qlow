@@ -219,6 +219,7 @@ std::string SemanticError::getMessage(void) const noexcept
         {OPERATOR_NOT_FOUND, ""},
         {WRONG_NUMBER_OF_ARGUMENTS, "wrong number of arguments passed"},
         {INVALID_RETURN_TYPE, "invalid return type"},
+        {NO_MAIN_METHOD, "no main method specified"},
     };
     if (errors.find(errorCode) != errors.end())
         return errors.at(errorCode);

@@ -121,7 +121,10 @@ std::unique_ptr<llvm::Module> generateModule(sem::GlobalScope& semantic)
         printf("verified function: %s\n", method->name.c_str());
 #endif
     }
-    generateStartFunction(module.get(), semantic.getMethod("main")->llvmNode);
+    auto mainMethod = semantic.getMethod("main");
+    if (mainMethod != nullptr) {
+        generateStartFunction(module.get(), mainMethod->llvmNode);
+    }
     return module;
 }
 
