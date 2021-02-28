@@ -11,5 +11,6 @@ end
 main do
     a: A
     a := new A
+    print(a)
 end
 

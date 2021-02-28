@@ -15,7 +15,9 @@
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Support/TargetRegistry.h>
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/Support/Host.h>
 #include <llvm/Support/FileSystem.h>
+#include <llvm/Support/CodeGen.h>
 #include <llvm/Support/raw_os_ostream.h>
 
 
@@ -45,7 +47,7 @@ std::unique_ptr<llvm::Module> generateModule(sem::GlobalScope& semantic)
         printf("creating llvm module\n"); 
 #endif 
 
-    std::unique_ptr<Module> module = llvm::make_unique<Module>("qlow_module", context);
+    std::unique_ptr<Module> module = std::make_unique<Module>("qlow_module", context);
 
     // create llvm structs
     // TODO implement detection of circles
@@ -260,7 +262,7 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
     builder.OptLevel = optLevel;
     builder.SizeLevel = sizeLevel;
     if (optLevel >= 2) {
-        builder.DisableUnitAtATime = false;
+        //builder.DisableUnitAtATime = false;
         builder.DisableUnrollLoops = false;
         builder.LoopVectorize = true;
         builder.SLPVectorize = true;
@@ -299,7 +301,7 @@ void generateObjectFile(const std::string& filename, std::unique_ptr<llvm::Modul
             nullptr,
 #endif
 //        nullptr,
-        llvm::TargetMachine::CGFT_ObjectFile);
+        llvm::CGFT_ObjectFile);
 
     pm.run(*module);
     dest.flush();

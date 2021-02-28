@@ -506,7 +506,7 @@ llvm::Value* StatementVisitor::visit(sem::AssignmentStatement& assignment,
     if (!assignment.value->type->isNativeType() && !assignment.value->type->isReferenceType()) {
         const llvm::DataLayout& layout = fg.builder.GetInsertBlock()->getModule()->getDataLayout();
 #if LLVM_VERSION_MAJOR >= 7
-        return fg.builder.CreateMemCpy(target, 1, val, 1, layout.getTypeAllocSize(val->getType()->getPointerElementType()), false);
+        return fg.builder.CreateMemCpy(target, llvm::MaybeAlign(), val, llvm::MaybeAlign(), layout.getTypeAllocSize(val->getType()->getPointerElementType()), false);
 #else
         return fg.builder.CreateMemCpy(target, val, layout.getTypeAllocSize(val->getType()->getPointerElementType()), 1);
 #endif
